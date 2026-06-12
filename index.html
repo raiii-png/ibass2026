@@ -1595,7 +1595,7 @@ body {
             <path d="M38 24c2.5 1.5 4 4.2 4 7" stroke="#dbb96e" stroke-width="1.1"/>
           </svg>
         </div>
-        <div class="role-name">Hello Buddy</div>
+        <div class="role-name">Buddy</div>
         <div class="role-scale">Skala 1 &ndash; 10</div>
         <div class="role-desc">Nilai Bizstar di departementmu secara mendalam</div>
       </div>
@@ -1943,7 +1943,7 @@ body {
 
     <div class="guide-section">
       <div class="guide-sec-title">Cara Mengisi</div>
-      <div class="guide-row"><span class="guide-num">1</span><p class="guide-text">Pilih peranmu — <strong>Hello Buddy</strong> atau <strong>Panitia</strong> — di halaman awal.</p></div>
+      <div class="guide-row"><span class="guide-num">1</span><p class="guide-text">Pilih peranmu — <strong>Buddy</strong> atau <strong>Panitia</strong> — di halaman awal.</p></div>
       <div class="guide-row"><span class="guide-num">2</span><p class="guide-text">Isi nama, pilih department (jika Buddy), dan pilih <strong>milestone</strong> yang sedang dievaluasi.</p></div>
       <div class="guide-row"><span class="guide-num">3</span><p class="guide-text">Nilai setiap Bizstar satu per satu. Gunakan <strong>dot navigasi</strong> di atas untuk berpindah atau melihat progress.</p></div>
       <div class="guide-row"><span class="guide-num">4</span><p class="guide-text">Isi <strong>catatan kualitatif</strong> jika ada hal penting yang perlu dicatat — opsional tapi sangat membantu.</p></div>
@@ -1952,7 +1952,7 @@ body {
 
     <div class="guide-section">
       <div class="guide-sec-title">Skala Penilaian</div>
-      <div class="guide-row"><span class="guide-num"></span><p class="guide-text"><strong>Hello Buddy</strong> menggunakan skala <strong>1–10</strong> karena observasi lebih dalam dan personal.</p></div>
+      <div class="guide-row"><span class="guide-num"></span><p class="guide-text"><strong>Buddy</strong> menggunakan skala <strong>1–10</strong> karena observasi lebih dalam dan personal.</p></div>
       <div class="guide-row"><span class="guide-num"></span><p class="guide-text"><strong>Panitia</strong> menggunakan skala <strong>1–5</strong> karena penilaian berdasarkan interaksi saat event.</p></div>
       <table class="guide-table" style="margin-top:0.75rem">
         <thead><tr><th>Skor</th><th>Makna</th></tr></thead>
@@ -2524,7 +2524,7 @@ function openApp(role){
   currentRole=role;
   document.getElementById('roleSelect').style.display='none';
   document.getElementById('app').classList.add('visible');
-  document.getElementById('roleLabel').textContent=role==='buddy'?'Hello Buddy':'Panitia';
+  document.getElementById('roleLabel').textContent=role==='buddy'?'Buddy':'Panitia';
 
   // show/hide role-specific fields
   document.getElementById('deptField').style.display=role==='buddy'?'block':'none';
@@ -2806,7 +2806,7 @@ function toggleCat(){
 /* ══ REVIEW PAGE ══ */
 function buildReview(){
   document.getElementById('progFill').style.width='88%';
-  const role=currentRole==='buddy'?'Hello Buddy':'Panitia';
+  const role=currentRole==='buddy'?'Buddy':'Panitia';
   const dept=currentRole==='buddy'?document.getElementById('deptPenilai').value:'Semua Department';
   document.getElementById('reviewInfo').innerHTML=
     `Penilai: <strong style="color:var(--silver)">${esc(document.getElementById('namaPenilai').value)}</strong><br>`+
@@ -2856,7 +2856,7 @@ function openConfirm(){
   const dept=isBuddy?document.getElementById('deptPenilai').value:'Pilihan kamu';
   document.getElementById('confirmDesc').innerHTML=
     `Penilai: <strong>${esc(document.getElementById('namaPenilai').value)}</strong><br>`+
-    `Peran: <strong>${isBuddy?'Hello Buddy':'Panitia'}</strong><br>`+
+    `Peran: <strong>${isBuddy?'Buddy':'Panitia'}</strong><br>`+
     `Department: <strong>${esc(dept)}</strong><br>`+
     `Milestone: <strong>${esc(milestone)}</strong><br>`+
     `Bizstar dinilai: <strong>${complete} dari ${total}</strong>`+
@@ -3367,7 +3367,7 @@ window.loadBizCard = function(idx){
 const _origBuildReviewAbsent = window.buildReview;
 window.buildReview = function(){
   document.getElementById('progFill').style.width='88%';
-  const role = currentRole==='buddy'?'Hello Buddy':'Panitia';
+  const role = currentRole==='buddy'?'Buddy':'Panitia';
   const dept = currentRole==='buddy'?document.getElementById('deptPenilai').value:'Semua Department';
   document.getElementById('reviewInfo').innerHTML=
     `Penilai: <strong style="color:var(--text)">${esc(document.getElementById('namaPenilai').value)}</strong><br>`+
@@ -3474,7 +3474,7 @@ window.openConfirm = function(){
   const dept = isBuddy?document.getElementById('deptPenilai').value:'Pilihan kamu';
   document.getElementById('confirmDesc').innerHTML=
     `Penilai: <strong>${esc(document.getElementById('namaPenilai').value)}</strong><br>`+
-    `Peran: <strong>${isBuddy?'Hello Buddy':'Panitia'}</strong><br>`+
+    `Peran: <strong>${isBuddy?'Buddy':'Panitia'}</strong><br>`+
     `Department: <strong>${esc(dept)}</strong><br>`+
     `Milestone: <strong>${esc(milestone)}</strong><br>`+
     `Bizstar dinilai: <strong>${complete} dari ${total}</strong>`+
