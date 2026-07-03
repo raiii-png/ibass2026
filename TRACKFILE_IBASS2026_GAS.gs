@@ -26,6 +26,13 @@ const DAP_FORM_ID = '1Ko8M-oRQisCxnOO5KDQXF2g8sS854yurR_qSxfJrYyE';
 const HEADER_ROW = ['No', 'Divisi', 'Kegiatan & Detail', 'Priority', 'Penanggung Jawab', 'Tanggal Mulai', 'Deadline', 'Status', 'Catatan', 'File/Link'];
 const DATA_START_ROW = 5; // header di baris 4, data mulai baris 5
 
+// Web Penilaian Bizstar — token harus sama dengan SUBMIT_TOKEN di index.html
+const PENILAIAN_TOKEN = 'ibass26-vGDnSmco7cBoju';
+const PENILAIAN_SHEET = 'Penilaian';
+const PENILAIAN_HEADER = ['Waktu', 'Peran', 'Penilai', 'Dept Penilai', 'Milestone', 'Nama Bizstar',
+  'Adaptive (raw)', 'Collaborative (raw)', 'Growth (raw)',
+  'Adaptive %', 'Collaborative %', 'Growth %', 'Skor Akhir', 'Kelebihan', 'Perlu Perbaikan'];
+
 // ─── GET: baca data ──────────────────────────────────────────────
 function doGet(e) {
   try {
@@ -63,6 +70,11 @@ function doGet(e) {
     if (action === 'dap') {
       // Baca semua pembayaran DAP dari Google Form
       return jsonOk({ payments: readDapPayments() });
+    }
+
+    if (action === 'penilaian') {
+      // Baca semua penilaian Bizstar yang sudah masuk
+      return jsonOk({ penilaian: readPenilaian(ss) });
     }
 
     return jsonOk({ ok: true, message: 'Track File I-BASS 2026 API aktif' });
@@ -113,6 +125,12 @@ function doPost(e) {
     const body = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const action = body.action;
+
+    // Kiriman dari web Penilaian Bizstar (index.html)
+    if (body.submissions) {
+      if (body.token !== PENILAIAN_TOKEN) return jsonErr('Token salah');
+      return savePenilaian(ss, body.submissions);
+    }
 
     // Sync seluruh data divisi dari dashboard
     if (action === 'sync') {
@@ -193,6 +211,58 @@ function doPost(e) {
   } catch (err) {
     return jsonErr(err.message);
   }
+}
+
+// ─── Penilaian Bizstar: simpan & baca ─────────────────────────────
+function ensurePenilaianSheet(ss) {
+  let sheet = ss.getSheetByName(PENILAIAN_SHEET);
+  if (sheet) return sheet;
+  sheet = ss.insertSheet(PENILAIAN_SHEET);
+  const header = sheet.getRange(1, 1, 1, PENILAIAN_HEADER.length);
+  header.setValues([PENILAIAN_HEADER])
+    .setBackground('#1e3a5f').setFontColor('#5bc4f5')
+    .setFontWeight('bold').setFontSize(10);
+  sheet.setFrozenRows(1);
+  const widths = [140, 70, 150, 110, 110, 150, 90, 110, 80, 80, 100, 70, 80, 220, 220];
+  widths.forEach((w, i) => sheet.setColumnWidth(i + 1, w));
+  return sheet;
+}
+
+function savePenilaian(ss, submissions) {
+  if (!Array.isArray(submissions) || submissions.length === 0) {
+    return jsonErr('Tidak ada data penilaian');
+  }
+  const sheet = ensurePenilaianSheet(ss);
+  const rows = submissions.map(s => [
+    s.timestamp ? Utilities.formatDate(new Date(s.timestamp), 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss') : '',
+    s.role || '',
+    s.penilai || '',
+    s.dept_penilai || '',
+    s.milestone || '',
+    s.nama_bizstar || '',
+    s.skor_adaptive_raw, s.skor_collab_raw, s.skor_growth_raw,
+    s.skor_adaptive, s.skor_collab, s.skor_growth,
+    s.skor_weighted,
+    s.kelebihan || '',
+    s.perbaikan || ''
+  ]);
+  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, PENILAIAN_HEADER.length).setValues(rows);
+  return jsonOk({ message: rows.length + ' penilaian tersimpan' });
+}
+
+function readPenilaian(ss) {
+  const sheet = ss.getSheetByName(PENILAIAN_SHEET);
+  if (!sheet || sheet.getLastRow() < 2) return [];
+  const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, PENILAIAN_HEADER.length).getValues();
+  return values.filter(r => r[5]).map(r => ({
+    waktu: r[0] instanceof Date ? Utilities.formatDate(r[0], 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss') : String(r[0]),
+    role: r[1], penilai: r[2], dept_penilai: r[3], milestone: r[4],
+    nama_bizstar: r[5],
+    skor_adaptive_raw: r[6], skor_collab_raw: r[7], skor_growth_raw: r[8],
+    skor_adaptive: r[9], skor_collab: r[10], skor_growth: r[11],
+    skor_weighted: r[12],
+    kelebihan: r[13], perbaikan: r[14]
+  }));
 }
 
 // ─── Helper: baca sheet → array of objects ───────────────────────

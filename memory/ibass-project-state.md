@@ -115,12 +115,22 @@ tab bars benar, panduan render, rename sesi Acara jalan, Finance saldo Rp1.535.0
 AI notulen sukses end-to-end. Catatan: preview_screenshot tool macet sesi ini — verifikasi visual
 pakai claude-in-chrome ke localhost:8321.
 
+**Sesi ke-5 (07-03, via Claude Code web/remote): koneksi Penilaian Bizstar → GAS**
+- `index.html`: `APPS_URL` diisi GAS URL yang sama dengan dashboard; `SUBMIT_TOKEN` diisi
+  token asli (`ibass26-…`, lihat file) — placeholder hilang, jalur kirim asli aktif.
+- `TRACKFILE_IBASS2026_GAS.gs`: handler baru di `doPost` — kalau body punya `submissions`,
+  validasi `PENILAIAN_TOKEN` (harus sama dengan `SUBMIT_TOKEN` index.html) lalu `savePenilaian()`
+  append ke sheet **"Penilaian"** (dibuat otomatis saat submit pertama, `ensurePenilaianSheet`).
+  Endpoint baca baru: `?action=penilaian`. Verifikasi: node --check OK, kedua HTML load
+  tanpa error console di Chromium headless.
+
 **Yang MUNGKIN masih perlu:**
-- User re-deploy GAS (langkah di atas) lalu test tombol "Cek Pembayaran Baru" dengan 9 respons asli.
-- `APPS_URL` di penilaian Bizstar masih placeholder — belum dikoneksikan ke Apps Script.
-- Pubdok belum dapat fitur baru sesi ini (sudah paling lengkap); Gemini API key perlu dicek aktif.
-- Dashboard belum di-push ke GitHub Pages (baru commit lokal; `update.bat` untuk push).
-- Penilaian Bizstar (`index.html` di GitHub Pages) masih pakai tema lama — kalau Boss mau konsisten, retheme juga ke Graphite.
+- **User RE-DEPLOY GAS (wajib, sekali):** paste kode .gs terbaru → Manage deployments →
+  Edit → New version → Deploy (URL tetap). Ini sekaligus menghidupkan `?action=dap` DAN
+  penerima penilaian. Lalu test: tombol "Cek Pembayaran Baru" (9 respons asli) + submit
+  penilaian dari `raiii-png.github.io/ibass2026` → cek sheet "Penilaian" terisi.
+- Pubdok belum dapat fitur baru (sudah paling lengkap).
+- GitHub Pages: pastikan main ter-update (sesi HP sudah push dashboard + memory ke main).
 
 **Catatan penting:**
 - User suka bilang "lanjut ke web kadiv sampai tahap sempurna" — artinya test semua fitur dan perbaiki kekurangan.

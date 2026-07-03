@@ -2050,10 +2050,9 @@ Object.keys(BIZSTAR_DB).filter(k=>k!=='__ALL__').forEach(dept=>{
 });
 
 /* ══ CONFIG ══ */
-const APPS_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
-/* Token rahasia — wajib sama dengan yang ada di Google Apps Script.
-   Ganti dengan string acak sebelum deploy. Contoh: 'ibass-hima-2026-xK9#mP' */
-const SUBMIT_TOKEN = 'GANTI_TOKEN_RAHASIA_KAMU';
+const APPS_URL = 'https://script.google.com/macros/s/AKfycbx5iNCi7rFpi8sXj5hyflk2W08OH4_4sUYFpJget4XQTgdbhKsp3vX8BXzQ8sa5_zla/exec';
+/* Token rahasia — wajib sama dengan PENILAIAN_TOKEN di TRACKFILE_IBASS2026_GAS.gs */
+const SUBMIT_TOKEN = 'ibass26-vGDnSmco7cBoju';
 
 /* ══ SECURITY: HTML escaper — cegah XSS dari user input ══ */
 function esc(str){ const d=document.createElement('div'); d.textContent=String(str); return d.innerHTML; }
