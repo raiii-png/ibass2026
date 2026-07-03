@@ -115,7 +115,13 @@ tab bars benar, panduan render, rename sesi Acara jalan, Finance saldo Rp1.535.0
 AI notulen sukses end-to-end. Catatan: preview_screenshot tool macet sesi ini — verifikasi visual
 pakai claude-in-chrome ke localhost:8321.
 
-**Sesi ke-5 (07-03, via Claude Code web/remote): koneksi Penilaian Bizstar → GAS**
+**Sesi ke-5 (07-03, via Claude Code web/remote): koneksi Penilaian Bizstar → GAS + verifikasi penuh dashboard**
+- **MERGED ke main** via PR #1 (squash `9c799c8`) — index.html + GAS + memory tayang di GitHub Pages.
+- **Dashboard diverifikasi fungsional penuh** di Chromium headless: 21 tab × 5 divisi render tanpa
+  error JS; Finance seed 9 DAP = Rp1.535.000; integrasi Logistik→Finance (Sudah Beli → saldo
+  terpotong) jalan; Acara 7 sesi + rename OK; Sekretaris manual→notulen OK; Pubdok caption UI OK.
+- Catatan sandbox: `script.google.com` & `github.io` diblokir network policy sesi remote —
+  cek GAS live & Pages hanya bisa dari browser user.
 - `index.html`: `APPS_URL` diisi GAS URL yang sama dengan dashboard; `SUBMIT_TOKEN` diisi
   token asli (`ibass26-…`, lihat file) — placeholder hilang, jalur kirim asli aktif.
 - `TRACKFILE_IBASS2026_GAS.gs`: handler baru di `doPost` — kalau body punya `submissions`,
