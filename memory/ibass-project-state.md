@@ -13,7 +13,7 @@ metadata:
 - **Single-file HTML** (semua CSS + JS inline) — bukan framework, murni vanilla.
 - **localStorage** untuk semua data persisten (tidak ada backend database).
 - **Google Gemini 2.5 Flash API** untuk fitur AI (transkripsi, notulen, caption, storyboard, briefing, cut plan).
-  - Key: `AQ.Ab8RN6ItViIlW1dHy_nk0NjEDwgm_JnZfUBGcq0gyOE5atESoA`
+  - Key tersimpan di file HTML (`GEMINI_KEY`), jangan tulis di memory/docs.
 - **Google Apps Script** sebagai middleware dashboard ↔ Google Sheets.
   - GAS URL dipakai dengan `mode:'no-cors'` untuk POST (write-only), normal fetch untuk GET.
 
