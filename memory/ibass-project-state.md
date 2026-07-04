@@ -130,6 +130,16 @@ pakai claude-in-chrome ke localhost:8321.
   video track 'ended' (tombol Stop sharing browser) otomatis stopRecord. Tanpa audio track →
   ditolak + toast. Panduan sk dapat kartu "Merekam Rapat Online". Dites headless: online mock
   & mic biasa dua-duanya OK, nol error.
+- **Laporan Perkembangan (turunan)** — tab "Laporan" di Sekretaris (`sk-laporan`,
+  `renderSkLaporan/skLapUpdate/skLapRefresh`): tombol "Perbarui Laporan" POST
+  `action:'laporan'` → GAS `appendLaporanUpdate()` menambah bagian ber-stempel waktu
+  (tglIndo, WIB) ke Google Doc persisten "LAPORAN PERKEMBANGAN I-BASS 2026"
+  (doc id di ScriptProperties `laporan_doc_id`, riwayat di `laporan_updates`).
+  Isi tiap update: ringkasan Track File per divisi, kegiatan lewat deadline/batal,
+  dana DAP, penilaian Bizstar, + Catatan Evaluasi manual. GET `?action=laporanurl`
+  → {url, updates} untuk tampilan riwayat. BONUS FIX: handler `action:'createDoc'`
+  (notulen → GDocs) yang selama ini TIDAK ADA di GAS sudah ditambahkan.
+  **GAS wajib re-deploy** + izin baru Docs saat authorize.
 - **Track File DIHIDUPKAN LAGI (keputusan Boss, membatalkan "keep it secret" sesi-4)** —
   tab "Track File" di 5 divisi, panel baru id `{sk,pd,lg,ac,fn}-tugas` (JANGAN pakai
   `-trackfile`: `fn-trackfile`=Kas&DAP, `pd-trackfile`=Upload Konten). Engine tf* lama

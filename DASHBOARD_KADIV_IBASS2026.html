@@ -1425,6 +1425,7 @@ body::after {
       <div class="tab" onclick="switchTab('sk','notulen',this)">Notulen</div>
       <div class="tab" onclick="switchTab('sk','riwayat',this)">Riwayat</div>
       <div class="tab" onclick="switchTab('sk','tugas',this)">Track File</div>
+      <div class="tab" onclick="switchTab('sk','laporan',this)">Laporan</div>
       <div class="tab" onclick="switchTab('sk','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1669,6 +1670,7 @@ body::after {
 
       <!-- TAB: Panduan -->
       <div class="sk-content" id="sk-tugas" style="display:none"></div>
+      <div class="sk-content" id="sk-laporan" style="display:none"></div>
       <div class="sk-content" id="sk-panduan" style="display:none"></div>
 
     </div><!-- end .main sekretaris -->
@@ -2031,6 +2033,7 @@ function switchTab(prefix, id, el){
   if(prefix==='fn' && id==='laporan') renderFnLaporan();
   if(id==='panduan') renderPanduan(prefix);
   if(id==='tugas') renderTrackFileTab(currentDiv);
+  if(prefix==='sk' && id==='laporan') renderSkLaporan();
 }
 
 /* ══════════════════════════════════════
@@ -2098,6 +2101,12 @@ function renderPanduan(prefix){
       'Gunakan <strong>Salin Teks</strong> untuk menyalin, atau <strong>Kirim ke Google Docs</strong> untuk arsip online.',
       'Tekan <strong>Simpan ke Riwayat</strong> supaya notulen tersimpan dan bisa dibuka kembali di tab Riwayat.'
     ],'Notulen tersimpan di perangkat ini. Simpan ke Riwayat setiap selesai rapat supaya tidak hilang.')}
+    ${pgCard('Laporan Perkembangan untuk Penerus',[
+      'Buka tab <strong>Laporan</strong>. Tulis <strong>Catatan Evaluasi</strong>: kesalahan yang terjadi, kendala, dan saran perbaikan untuk kepengurusan berikutnya.',
+      'Tekan <strong>Perbarui Laporan</strong>. Satu bagian baru ber-stempel waktu ditambahkan ke dokumen Google Docs — berisi ringkasan Track File semua divisi, kegiatan lewat deadline, dana DAP, penilaian Bizstar, dan catatanmu.',
+      'Lakukan rutin (misalnya tiap akhir bulan atau setelah tiap sesi besar) — riwayat waktu setiap update tercatat di laporan.',
+      'Tekan <strong>Buka Laporan di Google Docs</strong> untuk membaca atau merapikan dokumennya.'
+    ],'Dokumen ini adalah warisan untuk turunan I-BASS — makin jujur evaluasinya, makin berguna untuk mereka.')}
     ${tfGuide}`,
   pd: `
     <div class="sec-head">
@@ -2746,6 +2755,92 @@ async function sendToGDocs(){
     btn.disabled=false;
     lbl.innerHTML='Kirim ke Google Docs →';
   }
+}
+
+/* ── Laporan Perkembangan (untuk penerus) ── */
+function renderSkLaporan(){
+  const el=document.getElementById('sk-laporan');
+  if(!el) return;
+  if(!el.dataset.rendered){
+    el.dataset.rendered='1';
+    el.innerHTML=`
+    <div class="sec-head">
+      <div class="sec-eye">Sekretaris · Turunan</div>
+      <div class="sec-title">Laporan Perkembangan</div>
+      <div class="sec-desc">Laporan berjalan di Google Docs untuk kepengurusan berikutnya — supaya mereka tahu apa yang terjadi, apa kendalanya, dan apa yang perlu diperbaiki.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Perbarui Laporan</div>
+      <div class="info-box" style="font-size:0.68rem">
+        Setiap kali tombol ditekan, laporan bertambah satu bagian ber-stempel waktu berisi kondisi terkini: ringkasan Track File semua divisi, kegiatan yang lewat deadline atau batal, dana DAP, dan penilaian Bizstar — plus catatan evaluasimu di bawah ini.
+      </div>
+      <div class="field">
+        <label>Catatan Evaluasi — kesalahan, kendala, saran perbaikan</label>
+        <textarea id="sk-lap-catatan" placeholder="Contoh: koordinasi dengan vendor terlambat karena PIC ganda — ke depannya satu PIC satu vendor..." style="min-height:110px"></textarea>
+      </div>
+      <div class="field">
+        <label>Nama Pencatat</label>
+        <input type="text" id="sk-lap-penulis" placeholder="Opsional">
+      </div>
+      <button class="btn" id="sk-lap-btn" onclick="skLapUpdate()"><span id="sk-lap-btnlbl">Perbarui Laporan →</span></button>
+    </div>
+    <div class="card">
+      <div class="card-label">Riwayat Update</div>
+      <div id="sk-lap-status" style="font-size:0.7rem;color:var(--muted)">Memuat...</div>
+      <div class="btn-row" id="sk-lap-linkrow" style="display:none">
+        <a class="btn btn-ghost" id="sk-lap-link" href="#" target="_blank" rel="noopener" style="text-decoration:none;flex:1">Buka Laporan di Google Docs ↗</a>
+      </div>
+    </div>`;
+  }
+  skLapRefresh();
+}
+
+async function skLapRefresh(){
+  const st=document.getElementById('sk-lap-status');
+  if(!st) return;
+  if(!hasGasUrl()){ st.textContent='Belum terhubung — hubungi pengelola dashboard.'; return; }
+  try{
+    const res=await fetch(GAS_URL+'?action=laporanurl');
+    const json=await res.json();
+    if(json.ok && json.url){
+      localStorage.setItem('ibass_sk_lap_url', json.url);
+      const ups=(json.updates||[]);
+      st.innerHTML = ups.length
+        ? `<div style="margin-bottom:0.4rem;color:var(--text2)">${ups.length} kali update:</div>`+
+          ups.slice(-8).reverse().map(u=>`<div class="kv-row"><span class="kv-key">✓</span><span class="kv-val">${u}</span></div>`).join('')
+        : 'Laporan sudah dibuat, belum ada update tercatat.';
+      const row=document.getElementById('sk-lap-linkrow');
+      const a=document.getElementById('sk-lap-link');
+      if(row&&a){ a.href=json.url; row.style.display='flex'; }
+    } else {
+      st.textContent='Belum ada laporan — tekan "Perbarui Laporan" untuk membuat yang pertama.';
+    }
+  }catch(e){
+    const cached=localStorage.getItem('ibass_sk_lap_url');
+    if(cached){
+      const row=document.getElementById('sk-lap-linkrow');
+      const a=document.getElementById('sk-lap-link');
+      if(row&&a){ a.href=cached; row.style.display='flex'; }
+      st.textContent='Tidak bisa memuat riwayat — periksa koneksi.';
+    } else st.textContent='Belum ada laporan — tekan "Perbarui Laporan" untuk membuat yang pertama.';
+  }
+}
+
+async function skLapUpdate(){
+  if(!hasGasUrl()){ showToast('Belum terhubung', 'warning'); return; }
+  const btn=document.getElementById('sk-lap-btn'), lbl=document.getElementById('sk-lap-btnlbl');
+  btn.disabled=true; lbl.innerHTML='<span class="spinner"></span>Memperbarui...';
+  try{
+    await fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      action:'laporan',
+      catatan:document.getElementById('sk-lap-catatan').value,
+      penulis:document.getElementById('sk-lap-penulis').value
+    })});
+    showToast('Laporan diperbarui — bagian baru ditambahkan', 'success');
+    document.getElementById('sk-lap-catatan').value='';
+    setTimeout(skLapRefresh, 2500);
+  }catch(e){ showToast('Gagal memperbarui — periksa koneksi', 'error'); }
+  finally{ btn.disabled=false; lbl.textContent='Perbarui Laporan →'; }
 }
 
 /* ── Save History ── */
