@@ -1502,6 +1502,15 @@ body::after {
             <span class="rec-timer" id="sk-recTimer">00:00</span>
           </button>
 
+          <button class="rec-btn" id="sk-recOnlineBtn" onclick="toggleRecordOnline()" style="margin-top:0.5rem">
+            <div class="rec-dot"></div>
+            <span class="rec-label" id="sk-recOnlineLabel">Rekam Rapat Online — Meet / Zoom</span>
+            <span class="rec-timer" id="sk-recOnlineTimer">00:00</span>
+          </button>
+          <div class="info-box" style="margin-top:0.5rem;font-size:0.66rem">
+            Untuk rapat lewat laptop: tekan tombol di atas, pilih <strong>tab</strong> Google Meet / Zoom di jendela yang muncul, lalu centang <strong>&ldquo;Bagikan audio tab / Also share tab audio&rdquo;</strong> di pojok kiri bawah. Suara semua peserta terekam jernih langsung dari dalam laptop — bukan dari speaker — dan digabung otomatis dengan suara dari mikrofon.
+          </div>
+
           <!-- Live preview (Web Speech, kasar) -->
           <div style="margin-top:0.5rem">
             <div style="font-family:'Cinzel',serif;font-size:0.44rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">Preview real-time</div>
@@ -2047,6 +2056,14 @@ function renderPanduan(prefix){
       'Tekan tombol yang sama untuk berhenti. Audio langsung diproses: ditranskripsi, lalu kata yang salah dikoreksi otomatis.',
       'Hasil muncul di kotak <strong>Hasil transkripsi</strong>. Tekan <strong>Generate Notulen</strong> untuk lanjut.'
     ],'Rekam sedekat mungkin dengan pembicara. Untuk rapat besar, rekam juga dari HP kedua lalu upload keduanya — hasilnya digabung jadi satu notulen.')}
+    ${pgCard('Merekam Rapat Online — Meet / Zoom',[
+      'Buka rapat Google Meet atau Zoom di browser laptop seperti biasa.',
+      'Di dashboard ini, tekan <strong>Rekam Rapat Online — Meet / Zoom</strong>.',
+      'Di jendela yang muncul, pilih bagian <strong>Tab</strong>, klik tab Meet/Zoom-nya, lalu centang <strong>&ldquo;Bagikan audio tab&rdquo;</strong> di pojok kiri bawah — ini kuncinya supaya suara peserta ikut terekam.',
+      'Izinkan mikrofon saat diminta, supaya suara kamu juga masuk rekaman.',
+      'Selama merekam, kamu tetap bisa mendengarkan dan ikut bicara di rapat seperti biasa.',
+      'Selesai rapat, tekan tombol yang sama (atau tombol berhenti berbagi di bar browser) — audio langsung diproses jadi transkrip.'
+    ],'Suara peserta diambil langsung dari dalam laptop, jadi jernih tanpa gema — jauh lebih bagus daripada merekam speaker pakai HP. Pakai Chrome atau Edge di laptop; kalau Zoom dipakai lewat aplikasi (bukan browser), pilih <strong>Layar penuh</strong> dan centang <strong>&ldquo;Bagikan audio sistem&rdquo;</strong>.')}
     ${pgCard('Upload Rekaman dari HP',[
       'Rekam rapat memakai perekam suara HP seperti biasa.',
       'Di bagian <strong>Backup</strong>, klik area upload File #1 dan pilih file rekaman (MP3, MP4, WAV, OGG, WEBM — bebas ukuran, 1 jam lebih tetap bisa).',
@@ -2183,6 +2200,8 @@ function fmtRp(n){ return 'Rp '+Math.round(n||0).toLocaleString('id-ID'); }
 let skTranscript='', skRawTranscript='', skLiveText='', skNotulen='';
 let skAudioBlob=null, recognition=null, mediaRecorder=null, audioChunks=[];
 let isRecording=false, recSecs=0, recInterval=null;
+let recMode='mic', recTimerId='sk-recTimer';
+let skDisplayStream=null, skMicStream=null, skAudioCtx=null;
 
 function initSekretaris(){
   document.getElementById('sk-tanggal').valueAsDate=new Date();
@@ -2214,6 +2233,45 @@ function setStage(s){
 
 /* ══ RECORD ══ */
 function toggleRecord(){ if(isRecording) stopRecord(); else startRecord(); }
+function toggleRecordOnline(){ if(isRecording) stopRecord(); else startRecordOnline(); }
+
+function startLivePreview(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return;
+  recognition=new SR();
+  recognition.lang='id-ID'; recognition.continuous=true; recognition.interimResults=true;
+  recognition.onresult=e=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) skLiveText+=e.results[i][0].transcript+' ';
+      else interim+=e.results[i][0].transcript;
+    }
+    const box=document.getElementById('sk-live-preview');
+    if(box){box.classList.remove('empty');box.textContent=skLiveText+interim;box.scrollTop=box.scrollHeight;}
+  };
+  recognition.onerror=e=>{if(e.error!=='no-speech')console.warn('SR:',e.error);};
+  recognition.onend=()=>{if(isRecording){try{recognition.start();}catch(e){}}};
+  try{recognition.start();}catch(e){}
+}
+
+function beginRecordingUI(mode){
+  isRecording=true; recSecs=0; recMode=mode;
+  recTimerId = mode==='online' ? 'sk-recOnlineTimer' : 'sk-recTimer';
+  const btn = document.getElementById(mode==='online' ? 'sk-recOnlineBtn' : 'sk-recBtn');
+  const lbl = document.getElementById(mode==='online' ? 'sk-recOnlineLabel' : 'sk-recLabel');
+  if(btn) btn.classList.add('recording');
+  if(lbl) lbl.textContent = mode==='online' ? 'Merekam Rapat Online...' : 'Sedang Merekam...';
+  document.getElementById('sk-process-area').style.display='none';
+  document.getElementById('sk-transcribed-card').style.display='none';
+  setStage('rec');
+  recInterval=setInterval(()=>{
+    recSecs++;
+    const m=String(Math.floor(recSecs/60)).padStart(2,'0');
+    const sv=String(recSecs%60).padStart(2,'0');
+    const el=document.getElementById(recTimerId);
+    if(el) el.textContent=m+':'+sv;
+  },1000);
+}
 
 async function startRecord(){
   try{
@@ -2224,42 +2282,74 @@ async function startRecord(){
     mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size>0)audioChunks.push(e.data);};
     mediaRecorder.onerror=e=>{showToast('Error rekaman', 'error');stopRecord();};
     mediaRecorder.start(1000);
-
-    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(SR){
-      recognition=new SR();
-      recognition.lang='id-ID'; recognition.continuous=true; recognition.interimResults=true;
-      recognition.onresult=e=>{
-        let interim='';
-        for(let i=e.resultIndex;i<e.results.length;i++){
-          if(e.results[i].isFinal) skLiveText+=e.results[i][0].transcript+' ';
-          else interim+=e.results[i][0].transcript;
-        }
-        const box=document.getElementById('sk-live-preview');
-        if(box){box.classList.remove('empty');box.textContent=skLiveText+interim;box.scrollTop=box.scrollHeight;}
-      };
-      recognition.onerror=e=>{if(e.error!=='no-speech')console.warn('SR:',e.error);};
-      recognition.onend=()=>{if(isRecording){try{recognition.start();}catch(e){}}};
-      try{recognition.start();}catch(e){}
-    }
-
-    isRecording=true; recSecs=0;
-    document.getElementById('sk-recBtn').classList.add('recording');
-    document.getElementById('sk-recLabel').textContent='Sedang Merekam...';
-    document.getElementById('sk-process-area').style.display='none';
-    document.getElementById('sk-transcribed-card').style.display='none';
-    setStage('rec');
-    recInterval=setInterval(()=>{
-      recSecs++;
-      const m=String(Math.floor(recSecs/60)).padStart(2,'0');
-      const sv=String(recSecs%60).padStart(2,'0');
-      const el=document.getElementById('sk-recTimer');
-      if(el) el.textContent=m+':'+sv;
-    },1000);
+    startLivePreview();
+    beginRecordingUI('mic');
   }catch(err){
     const msgs={NotAllowedError:'Izin mikrofon ditolak — aktifkan di pengaturan browser',PermissionDeniedError:'Izin mikrofon ditolak',NotFoundError:'Mikrofon tidak ditemukan'};
     showToast(msgs[err.name]||'Gagal akses mikrofon: '+err.message);
   }
+}
+
+/* Rekam rapat online: audio tab Meet/Zoom + mikrofon digabung jadi satu */
+async function startRecordOnline(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia){
+    showToast('Fitur ini untuk laptop/PC dengan Chrome atau Edge', 'warning'); return;
+  }
+  try{
+    skDisplayStream=await navigator.mediaDevices.getDisplayMedia({
+      video:true,
+      audio:{echoCancellation:false, noiseSuppression:false}
+    });
+  }catch(err){
+    if(err.name==='NotAllowedError'){ showToast('Dibatalkan — pilih tab Meet/Zoom untuk mulai merekam', 'warning'); }
+    else showToast('Gagal membuka pilihan layar: '+err.message, 'error');
+    return;
+  }
+  if(skDisplayStream.getAudioTracks().length===0){
+    skDisplayStream.getTracks().forEach(t=>t.stop()); skDisplayStream=null;
+    showToast('Audio tab belum dibagikan — ulangi, lalu centang "Bagikan audio tab" di jendela pemilihan', 'warning');
+    return;
+  }
+
+  // Suara Boss dari mikrofon (opsional — kalau ditolak, tetap lanjut rekam suara rapat)
+  skMicStream=null;
+  try{
+    skMicStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+  }catch(e){
+    showToast('Mikrofon tidak aktif — hanya suara rapat yang terekam', 'warning');
+  }
+
+  try{
+    skAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const dest=skAudioCtx.createMediaStreamDestination();
+    skAudioCtx.createMediaStreamSource(new MediaStream(skDisplayStream.getAudioTracks())).connect(dest);
+    if(skMicStream) skAudioCtx.createMediaStreamSource(skMicStream).connect(dest);
+
+    const mime=getSupportedMime();
+    mediaRecorder=mime?new MediaRecorder(dest.stream,{mimeType:mime}):new MediaRecorder(dest.stream);
+    audioChunks=[];
+    mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size>0)audioChunks.push(e.data);};
+    mediaRecorder.onerror=e=>{showToast('Error rekaman', 'error');stopRecord();};
+    mediaRecorder.start(1000);
+
+    // Kalau berbagi layar dihentikan dari bar browser, rekaman ikut berhenti rapi
+    const vt=skDisplayStream.getVideoTracks()[0];
+    if(vt) vt.addEventListener('ended', ()=>{ if(isRecording) stopRecord(); });
+
+    startLivePreview();
+    beginRecordingUI('online');
+    showToast('Merekam rapat online — suara rapat + mikrofon', 'success');
+  }catch(err){
+    cleanupOnlineStreams();
+    showToast('Gagal memulai rekaman: '+err.message, 'error');
+  }
+}
+
+function cleanupOnlineStreams(){
+  try{ if(skDisplayStream) skDisplayStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+  try{ if(skMicStream) skMicStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+  try{ if(skAudioCtx) skAudioCtx.close(); }catch(e){}
+  skDisplayStream=null; skMicStream=null; skAudioCtx=null;
 }
 
 async function stopRecord(){
@@ -2271,12 +2361,17 @@ async function stopRecord(){
   const lbl=document.getElementById('sk-recLabel');
   if(btn) btn.classList.remove('recording');
   if(lbl) lbl.textContent='Mulai Merekam';
-  if(!mediaRecorder) return;
+  const obtn=document.getElementById('sk-recOnlineBtn');
+  const olbl=document.getElementById('sk-recOnlineLabel');
+  if(obtn) obtn.classList.remove('recording');
+  if(olbl) olbl.textContent='Rekam Rapat Online — Meet / Zoom';
+  if(!mediaRecorder){ cleanupOnlineStreams(); return; }
 
   const stopP=new Promise(r=>{mediaRecorder.onstop=r;});
   try{mediaRecorder.stop();}catch(e){}
   try{mediaRecorder.stream?.getTracks().forEach(t=>t.stop());}catch(e){}
   await Promise.race([stopP,new Promise(r=>setTimeout(r,3000))]);
+  cleanupOnlineStreams();
 
   skAudioBlob=audioChunks.length>0?new Blob(audioChunks,{type:audioChunks[0]?.type||'audio/webm'}):null;
   mediaRecorder=null;
