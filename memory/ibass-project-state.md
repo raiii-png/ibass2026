@@ -122,6 +122,14 @@ pakai claude-in-chrome ke localhost:8321.
   terpotong) jalan; Acara 7 sesi + rename OK; Sekretaris manual→notulen OK; Pubdok caption UI OK.
 - Catatan sandbox: `script.google.com` & `github.io` diblokir network policy sesi remote —
   cek GAS live & Pages hanya bisa dari browser user.
+- **Rekam Rapat Online (Sekretaris)** — tombol kedua `sk-recOnlineBtn` di kartu Rekaman Suara:
+  `startRecordOnline()` pakai `getDisplayMedia({video,audio})` (tab Meet/Zoom + centang
+  "Bagikan audio tab") digabung mic via `AudioContext.createMediaStreamDestination` →
+  MediaRecorder → pipeline transkripsi lama. Refactor: `startLivePreview()` +
+  `beginRecordingUI(mode)` dipakai kedua mode; `cleanupOnlineStreams()` di stopRecord;
+  video track 'ended' (tombol Stop sharing browser) otomatis stopRecord. Tanpa audio track →
+  ditolak + toast. Panduan sk dapat kartu "Merekam Rapat Online". Dites headless: online mock
+  & mic biasa dua-duanya OK, nol error.
 - **UI V8 "Royal Grandeur"** — layer CSS override di akhir `<style>` (pola sama V6/V7, tanpa
   sentuh intro/font/JS): vignette kedalaman, judul "Pilih Divisi" gradasi emas + ornamen,
   segel divisi bundar cincin ganda (hover miring + emas), topbar hairline emas, tab aktif
