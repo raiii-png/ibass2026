@@ -77,6 +77,15 @@ function doGet(e) {
       return jsonOk({ penilaian: readPenilaian(ss) });
     }
 
+    if (action === 'laporanurl') {
+      // URL + riwayat waktu update Laporan Perkembangan
+      const props = PropertiesService.getScriptProperties();
+      const id = props.getProperty('laporan_doc_id');
+      let ups = [];
+      try { ups = JSON.parse(props.getProperty('laporan_updates') || '[]'); } catch (e) {}
+      return jsonOk({ url: id ? 'https://docs.google.com/document/d/' + id + '/edit' : '', updates: ups });
+    }
+
     return jsonOk({ ok: true, message: 'Track File I-BASS 2026 API aktif' });
 
   } catch (err) {
@@ -200,6 +209,24 @@ function doPost(e) {
       return jsonOk({ message: 'Item ditambahkan' });
     }
 
+    // Notulen rapat → Google Doc baru (tombol "Kirim ke Google Docs" di Sekretaris)
+    if (action === 'createDoc') {
+      const doc = DocumentApp.create(body.title || ('Notulen I-BASS — ' + tglIndo(new Date())));
+      const b = doc.getBody();
+      b.appendParagraph(body.title || 'Notulen Rapat').setHeading(DocumentApp.ParagraphHeading.TITLE);
+      if (body.tanggal) b.appendParagraph('Tanggal: ' + body.tanggal);
+      if (body.peserta) b.appendParagraph('Peserta: ' + body.peserta);
+      b.appendHorizontalRule();
+      String(body.content || '').split('\n').forEach(line => b.appendParagraph(line));
+      doc.saveAndClose();
+      return jsonOk({ message: 'Notulen tersimpan di Google Docs', url: doc.getUrl() });
+    }
+
+    // Laporan Perkembangan — tiap panggilan menambah bagian ber-stempel waktu
+    if (action === 'laporan') {
+      return jsonOk(appendLaporanUpdate(ss, body.catatan || '', body.penulis || ''));
+    }
+
     // Setup ulang struktur spreadsheet
     if (action === 'setup') {
       setupSpreadsheet();
@@ -263,6 +290,109 @@ function readPenilaian(ss) {
     skor_weighted: r[12],
     kelebihan: r[13], perbaikan: r[14]
   }));
+}
+
+// ─── Laporan Perkembangan (Google Docs, untuk penerus) ────────────
+function tglIndo(d) {
+  const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const tz = 'Asia/Jakarta';
+  const dow = parseInt(Utilities.formatDate(d, tz, 'u'), 10) % 7;
+  const day = Utilities.formatDate(d, tz, 'd');
+  const mon = parseInt(Utilities.formatDate(d, tz, 'M'), 10) - 1;
+  const yr = Utilities.formatDate(d, tz, 'yyyy');
+  const hm = Utilities.formatDate(d, tz, 'HH:mm');
+  return hari[dow] + ', ' + day + ' ' + bulan[mon] + ' ' + yr + ' · ' + hm + ' WIB';
+}
+function rp(n) { return 'Rp' + String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+
+function appendLaporanUpdate(ss, catatan, penulis) {
+  const props = PropertiesService.getScriptProperties();
+  let docId = props.getProperty('laporan_doc_id');
+  let doc = null;
+  if (docId) { try { doc = DocumentApp.openById(docId); } catch (e) { doc = null; } }
+  if (!doc) {
+    doc = DocumentApp.create('LAPORAN PERKEMBANGAN I-BASS 2026');
+    docId = doc.getId();
+    props.setProperty('laporan_doc_id', docId);
+    const b = doc.getBody();
+    b.appendParagraph('LAPORAN PERKEMBANGAN I-BASS 2026').setHeading(DocumentApp.ParagraphHeading.TITLE);
+    b.appendParagraph('Dokumen turunan untuk kepengurusan berikutnya. Setiap bagian di bawah adalah potret kondisi saat tombol "Perbarui Laporan" ditekan di Dashboard Kadiv — lengkap dengan evaluasi, kendala, dan hal yang perlu diperbaiki ke depannya.');
+  }
+  const body = doc.getBody();
+  const now = new Date();
+
+  body.appendHorizontalRule();
+  body.appendParagraph('Update — ' + tglIndo(now)).setHeading(DocumentApp.ParagraphHeading.HEADING1);
+  if (penulis) {
+    const p = body.appendParagraph('Dicatat oleh: ' + penulis);
+    p.editAsText().setItalic(true);
+  }
+
+  // Ringkasan Track File per divisi
+  body.appendParagraph('Ringkasan Track File').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const lateAll = [];
+  const cancelAll = [];
+  SHEET_DIVISI.forEach(name => {
+    const rows = readSheet(ss, name);
+    if (!rows.length) { body.appendListItem(name + ': belum ada kegiatan tercatat'); return; }
+    const c = { Selesai: 0, Berlangsung: 0, Terlambat: 0, Cancel: 0, Belum: 0 };
+    rows.forEach(r => {
+      let st = r.status || 'Belum';
+      const dl = r.deadline ? new Date(r.deadline) : null;
+      if (st !== 'Selesai' && st !== 'Cancel' && dl && !isNaN(dl) && dl < today) st = 'Terlambat';
+      c[st] = (c[st] || 0) + 1;
+      if (st === 'Terlambat') lateAll.push({ divisi: name, r });
+      if (st === 'Cancel') cancelAll.push({ divisi: name, r });
+    });
+    body.appendListItem(name + ': ' + rows.length + ' kegiatan — ' + c.Selesai + ' selesai, ' + c.Berlangsung + ' berlangsung, ' + c.Belum + ' belum, ' + c.Terlambat + ' terlambat, ' + c.Cancel + ' batal');
+  });
+
+  // Kegiatan bermasalah = bahan evaluasi
+  body.appendParagraph('Perlu Perhatian — Lewat Deadline').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  if (!lateAll.length) body.appendParagraph('Tidak ada — semua kegiatan berjalan sesuai jadwal.');
+  else lateAll.forEach(x => body.appendListItem('[' + x.divisi + '] ' + (x.r.kegiatan || '—') + ' — PIC: ' + (x.r.pic || '—') + ', deadline ' + (x.r.deadline || '—') + (x.r.catatan ? ' · ' + x.r.catatan : '')));
+  if (cancelAll.length) {
+    body.appendParagraph('Kegiatan yang Dibatalkan').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    cancelAll.forEach(x => body.appendListItem('[' + x.divisi + '] ' + (x.r.kegiatan || '—') + (x.r.catatan ? ' — ' + x.r.catatan : '')));
+  }
+
+  // Dana DAP
+  try {
+    const pays = readDapPayments();
+    if (pays.length) {
+      const total = pays.reduce((a, p) => a + (p.nominal || 0), 0);
+      const lunas = pays.filter(p => /lunas/i.test(p.termin || '')).length;
+      body.appendParagraph('Dana DAP').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+      body.appendParagraph('Terkumpul ' + rp(total) + ' dari ' + pays.length + ' pembayaran (' + lunas + ' lunas).');
+    }
+  } catch (e) {}
+
+  // Penilaian Bizstar
+  try {
+    const pen = readPenilaian(ss);
+    if (pen.length) {
+      const perMile = {};
+      pen.forEach(p => { const k = p.milestone || '—'; perMile[k] = (perMile[k] || 0) + 1; });
+      body.appendParagraph('Penilaian Bizstar').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+      body.appendParagraph(pen.length + ' penilaian masuk — ' + Object.keys(perMile).map(k => k + ': ' + perMile[k]).join(', ') + '.');
+    }
+  } catch (e) {}
+
+  // Evaluasi manual dari dashboard
+  body.appendParagraph('Catatan Evaluasi untuk Penerus').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  body.appendParagraph(catatan && catatan.trim() ? catatan.trim() : '—');
+
+  doc.saveAndClose();
+
+  let ups = [];
+  try { ups = JSON.parse(props.getProperty('laporan_updates') || '[]'); } catch (e) {}
+  ups.push(tglIndo(now));
+  ups = ups.slice(-100);
+  props.setProperty('laporan_updates', JSON.stringify(ups));
+
+  return { message: 'Laporan diperbarui', url: 'https://docs.google.com/document/d/' + docId + '/edit', updates: ups };
 }
 
 // ─── Helper: baca sheet → array of objects ───────────────────────
