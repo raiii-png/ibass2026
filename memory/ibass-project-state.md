@@ -122,6 +122,14 @@ pakai claude-in-chrome ke localhost:8321.
   terpotong) jalan; Acara 7 sesi + rename OK; Sekretaris manual→notulen OK; Pubdok caption UI OK.
 - Catatan sandbox: `script.google.com` & `github.io` diblokir network policy sesi remote —
   cek GAS live & Pages hanya bisa dari browser user.
+- **UI V8 "Royal Grandeur"** — layer CSS override di akhir `<style>` (pola sama V6/V7, tanpa
+  sentuh intro/font/JS): vignette kedalaman, judul "Pilih Divisi" gradasi emas + ornamen,
+  segel divisi bundar cincin ganda (hover miring + emas), topbar hairline emas, tab aktif
+  EMAS dengan underline menyala (bukan biru lagi), card-label emas + garis, tombol kilau
+  menyapu, kas-hero aura emas, th tabel & label Cinzel emas, empty state berlian emas,
+  panel konten fadeUp saat ganti tab, hover lift di card/stat/hist. Diverifikasi screenshot
+  mobile 390px + desktop 1280px, nol error. Penting: `openDivisiSelect()` delay 950ms
+  (fade intro) — screenshot otomatis harus tunggu >1s.
 - `index.html`: `APPS_URL` diisi GAS URL yang sama dengan dashboard; `SUBMIT_TOKEN` diisi
   token asli (`ibass26-…`, lihat file) — placeholder hilang, jalur kirim asli aktif.
 - `TRACKFILE_IBASS2026_GAS.gs`: handler baru di `doPost` — kalau body punya `submissions`,
