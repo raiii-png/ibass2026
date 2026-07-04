@@ -1054,6 +1054,208 @@ body {
 .tab:focus-visible, .btn:focus-visible, .chip:focus-visible {
   outline:1px solid rgba(232,191,106,0.5); outline-offset:2px;
 }
+
+/* ═══════════════════════════════════
+   V8 — ROYAL GRANDEUR
+   Polesan menyeluruh: kedalaman ruang,
+   ornamen emas, gerak halus di semua
+   komponen. Intro & font TIDAK disentuh.
+═══════════════════════════════════ */
+
+/* ── Kedalaman ruang: vignette lembut di tepi layar ── */
+body::after {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:radial-gradient(120% 90% at 50% 30%, transparent 55%, rgba(3,5,9,0.5) 100%);
+}
+
+/* ── Seleksi teks & dasar ── */
+::selection { background:rgba(200,146,42,0.3); color:#fff; }
+
+/* ── Setiap panel konten masuk dengan napas halus ── */
+.sk-content, .pd-content, .lg-content, .ac-content, .fn-content {
+  animation:fadeUp 0.4s cubic-bezier(0.22,0.8,0.36,1) both;
+}
+
+/* ── HALAMAN PILIH DIVISI — upacara pembuka ── */
+.page-head { padding:4.25rem 0 2.4rem; }
+.page-eye { font-size:0.54rem; letter-spacing:0.46em; }
+.page-title {
+  font-size:2rem;
+  background:linear-gradient(160deg, #b0d8ff 0%, #ffffff 34%, var(--gold2) 68%, #b0d8ff 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.page-title::after {
+  content:''; display:block; width:120px; height:1px; margin:0.9rem auto 0;
+  background:linear-gradient(90deg, transparent, rgba(232,191,106,0.55), rgba(134,207,245,0.35), rgba(232,191,106,0.55), transparent);
+}
+.page-desc { margin-top:0.65rem; letter-spacing:0.04em; }
+
+.div-grid { gap:0.7rem; }
+.div-card {
+  border-radius:var(--r);
+  background:linear-gradient(180deg, rgba(12,17,32,0.82), rgba(7,9,21,0.88));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.03), 0 14px 34px -22px rgba(0,0,0,0.9);
+  padding:1.2rem 1.4rem;
+}
+.div-card:hover {
+  transform:translateY(-3px);
+  background:linear-gradient(180deg, rgba(15,21,38,0.92), rgba(9,12,26,0.92));
+}
+.div-card[data-div="sekretaris"]:hover { box-shadow:0 18px 40px -20px rgba(0,0,0,0.95), 0 0 30px rgba(82,168,224,0.12),  inset 3px 0 0 rgba(82,168,224,0.6); }
+.div-card[data-div="pubdok"]:hover     { box-shadow:0 18px 40px -20px rgba(0,0,0,0.95), 0 0 30px rgba(155,126,240,0.12), inset 3px 0 0 rgba(155,126,240,0.6); }
+.div-card[data-div="logistik"]:hover   { box-shadow:0 18px 40px -20px rgba(0,0,0,0.95), 0 0 30px rgba(54,201,122,0.12),  inset 3px 0 0 rgba(54,201,122,0.6); }
+.div-card[data-div="acara"]:hover      { box-shadow:0 18px 40px -20px rgba(0,0,0,0.95), 0 0 30px rgba(240,168,32,0.12),  inset 3px 0 0 rgba(240,168,32,0.6); }
+.div-card[data-div="finance"]:hover    { box-shadow:0 18px 40px -20px rgba(0,0,0,0.95), 0 0 30px rgba(54,201,122,0.12),  inset 3px 0 0 rgba(54,201,122,0.6); }
+
+/* Segel divisi: cincin ganda seperti stempel kerajaan */
+.div-icon-wrap {
+  width:52px; height:52px; border-radius:50%;
+  border:1px solid var(--bdr);
+  background:radial-gradient(circle at 50% 32%, var(--bg4), var(--bg3) 75%);
+  box-shadow:0 0 0 4px rgba(82,168,224,0.045), inset 0 0 14px rgba(82,168,224,0.07);
+  transition:all 0.3s cubic-bezier(0.22,0.8,0.36,1);
+}
+.div-card:hover .div-icon-wrap {
+  box-shadow:0 0 0 4px rgba(232,191,106,0.1), inset 0 0 16px rgba(82,168,224,0.12), 0 0 18px rgba(232,191,106,0.12);
+  border-color:rgba(232,191,106,0.35);
+  transform:rotate(-4deg) scale(1.04);
+}
+.div-name { font-size:0.98rem; letter-spacing:0.01em; }
+.div-desc { font-size:0.65rem; }
+.div-arrow { font-size:1rem; }
+.div-card:hover .div-arrow { color:var(--gold2); transform:translateX(4px); }
+
+/* ── TOPBAR — mahkota tipis emas di bawahnya ── */
+.topbar { background:rgba(3,5,9,0.82); }
+.topbar::after {
+  content:''; position:absolute; left:0; right:0; bottom:-1px; height:1px;
+  background:linear-gradient(90deg, transparent 4%, rgba(232,191,106,0.35) 30%, rgba(82,168,224,0.3) 55%, rgba(232,191,106,0.35) 75%, transparent 96%);
+  pointer-events:none;
+}
+.topbar-brand-sub { color:rgba(232,191,106,0.5); letter-spacing:0.22em; }
+.topbar-back:hover { color:var(--gold2); background:rgba(232,191,106,0.05); }
+.prog-fill {
+  background:linear-gradient(90deg, var(--blue3), var(--blue2) 60%, var(--gold2));
+  box-shadow:0 0 10px rgba(232,191,106,0.35);
+}
+
+/* ── TABS — takhta emas untuk yang aktif ── */
+.tab { position:relative; padding:0.92rem 0.95rem; letter-spacing:0.17em; }
+.tab.active {
+  color:var(--gold2);
+  border-bottom-color:transparent;
+  text-shadow:0 0 14px rgba(232,191,106,0.4);
+}
+.tab.active::after {
+  content:''; position:absolute; left:16%; right:16%; bottom:0; height:2px;
+  background:linear-gradient(90deg, transparent, var(--gold2), transparent);
+  box-shadow:0 0 12px rgba(232,191,106,0.55);
+}
+.tabs { border-bottom-color:rgba(82,168,224,0.14); }
+
+/* ── SECTION HEAD — gelar resmi ── */
+.sec-head { padding:2rem 0 1.35rem; }
+.sec-title::after {
+  width:64px;
+  background:linear-gradient(90deg, var(--gold), rgba(134,207,245,0.4), transparent);
+}
+.sec-desc { max-width:46ch; }
+
+/* ── CARDS — kaca berlapis dengan bingkai bercahaya ── */
+.card {
+  border-radius:var(--r);
+  background:linear-gradient(180deg, rgba(13,18,34,0.85), rgba(7,9,21,0.85));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.03), 0 12px 30px -22px rgba(0,0,0,0.9);
+  margin-bottom:0.8rem;
+}
+.card:hover {
+  border-color:rgba(232,191,106,0.2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04), 0 14px 34px -20px rgba(0,0,0,0.95), 0 0 24px rgba(232,191,106,0.05);
+}
+.card-label {
+  display:flex; align-items:center; gap:0.65rem;
+  color:rgba(232,191,106,0.72); margin-bottom:0.55rem;
+}
+.card-label::after {
+  content:''; flex:1; height:1px;
+  background:linear-gradient(90deg, rgba(232,191,106,0.22), transparent);
+}
+
+/* ── TOMBOL — kilau menyapu saat disentuh ── */
+.btn::before {
+  content:''; position:absolute; top:0; bottom:0; left:-65%; width:42%;
+  background:linear-gradient(100deg, transparent, rgba(232,191,106,0.16), transparent);
+  transform:skewX(-18deg); pointer-events:none; transition:left 0.55s ease;
+}
+.btn:hover:not(:disabled)::before { left:125%; }
+.btn-ghost::before { display:none; }
+.btn-ghost:hover:not(:disabled) { border-color:rgba(232,191,106,0.3); color:var(--text); }
+
+/* ── INPUT — fokus berpendar dua warna ── */
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color:rgba(134,207,245,0.55);
+  box-shadow:0 0 0 3px rgba(82,168,224,0.07), 0 0 16px rgba(82,168,224,0.1), 0 1px 10px rgba(232,191,106,0.05);
+}
+.field label { color:rgba(232,191,106,0.55); }
+.field label .req { color:var(--gold2); }
+
+/* ── KAS HERO — singgasana angka ── */
+.kas-hero {
+  border-color:rgba(232,191,106,0.16); border-radius:var(--r);
+  background:
+    radial-gradient(130% 150% at 50% 0%, rgba(232,191,106,0.06), transparent 55%),
+    linear-gradient(180deg, rgba(13,18,34,0.9), rgba(7,9,21,0.9));
+}
+.kas-hero-lbl { color:rgba(232,191,106,0.7); letter-spacing:0.32em; }
+
+/* ── STAT & MINI STAT — naik halus saat disentuh ── */
+.stat-card, .mini-stat, .tf-sum-box { border-radius:var(--r); transition:all 0.25s cubic-bezier(0.22,0.8,0.36,1); }
+.stat-card:hover, .tf-sum-box:hover { transform:translateY(-2px); }
+.mini-lbl, .tf-sum-lbl, .stat-lbl { font-family:'Cinzel',serif; letter-spacing:0.1em; }
+
+/* ── TABEL — arsip kerajaan ── */
+.tf-table th { color:rgba(232,191,106,0.55); }
+.tf-table tr:hover td { background:rgba(232,191,106,0.035); }
+.tf-table tbody tr { transition:background 0.15s; }
+
+/* ── LIST & RIWAYAT ── */
+.hist-item { border-radius:var(--r); transition:all 0.25s cubic-bezier(0.22,0.8,0.36,1); }
+.hist-item:hover { transform:translateY(-2px); border-color:rgba(232,191,106,0.2); }
+.list-title { font-family:'Cinzel',serif; letter-spacing:0.14em; color:rgba(232,191,106,0.6); }
+
+/* ── KEADAAN KOSONG — tetap anggun ── */
+.tf-empty { font-family:'Cinzel',serif; letter-spacing:0.1em; font-size:0.66rem; text-transform:uppercase; }
+.tf-empty::before {
+  content:''; display:block; width:7px; height:7px; margin:0 auto 0.9rem;
+  background:linear-gradient(135deg, rgba(232,191,106,0.7), rgba(134,207,245,0.5));
+  transform:rotate(45deg); box-shadow:0 0 14px rgba(232,191,106,0.35);
+}
+
+/* ── TOAST — maklumat singkat ── */
+.toast {
+  border-radius:var(--r);
+  backdrop-filter:blur(18px) saturate(150%);
+  box-shadow:0 10px 36px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* ── INFO BOX ── */
+.info-box { border-radius:0 var(--r) var(--r) 0; backdrop-filter:blur(4px); }
+
+/* ── CHIP & PILL ── */
+.chip.on { box-shadow:0 0 10px rgba(82,168,224,0.14), inset 0 0 8px rgba(82,168,224,0.06); }
+.pill, .filter-select { border-radius:999px; }
+
+/* ── DESKTOP — ruang lebih lega, tetap satu suara ── */
+@media (min-width:760px){
+  .page-head { padding:5rem 0 2.75rem; }
+  .page-title { font-size:2.4rem; }
+  .center-wrap { max-width:700px; }
+  .div-card { padding:1.35rem 1.7rem; }
+  .div-icon-wrap { width:56px; height:56px; }
+  .sec-head { padding:2.4rem 0 1.5rem; }
+  .card { padding:1.5rem 1.6rem; margin-bottom:0.9rem; }
+  .tab { padding:0.95rem 1.6rem; }
+}
 </style>
 </head>
 <body>
