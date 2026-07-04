@@ -1424,6 +1424,7 @@ body::after {
       <div class="tab active" onclick="switchTab('sk','rekam',this)">Rekam Rapat</div>
       <div class="tab" onclick="switchTab('sk','notulen',this)">Notulen</div>
       <div class="tab" onclick="switchTab('sk','riwayat',this)">Riwayat</div>
+      <div class="tab" onclick="switchTab('sk','tugas',this)">Track File</div>
       <div class="tab" onclick="switchTab('sk','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1667,6 +1668,7 @@ body::after {
       </div>
 
       <!-- TAB: Panduan -->
+      <div class="sk-content" id="sk-tugas" style="display:none"></div>
       <div class="sk-content" id="sk-panduan" style="display:none"></div>
 
     </div><!-- end .main sekretaris -->
@@ -1680,6 +1682,7 @@ body::after {
       <div class="tab" onclick="switchTab('pd','video',this)">Edit Video</div>
       <div class="tab" onclick="switchTab('pd','trackfile',this);initUploadTracker()">Upload Konten</div>
       <div class="tab" onclick="switchTab('pd','laporan',this)">Laporan</div>
+      <div class="tab" onclick="switchTab('pd','tugas',this)">Track File</div>
       <div class="tab" onclick="switchTab('pd','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1850,6 +1853,7 @@ body::after {
       </div>
 
       <!-- TAB: Panduan -->
+      <div class="pd-content" id="pd-tugas" style="display:none"></div>
       <div class="pd-content" id="pd-panduan" style="display:none"></div>
 
       <!-- TAB: Edit Video -->
@@ -1887,12 +1891,14 @@ body::after {
     <div class="tabs">
       <div class="tab active" onclick="switchTab('lg','barang',this)">Pengadaan Barang</div>
       <div class="tab" onclick="switchTab('lg','laporan',this)">Laporan</div>
+      <div class="tab" onclick="switchTab('lg','tugas',this)">Track File</div>
       <div class="tab" onclick="switchTab('lg','panduan',this)">Panduan</div>
     </div>
     <div class="main">
       <div class="lg-content" id="lg-barang"></div>
       <div class="lg-content" id="lg-trackfile" style="display:none"></div>
       <div class="lg-content" id="lg-laporan" style="display:none"></div>
+      <div class="lg-content" id="lg-tugas" style="display:none"></div>
       <div class="lg-content" id="lg-panduan" style="display:none"></div>
     </div>
   </div>
@@ -1902,12 +1908,14 @@ body::after {
     <div class="tabs">
       <div class="tab active" onclick="switchTab('ac','rundown',this)">Rundown</div>
       <div class="tab" onclick="switchTab('ac','laporan',this)">Laporan</div>
+      <div class="tab" onclick="switchTab('ac','tugas',this)">Track File</div>
       <div class="tab" onclick="switchTab('ac','panduan',this)">Panduan</div>
     </div>
     <div class="main">
       <div class="ac-content" id="ac-rundown"></div>
       <div class="ac-content" id="ac-trackfile" style="display:none"></div>
       <div class="ac-content" id="ac-laporan" style="display:none"></div>
+      <div class="ac-content" id="ac-tugas" style="display:none"></div>
       <div class="ac-content" id="ac-panduan" style="display:none"></div>
     </div>
   </div>
@@ -1919,6 +1927,7 @@ body::after {
       <div class="tab" onclick="switchTab('fn','pengeluaran',this);renderFnPerSesi()">RAB per Sesi</div>
       <div class="tab" onclick="switchTab('fn','trackfile',this);renderFnDAP()">Kas &amp; DAP</div>
       <div class="tab" onclick="switchTab('fn','laporan',this);renderFnLaporan()">Laporan</div>
+      <div class="tab" onclick="switchTab('fn','tugas',this)">Track File</div>
       <div class="tab" onclick="switchTab('fn','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1926,6 +1935,7 @@ body::after {
       <div class="fn-content" id="fn-pengeluaran" style="display:none"></div>
       <div class="fn-content" id="fn-trackfile" style="display:none"></div>
       <div class="fn-content" id="fn-laporan" style="display:none"></div>
+      <div class="fn-content" id="fn-tugas" style="display:none"></div>
       <div class="fn-content" id="fn-panduan" style="display:none"></div>
     </div>
   </div>
@@ -2020,6 +2030,7 @@ function switchTab(prefix, id, el){
   if(prefix==='fn' && id==='trackfile') renderFnDAP();
   if(prefix==='fn' && id==='laporan') renderFnLaporan();
   if(id==='panduan') renderPanduan(prefix);
+  if(id==='tugas') renderTrackFileTab(currentDiv);
 }
 
 /* ══════════════════════════════════════
@@ -2042,6 +2053,13 @@ function renderPanduan(prefix){
   const el = document.getElementById(prefix+'-panduan');
   if(!el || el.dataset.rendered) return;
   el.dataset.rendered = '1';
+  const tfGuide = pgCard('Track File — Catat Kegiatan Divisi',[
+    'Buka tab <strong>Track File</strong>, tekan <strong>+ Tambah Kegiatan</strong>.',
+    'Isi kegiatan &amp; detail, pilih sesi dan priority, tulis penanggung jawab, tanggal mulai, dan deadline. Catatan dan link file opsional.',
+    'Tekan <strong>Simpan Kegiatan</strong>. Data langsung masuk daftar dan <strong>otomatis terkirim ke Sheet I-BASS</strong> — tidak perlu lapor manual.',
+    'Klik badge <strong>status</strong> pada tabel untuk mengubahnya: Belum → Berlangsung → Selesai → Terlambat → Cancel.',
+    'Baris merah dengan tanda ! artinya lewat deadline — segera update statusnya.'
+  ],'Sekretaris I-BASS memantau sheet yang sama, jadi cukup isi di sini — seluruh rekap per divisi terbentuk sendiri.');
   const P = {
   sk: `
     <div class="sec-head">
@@ -2079,7 +2097,8 @@ function renderPanduan(prefix){
       'Tekan <strong>Generate Notulen</strong>. Hasilnya berformat notulen resmi I-BASS: agenda, pembahasan, keputusan, tindak lanjut.',
       'Gunakan <strong>Salin Teks</strong> untuk menyalin, atau <strong>Kirim ke Google Docs</strong> untuk arsip online.',
       'Tekan <strong>Simpan ke Riwayat</strong> supaya notulen tersimpan dan bisa dibuka kembali di tab Riwayat.'
-    ],'Notulen tersimpan di perangkat ini. Simpan ke Riwayat setiap selesai rapat supaya tidak hilang.')}`,
+    ],'Notulen tersimpan di perangkat ini. Simpan ke Riwayat setiap selesai rapat supaya tidak hilang.')}
+    ${tfGuide}`,
   pd: `
     <div class="sec-head">
       <div class="sec-eye">Pubdok · Panduan</div>
@@ -2105,7 +2124,8 @@ function renderPanduan(prefix){
     ${pgCard('Upload Konten & Laporan',[
       'Tab <strong>Upload Konten</strong>: centang platform yang kontennya sudah terupload per sesi — jadi checklist bersama tim.',
       'Tab <strong>Laporan</strong>: rekap status dokumentasi seluruh sesi untuk laporan akhir kepengurusan.'
-    ])}`,
+    ])}
+    ${tfGuide}`,
   lg: `
     <div class="sec-head">
       <div class="sec-eye">Logistik · Panduan</div>
@@ -2128,7 +2148,8 @@ function renderPanduan(prefix){
     ])}
     ${pgCard('Laporan',[
       'Tab <strong>Laporan</strong> berisi rekap pengadaan per sesi: total barang, yang sudah dibeli, dan total pengeluaran — siap untuk LPJ.'
-    ])}`,
+    ])}
+    ${tfGuide}`,
   ac: `
     <div class="sec-head">
       <div class="sec-eye">Acara · Panduan</div>
@@ -2151,7 +2172,8 @@ function renderPanduan(prefix){
       'Tab <strong>Laporan</strong> menampilkan progress semua sesi.',
       'Tulis catatan evaluasi di kolom catatan tiap sesi — otomatis tersimpan.',
       '<strong>Reset Status</strong> menghapus tanda selesai/berjalan pada sesi aktif (isi rundown tidak terhapus) — berguna untuk gladi bersih.'
-    ])}`,
+    ])}
+    ${tfGuide}`,
   fn: `
     <div class="sec-head">
       <div class="sec-eye">Finance · Panduan</div>
@@ -2175,7 +2197,8 @@ function renderPanduan(prefix){
     ${pgCard('Laporan',[
       'Tab <strong>Laporan</strong>: rekap lengkap semua arus dana.',
       'Tekan <strong>Salin Laporan untuk WhatsApp</strong> — format rapi siap kirim ke grup panitia atau pembina.'
-    ],'Cek pembayaran baru secara berkala, terutama menjelang tenggat termin.')}`,
+    ],'Cek pembayaran baru secara berkala, terutama menjelang tenggat termin.')}
+    ${tfGuide}`,
   };
   el.innerHTML = P[prefix] || '';
 }
@@ -2193,6 +2216,7 @@ function getSupportedMime(){
 function hasGeminiKey(){ return GEMINI_KEY && !GEMINI_KEY.startsWith('ISI_'); }
 function hasGasUrl()   { return GAS_URL   && !GAS_URL.startsWith('ISI_'); }
 function fmtRp(n){ return 'Rp '+Math.round(n||0).toLocaleString('id-ID'); }
+function esc(str){ const d=document.createElement('div'); d.textContent=String(str); return d.innerHTML; }
 
 /* ══════════════════════════════════════
    SEKRETARIS STATE
@@ -3246,7 +3270,31 @@ function tfLoad(div){
 function tfSave(div,data){
   localStorage.setItem(tfKey(div), JSON.stringify(data));
 }
-function tfGetUrl(){ return localStorage.getItem('ibass_tf_sheets_url')||''; }
+function tfGetUrl(){ return localStorage.getItem('ibass_tf_sheets_url') || (hasGasUrl()?GAS_URL:''); }
+
+/* Auto-sync: setiap perubahan track file terkirim sendiri ke Sheets (debounce 2 detik) */
+const tfAutoTimers = {};
+function tfAutoSync(div){
+  if(!tfGetUrl()) return;
+  clearTimeout(tfAutoTimers[div]);
+  tfAutoTimers[div]=setTimeout(async ()=>{
+    try{
+      await fetch(tfGetUrl(), {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'sync', divisi: TF_DIV_LABEL[div]||div, data: tfExportRows(div) })
+      });
+      localStorage.setItem('ibass_tf_sync_'+div, new Date().toLocaleString('id-ID'));
+      const el=document.getElementById('tf-sync-info-'+div);
+      if(el) el.textContent='Tersimpan ke Sheet · '+tfLastSync(div);
+    }catch(e){}
+  },2000);
+}
+
+/* Bentuk data untuk sheet: sesi digabung ke kegiatan sebagai prefix [SESI] */
+function tfExportRows(div){
+  return tfLoad(div).map(d=>({ ...d, kegiatan:(d.sesi?'['+d.sesi+'] ':'')+(d.kegiatan||'') }));
+}
 function tfSetUrl(url){
   localStorage.setItem('ibass_tf_sheets_url', url.trim());
   renderTrackFileTab(currentDiv);
@@ -3260,11 +3308,10 @@ async function tfSyncToSheets(div){
   const btn = document.getElementById('tf-sync-btn-'+div);
   if(btn){btn.disabled=true;btn.textContent='...';}
   try{
-    const data = tfLoad(div);
     await fetch(url, {
       method:'POST', mode:'no-cors',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ action:'sync', divisi: TF_DIV_LABEL[div]||div, data })
+      body: JSON.stringify({ action:'sync', divisi: TF_DIV_LABEL[div]||div, data: tfExportRows(div) })
     });
     localStorage.setItem('ibass_tf_sync_'+div, new Date().toLocaleString('id-ID'));
     showToast('Tersimpan ke Google Sheets ✓');
@@ -3283,7 +3330,11 @@ async function tfLoadFromSheets(div){
     const res = await fetch(url+'?action=read&divisi='+encodeURIComponent(divLabel));
     const json = await res.json();
     if(json.ok && json.data){
-      tfSave(div, json.data);
+      const items=(json.data||[]).map(r=>{
+        const m=/^\[([^\]]+)\]\s*/.exec(r.kegiatan||'');
+        return m ? {...r, sesi:m[1], kegiatan:String(r.kegiatan||'').slice(m[0].length)} : r;
+      });
+      tfSave(div, items);
       localStorage.setItem('ibass_tf_sync_'+div, new Date().toLocaleString('id-ID'));
       renderTrackFileTab(div);
       showToast('Data dimuat dari Sheets ✓');
@@ -3297,7 +3348,7 @@ async function tfLoadFromSheets(div){
 function injectTrackFile(div){
   const prefixes = {sekretaris:'sk',pubdok:'pd',logistik:'lg',acara:'ac',finance:'fn'};
   const p = prefixes[div];
-  const el = document.getElementById(p+'-trackfile');
+  const el = document.getElementById(p+'-tugas');
   if(!el || el.dataset.injected) return;
   el.dataset.injected = '1';
   // will be rendered on first open
@@ -3306,7 +3357,7 @@ function injectTrackFile(div){
 function renderTrackFileTab(div){
   const prefixes = {sekretaris:'sk',pubdok:'pd',logistik:'lg',acara:'ac',finance:'fn'};
   const p = prefixes[div];
-  const el = document.getElementById(p+'-trackfile');
+  const el = document.getElementById(p+'-tugas');
   if(!el) return;
 
   const data = tfLoad(div);
@@ -3328,7 +3379,7 @@ function renderTrackFileTab(div){
     return `<tr${isOverdue?' class="overdue"':''}>
       <td style="color:var(--muted);font-size:0.62rem">${i+1}</td>
       <td style="font-family:'Cinzel',serif;font-size:0.46rem;letter-spacing:0.08em;color:var(--muted)">${item.sesi||'—'}</td>
-      <td style="max-width:180px;line-height:1.4">${item.kegiatan||'—'}</td>
+      <td style="max-width:180px;line-height:1.4">${esc(item.kegiatan||'—')}${item.catatan?`<div style="font-size:0.58rem;color:var(--muted);margin-top:2px">${esc(item.catatan)}</div>`:''}${item.file?`<div style="font-size:0.58rem;margin-top:2px"><a href="${esc(item.file)}" target="_blank" rel="noopener" style="color:var(--blue2)">Lihat file ↗</a></div>`:''}</td>
       <td><span class="tf-priority ${prioClass}">${item.priority||'—'}</span></td>
       <td style="font-size:0.66rem">${item.pic||'—'}</td>
       <td style="font-size:0.62rem;color:var(--muted);white-space:nowrap">${item.mulai||'—'}</td>
@@ -3381,20 +3432,11 @@ function renderTrackFileTab(div){
       <button id="tf-load-btn-${div}" class="btn btn-ghost btn-sm" onclick="tfLoadFromSheets('${div}')" style="width:auto">↺ Muat dari Sheets</button>`:''}
     </div>
 
-    <!-- Sheets Config -->
-    <div style="background:var(--bg2);border:1px solid ${tfGetUrl()?'rgba(68,201,138,0.25)':'rgba(240,160,35,0.25)'};padding:0.6rem 0.75rem;margin-bottom:0.5rem">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem">
-        <span style="font-size:0.62rem;font-weight:600;color:${tfGetUrl()?'var(--green)':'var(--amber)'}">${tfGetUrl()?'Terhubung ke Google Sheets':'Google Sheets belum dikonfigurasi'}</span>
-        ${tfLastSync(div)?`<span style="font-size:0.55rem;color:var(--muted)">Sync: ${tfLastSync(div)}</span>`:''}
-      </div>
-      ${tfGetUrl()?
-        `<div style="font-size:0.6rem;color:var(--muted);word-break:break-all">${tfGetUrl().substring(0,60)}...</div>
-        <button onclick="localStorage.removeItem('ibass_tf_sheets_url');renderTrackFileTab('${div}')" style="margin-top:0.3rem;font-size:0.58rem;background:transparent;border:none;color:var(--red,#f87171);cursor:pointer;padding:0">× Hapus URL</button>`
-        :`<div style="font-size:0.65rem;color:var(--muted);margin-bottom:0.35rem">Tempel URL dari Google Apps Script I-BASS:</div>
-        <div style="display:flex;gap:0.35rem">
-          <input type="text" id="tf-url-input" placeholder="https://script.google.com/macros/s/..." style="flex:1;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.68rem;padding:0.3rem 0.5rem;outline:none">
-          <button onclick="tfSetUrl(document.getElementById('tf-url-input').value)" style="font-size:0.68rem;padding:0.3rem 0.65rem;background:rgba(68,201,138,0.1);border:1px solid rgba(68,201,138,0.3);color:var(--green);cursor:pointer">Simpan</button>
-        </div>`}
+    <!-- Status koneksi Sheet -->
+    <div style="background:var(--bg2);border:1px solid ${tfGetUrl()?'rgba(68,201,138,0.25)':'rgba(240,160,35,0.25)'};padding:0.55rem 0.75rem;margin-bottom:0.5rem;font-size:0.62rem">
+      ${tfGetUrl()
+        ?`<span id="tf-sync-info-${div}" style="color:var(--green)">${tfLastSync(div)?'Tersimpan ke Sheet · '+tfLastSync(div):'Terhubung ke Sheet I-BASS — setiap perubahan tersimpan otomatis'}</span>`
+        :`<span style="color:var(--amber)">Belum terhubung ke Sheet — hubungi Sekretaris I-BASS</span>`}
     </div>
 
     <div id="tf-form-${div}" style="display:none">
@@ -3443,13 +3485,22 @@ function renderTrackFileTab(div){
             </select>
           </div>
         </div>
+        <div class="tf-row" style="margin-top:0.5rem">
+          <div class="field" style="margin:0">
+            <label>Catatan</label>
+            <input type="text" id="tf-catatan-${div}" placeholder="Keterangan tambahan (opsional)">
+          </div>
+          <div class="field" style="margin:0">
+            <label>Link File</label>
+            <input type="text" id="tf-file-${div}" placeholder="Link Drive/Docs (opsional)">
+          </div>
+        </div>
         <div class="btn-row" style="margin-top:0.75rem">
           <button class="btn btn-ghost" onclick="tfToggleForm('${div}')" style="flex:1">Batal</button>
           <button class="btn" onclick="tfAddItem('${div}')" style="flex:2">Simpan Kegiatan →</button>
         </div>
       </div>
     </div>`;
-  if(div==='pubdok') setTimeout(initUploadTracker,50);
 }
 
 function tfToggleForm(div){
@@ -3470,10 +3521,13 @@ function tfAddItem(div){
     mulai:    document.getElementById('tf-mulai-'+div).value,
     deadline: document.getElementById('tf-deadline-'+div).value,
     status:   document.getElementById('tf-status-'+div).value || 'Belum',
+    catatan:  document.getElementById('tf-catatan-'+div)?.value.trim()||'',
+    file:     document.getElementById('tf-file-'+div)?.value.trim()||'',
     created:  new Date().toISOString()
   });
   tfSave(div, data);
   renderTrackFileTab(div);
+  tfAutoSync(div);
   showToast('Kegiatan ditambahkan!');
 }
 
@@ -3482,6 +3536,7 @@ function tfDelete(div, idx){
   data.splice(idx, 1);
   tfSave(div, data);
   renderTrackFileTab(div);
+  tfAutoSync(div);
   showToast('Dihapus', 'success');
 }
 
@@ -3492,6 +3547,7 @@ function tfCycleStatus(div, idx){
   data[idx].status = next;
   tfSave(div, data);
   renderTrackFileTab(div);
+  tfAutoSync(div);
 }
 
 /* tfSubmitToSheets diganti dengan tfSyncToSheets */
