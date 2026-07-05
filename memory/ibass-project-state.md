@@ -68,13 +68,20 @@ metadata:
 | 3 | 07-03 | Laptop | `d721c89` | Redesign Graphite — DITOLAK |
 | 4 | 07-03 | Laptop | `ae44c3b` | Revert → Royal Magic, panduan, arsip/briefing hapus, seed DAP |
 | 5 | 07-03 | Remote+HP | PR #1-#7 | Penilaian→GAS, rekam online, laporan, Track File aktif, UI V8 |
-| 6 | 07-05 | Laptop | — | Bukti pembayaran Logistik |
+| 6 | 07-05 | Laptop | `458591e`,`fc26dcc` | Bukti pembayaran Logistik, fix loop SR, kunci AI baru, rekam online terverifikasi |
 
 ## ⏭️ Resume (per 2026-07-05)
 
-**Status: semua fitur selesai, commit `8f27b66` (main, up-to-date dengan origin).**
+**Status: semua fitur selesai, commit `fc26dcc` (main).**
 
-Sesi ke-6: tambah fitur bukti pembayaran di Logistik — field `bukti` di form, inline quick-add (`lgAddBukti/lgSaveBukti`), link "Lihat Bukti" di tabel, link di laporan pengeluaran + Finance. Sudah di file, sudah committed via auto-sync.
+Sesi ke-6 (07-05):
+- **Bukti pembayaran Logistik** — field `bukti` di form, inline quick-add (`lgAddBukti/lgSaveBukti`), link "Lihat Bukti" di tabel, link di laporan pengeluaran.
+- **Rekam Rapat Online TERVERIFIKASI end-to-end** di browser (mock getDisplayMedia + mic → gabung → rekam → stop → transkripsi Gemini 200 → hasil tampil).
+- **Fix loop SR**: preview real-time berhenti retry kalau izin mikrofon `not-allowed` (dulu infinite loop, banjir warning).
+- **Kunci AI diganti** (2026-07-05, dites 200). PENTING: kunci format `AQ...` = token sementara,
+  expired ±2 hari (yang lama mati 401 pada 07-05). Kalau AI mati lagi → minta Boss buat kunci
+  baru. Boss ingin kunci PERMANEN format `AIza...` dari aistudio.google.com/apikey —
+  Boss harus buat sendiri (login Google), lalu Claude pasang di `GEMINI_KEY`.
 
 **GAS status:** user bilang sudah re-deploy (2026-07-05). Perlu ditest:
 - Tombol "Cek Pembayaran Baru" di Finance (9 respons asli dari form)
