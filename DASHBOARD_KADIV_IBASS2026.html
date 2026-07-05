@@ -3963,7 +3963,7 @@ function renderLogistikBarang(){
     const statusClass = item.status==='Sudah Beli'?'selesai':item.status==='Proses'?'berlangsung':'belum';
     const totalFmt = item.total ? fmtRp(item.total) : '—';
     return `<tr>
-      <td style="max-width:160px;line-height:1.4">${item.nama||'—'}${item.catatan?`<div style="font-size:0.58rem;color:var(--muted);margin-top:1px">${item.catatan}</div>`:''}</td>
+      <td style="max-width:160px;line-height:1.4">${item.nama||'—'}${item.catatan?`<div style="font-size:0.58rem;color:var(--muted);margin-top:1px">${item.catatan}</div>`:''}${item.status==='Sudah Beli'&&item.bukti?`<a href="${item.bukti}" target="_blank" rel="noopener" style="font-size:0.56rem;color:var(--green);text-decoration:underline;display:inline-block;margin-top:2px">Lihat Bukti</a>`:item.status==='Sudah Beli'&&!item.bukti?`<span style="font-size:0.56rem;color:var(--amber);cursor:pointer" onclick="lgAddBukti(${i})">+ Tambah Bukti</span>`:''}</td>
       <td style="font-size:0.66rem;color:var(--muted)">${item.kategori||'—'}</td>
       <td style="font-size:0.66rem;text-align:center;white-space:nowrap">${item.qty||'—'} ${item.satuan||''}</td>
       <td class="num" style="font-size:0.68rem;color:var(--gold2);white-space:nowrap;text-align:right">${totalFmt}</td>
@@ -4056,7 +4056,12 @@ function renderLogistikBarang(){
         </div>
         <div class="field" style="margin:0 0 0.5rem">
           <label>Catatan (opsional)</label>
-          <input type="text" id="lg-catatan" placeholder="Link toko, spesifikasi, dll..." value="${lgEsc(editing?.catatan)}">
+          <input type="text" id="lg-catatan" placeholder="Spesifikasi, catatan khusus..." value="${lgEsc(editing?.catatan)}">
+        </div>
+        <div class="field" style="margin:0 0 0.5rem">
+          <label>Bukti Pembayaran (opsional)</label>
+          <input type="text" id="lg-bukti" placeholder="Link foto/file bukti transfer..." value="${lgEsc(editing?.bukti)}">
+          <div style="font-size:0.56rem;color:var(--muted);margin-top:2px">Link Google Drive, foto nota, atau bukti transfer — bisa diisi nanti saat sudah beli</div>
         </div>
         <div class="btn-row">
           <button class="btn btn-ghost" onclick="lgCancelForm()" style="flex:1">Batal</button>
@@ -4103,7 +4108,8 @@ function lgSaveForm(){
     sesi: document.getElementById('lg-sesi')?.value||'',
     qty, satuan: document.getElementById('lg-satuan')?.value||'',
     hargaSatuan: harga, total: qty*harga,
-    catatan: document.getElementById('lg-catatan')?.value||''
+    catatan: document.getElementById('lg-catatan')?.value||'',
+    bukti: document.getElementById('lg-bukti')?.value.trim()||''
   };
   if(lgEditIdx!==null && data[lgEditIdx]){
     data[lgEditIdx] = { ...data[lgEditIdx], ...obj };
@@ -4145,10 +4151,50 @@ function lgDelete(idx){
 function lgCycleStatus(idx){
   const data = lgLoad();
   const cur = data[idx].status||'Belum Beli';
-  data[idx].status = LG_STATUS[(LG_STATUS.indexOf(cur)+1)%LG_STATUS.length];
+  const next = LG_STATUS[(LG_STATUS.indexOf(cur)+1)%LG_STATUS.length];
+  data[idx].status = next;
+  if(next==='Sudah Beli' && !data[idx].bukti){
+    data[idx].tglBeli = new Date().toISOString();
+  }
   lgSave(data);
   renderLogistikBarang();
-  if(data[idx].status==='Sudah Beli') showToast('Tercatat! Sisa saldo kas: '+fmtRp(fnKasCalc().saldo), 'success');
+  if(next==='Sudah Beli'){
+    showToast('Tercatat! Sisa saldo kas: '+fmtRp(fnKasCalc().saldo)+' — jangan lupa lampirkan bukti pembayaran', 'success');
+  }
+}
+
+function lgAddBukti(idx){
+  const data = lgLoad();
+  const item = data[idx];
+  if(!item) return;
+  const el = document.getElementById('lg-barang');
+  if(!el) return;
+  const existing = document.getElementById('lg-bukti-inline');
+  if(existing){ existing.remove(); return; }
+  const row = el.querySelector(`tr:nth-child(${idx+1})`);
+  if(!row) return;
+  const div = document.createElement('tr');
+  div.id = 'lg-bukti-inline';
+  div.innerHTML = `<td colspan="7" style="padding:0.5rem">
+    <div style="display:flex;gap:0.4rem;align-items:center">
+      <input type="text" id="lg-bukti-input" placeholder="Paste link bukti pembayaran (foto/Drive/nota)..." style="flex:1;font-size:0.72rem;padding:0.4rem 0.6rem;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)">
+      <button class="btn btn-sm" onclick="lgSaveBukti(${idx})" style="white-space:nowrap">Simpan</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('lg-bukti-inline')?.remove()">Batal</button>
+    </div>
+  </td>`;
+  row.after(div);
+  document.getElementById('lg-bukti-input')?.focus();
+}
+
+function lgSaveBukti(idx){
+  const val = document.getElementById('lg-bukti-input')?.value.trim();
+  if(!val){ showToast('Link bukti tidak boleh kosong','warning'); return; }
+  const data = lgLoad();
+  if(!data[idx]) return;
+  data[idx].bukti = val;
+  lgSave(data);
+  renderLogistikBarang();
+  showToast('Bukti pembayaran tersimpan','success');
 }
 
 function renderLogistikLaporan(){
@@ -4169,7 +4215,7 @@ function renderLogistikLaporan(){
     <div class="card accent-logistik" style="margin-bottom:0.5rem">
       <div class="card-label">${k}</div>
       <div style="font-family:'Cinzel Decorative',serif;font-size:1.1rem;color:var(--green)">Rp ${v.total.toLocaleString('id-ID')}</div>
-      ${v.items.map(i=>`<div class="kv-row"><div class="kv-key">${i.nama} (${i.qty} ${i.satuan})</div><div class="kv-val">Rp ${(i.total||0).toLocaleString('id-ID')}</div></div>`).join('')}
+      ${v.items.map(i=>`<div class="kv-row"><div class="kv-key">${i.nama} (${i.qty} ${i.satuan})${i.bukti?` <a href="${i.bukti}" target="_blank" rel="noopener" style="font-size:0.56rem;color:var(--green);text-decoration:underline;margin-left:4px">Bukti</a>`:''}</div><div class="kv-val">Rp ${(i.total||0).toLocaleString('id-ID')}</div></div>`).join('')}
     </div>`).join('')
     +`<div class="card" style="margin-top:0.65rem"><div class="kv-row"><div class="kv-key" style="font-weight:600;color:var(--text)">Total Pengeluaran</div><div class="kv-val" style="color:var(--gold);font-size:0.9rem;font-weight:600">Rp ${grandTotal.toLocaleString('id-ID')}</div></div></div>`;
 }
@@ -4681,6 +4727,7 @@ function renderFnLaporan(){
       <div class="kv-row"><div class="kv-key">Pembayaran DAP masuk</div><div class="kv-val num" style="color:var(--green)">${fmtRp(kas.dapTotal)}</div></div>
       <div class="kv-row"><div class="kv-key">Pemasukan lain</div><div class="kv-val num" style="color:var(--green)">${fmtRp(kas.incomeTotal)}</div></div>
       <div class="kv-row"><div class="kv-key">Belanja Logistik</div><div class="kv-val num" style="color:var(--red)">− ${fmtRp(kas.lgTotal)}</div></div>
+      ${(()=>{const lg=lgLoad().filter(d=>d.status==='Sudah Beli');return lg.length?'<div style="padding:0.3rem 0 0.2rem 0.5rem;border-left:2px solid var(--border)">'+lg.map(d=>'<div class="kv-row" style="font-size:0.62rem"><div class="kv-key" style="color:var(--muted)">'+d.nama+(d.bukti?' <a href="'+d.bukti+'" target="_blank" rel="noopener" style="color:var(--green);text-decoration:underline;font-size:0.56rem">Bukti</a>':'')+'</div><div class="kv-val num" style="color:var(--red);font-size:0.62rem">'+fmtRp(d.total||0)+'</div></div>').join('')+'</div>':'';})()}
       <div class="kv-row"><div class="kv-key">Pengeluaran manual</div><div class="kv-val num" style="color:var(--red)">− ${fmtRp(kas.manualTotal)}</div></div>
       <div class="kv-row" style="border-top:1px solid var(--bdr2);padding-top:0.6rem"><div class="kv-key" style="font-weight:600;color:var(--text)">Saldo Kas</div><div class="kv-val num" style="font-size:0.92rem;font-weight:700;color:${kas.saldo<0?'var(--red)':'var(--green)'}">${fmtRp(kas.saldo)}</div></div>
       <div class="kv-row"><div class="kv-key">DAP lunas</div><div class="kv-val">${lunas} dari ${fnNPanitia()} panitia</div></div>
