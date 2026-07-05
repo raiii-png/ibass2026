@@ -2295,8 +2295,12 @@ function startLivePreview(){
     const box=document.getElementById('sk-live-preview');
     if(box){box.classList.remove('empty');box.textContent=skLiveText+interim;box.scrollTop=box.scrollHeight;}
   };
-  recognition.onerror=e=>{if(e.error!=='no-speech')console.warn('SR:',e.error);};
-  recognition.onend=()=>{if(isRecording){try{recognition.start();}catch(e){}}};
+  let srBlocked=false;
+  recognition.onerror=e=>{
+    if(e.error==='not-allowed'||e.error==='service-not-allowed'){srBlocked=true;return;}
+    if(e.error!=='no-speech')console.warn('SR:',e.error);
+  };
+  recognition.onend=()=>{if(isRecording&&!srBlocked){try{recognition.start();}catch(e){}}};
   try{recognition.start();}catch(e){}
 }
 
