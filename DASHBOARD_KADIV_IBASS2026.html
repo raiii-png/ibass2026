@@ -1245,6 +1245,20 @@ body::after {
 .chip.on { box-shadow:0 0 10px rgba(82,168,224,0.14), inset 0 0 8px rgba(82,168,224,0.06); }
 .pill, .filter-select { border-radius:999px; }
 
+/* ── LOGISTIK — tombol progres 3 tahap yang jelas ── */
+.lg-st-col { display:flex; flex-direction:column; gap:3px; min-width:86px; }
+.lg-st {
+  font-family:'Cinzel',serif; font-size:0.48rem; letter-spacing:0.08em; text-transform:uppercase;
+  padding:0.22rem 0.55rem; border:1px solid var(--bdr2); border-radius:999px;
+  color:var(--muted); cursor:pointer; white-space:nowrap; text-align:center;
+  transition:all 0.18s; user-select:none; opacity:0.65;
+}
+.lg-st:hover { color:var(--text2); border-color:var(--bdr); opacity:1; }
+.lg-st.on { opacity:1; font-weight:600; }
+.lg-st.on.belum  { color:var(--text2); border-color:var(--bdr);                background:rgba(82,168,224,0.08); }
+.lg-st.on.proses { color:var(--amber); border-color:rgba(240,168,32,0.55);    background:rgba(240,168,32,0.1);  box-shadow:0 0 8px rgba(240,168,32,0.15); }
+.lg-st.on.beli   { color:var(--green); border-color:rgba(54,201,122,0.55);    background:rgba(54,201,122,0.12); box-shadow:0 0 8px rgba(54,201,122,0.15); }
+
 /* ── DESKTOP — ruang lebih lega, tetap satu suara ── */
 @media (min-width:760px){
   .page-head { padding:5rem 0 2.75rem; }
@@ -1425,7 +1439,6 @@ body::after {
       <div class="tab" onclick="switchTab('sk','notulen',this)">Notulen</div>
       <div class="tab" onclick="switchTab('sk','riwayat',this)">Riwayat</div>
       <div class="tab" onclick="switchTab('sk','tugas',this)">Track File</div>
-      <div class="tab" onclick="switchTab('sk','laporan',this)">Laporan</div>
       <div class="tab" onclick="switchTab('sk','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1670,7 +1683,6 @@ body::after {
 
       <!-- TAB: Panduan -->
       <div class="sk-content" id="sk-tugas" style="display:none"></div>
-      <div class="sk-content" id="sk-laporan" style="display:none"></div>
       <div class="sk-content" id="sk-panduan" style="display:none"></div>
 
     </div><!-- end .main sekretaris -->
@@ -2033,7 +2045,6 @@ function switchTab(prefix, id, el){
   if(prefix==='fn' && id==='laporan') renderFnLaporan();
   if(id==='panduan') renderPanduan(prefix);
   if(id==='tugas') renderTrackFileTab(currentDiv);
-  if(prefix==='sk' && id==='laporan') renderSkLaporan();
 }
 
 /* ══════════════════════════════════════
@@ -2102,11 +2113,11 @@ function renderPanduan(prefix){
       'Tekan <strong>Simpan ke Riwayat</strong> supaya notulen tersimpan dan bisa dibuka kembali di tab Riwayat.'
     ],'Notulen tersimpan di perangkat ini. Simpan ke Riwayat setiap selesai rapat supaya tidak hilang.')}
     ${pgCard('Laporan Perkembangan untuk Penerus',[
-      'Buka tab <strong>Laporan</strong>. Tulis <strong>Catatan Evaluasi</strong>: kesalahan yang terjadi, kendala, dan saran perbaikan untuk kepengurusan berikutnya.',
-      'Tekan <strong>Perbarui Laporan</strong>. Satu bagian baru ber-stempel waktu ditambahkan ke sheet <strong>LAPORAN</strong> di spreadsheet Track File — berisi ringkasan Track File semua divisi, kegiatan lewat deadline, dana DAP, penilaian Bizstar, dan catatanmu.',
-      'Bisa juga langsung dari spreadsheet: buka menu <strong>Laporan I-BASS → Perbarui Laporan</strong> di bar menu Google Sheets.',
-      'Lakukan rutin (misalnya tiap akhir bulan atau setelah tiap sesi besar) — riwayat waktu setiap update tercatat di laporan.',
-      'Tekan <strong>Buka Sheet LAPORAN</strong> untuk membaca atau merapikannya.'
+      'Laporan dibuat langsung di spreadsheet <strong>Track File I-BASS 2026</strong>, di sheet bernama <strong>LAPORAN</strong> — datanya diambil otomatis dari Track File semua divisi.',
+      'Buka spreadsheet-nya, lalu klik menu <strong>Laporan I-BASS → Perbarui Laporan</strong> di bar menu Google Sheets.',
+      'Tulis <strong>catatan evaluasi</strong> saat diminta: kesalahan yang terjadi, kendala, dan saran perbaikan untuk kepengurusan berikutnya.',
+      'Satu bagian baru ber-stempel waktu ditambahkan — berisi ringkasan tiap divisi, kegiatan lewat deadline atau batal, dana DAP, dan penilaian Bizstar.',
+      'Lakukan rutin (misalnya tiap akhir bulan atau setelah tiap sesi besar) — waktu setiap update tercatat di laporan.'
     ],'Laporan ini adalah warisan untuk turunan I-BASS — makin jujur evaluasinya, makin berguna untuk mereka.')}
     ${tfGuide}`,
   pd: `
@@ -2144,8 +2155,9 @@ function renderPanduan(prefix){
     </div>
     ${pgCard('Mencatat Barang',[
       'Tekan tombol tambah barang, isi nama barang, jumlah, harga satuan, dan sesi tujuannya. Total harga terhitung otomatis.',
-      'Klik badge status untuk mengubahnya: <strong>Belum Beli</strong> menjadi <strong>Proses</strong> menjadi <strong>Sudah Beli</strong>.',
+      'Di kolom status ada tiga tombol: <strong>Belum Beli</strong>, <strong>Proses</strong>, <strong>Sudah Beli</strong> — tinggal tekan yang sesuai, yang aktif menyala.',
       'Saat barang berstatus <strong>Sudah Beli</strong>, harganya otomatis memotong saldo kas Finance — tidak perlu lapor manual.',
+      'Setelah beli: tekan <strong>+ Tambah Bukti</strong> untuk melampirkan link foto nota / bukti transfer, lalu tekan <strong>Kabari Finance</strong> — info pembelian lengkap tersalin, tinggal kirim ke Kadiv Finance via WhatsApp.',
       'Gunakan tombol edit untuk mengubah data barang, dan tanda silang untuk menghapus.'
     ])}
     ${pgCard('Filter & Daftar Belanja',[
@@ -2756,92 +2768,6 @@ async function sendToGDocs(){
     btn.disabled=false;
     lbl.innerHTML='Kirim ke Google Docs →';
   }
-}
-
-/* ── Laporan Perkembangan (untuk penerus) ── */
-function renderSkLaporan(){
-  const el=document.getElementById('sk-laporan');
-  if(!el) return;
-  if(!el.dataset.rendered){
-    el.dataset.rendered='1';
-    el.innerHTML=`
-    <div class="sec-head">
-      <div class="sec-eye">Sekretaris · Turunan</div>
-      <div class="sec-title">Laporan Perkembangan</div>
-      <div class="sec-desc">Laporan berjalan di sheet LAPORAN pada spreadsheet Track File — untuk kepengurusan berikutnya, supaya mereka tahu apa yang terjadi, apa kendalanya, dan apa yang perlu diperbaiki.</div>
-    </div>
-    <div class="card">
-      <div class="card-label">Perbarui Laporan</div>
-      <div class="info-box" style="font-size:0.68rem">
-        Setiap kali tombol ditekan, sheet LAPORAN bertambah satu bagian ber-stempel waktu berisi kondisi terkini: ringkasan Track File semua divisi, kegiatan yang lewat deadline atau batal, dana DAP, dan penilaian Bizstar — plus catatan evaluasimu di bawah ini. Bisa juga dari dalam spreadsheet lewat menu <strong>Laporan I-BASS</strong>.
-      </div>
-      <div class="field">
-        <label>Catatan Evaluasi — kesalahan, kendala, saran perbaikan</label>
-        <textarea id="sk-lap-catatan" placeholder="Contoh: koordinasi dengan vendor terlambat karena PIC ganda — ke depannya satu PIC satu vendor..." style="min-height:110px"></textarea>
-      </div>
-      <div class="field">
-        <label>Nama Pencatat</label>
-        <input type="text" id="sk-lap-penulis" placeholder="Opsional">
-      </div>
-      <button class="btn" id="sk-lap-btn" onclick="skLapUpdate()"><span id="sk-lap-btnlbl">Perbarui Laporan →</span></button>
-    </div>
-    <div class="card">
-      <div class="card-label">Riwayat Update</div>
-      <div id="sk-lap-status" style="font-size:0.7rem;color:var(--muted)">Memuat...</div>
-      <div class="btn-row" id="sk-lap-linkrow" style="display:none">
-        <a class="btn btn-ghost" id="sk-lap-link" href="#" target="_blank" rel="noopener" style="text-decoration:none;flex:1">Buka Sheet LAPORAN ↗</a>
-      </div>
-    </div>`;
-  }
-  skLapRefresh();
-}
-
-async function skLapRefresh(){
-  const st=document.getElementById('sk-lap-status');
-  if(!st) return;
-  if(!hasGasUrl()){ st.textContent='Belum terhubung — hubungi pengelola dashboard.'; return; }
-  try{
-    const res=await fetch(GAS_URL+'?action=laporanurl');
-    const json=await res.json();
-    if(json.ok && json.url){
-      localStorage.setItem('ibass_sk_lap_url', json.url);
-      const ups=(json.updates||[]);
-      st.innerHTML = ups.length
-        ? `<div style="margin-bottom:0.4rem;color:var(--text2)">${ups.length} kali update:</div>`+
-          ups.slice(-8).reverse().map(u=>`<div class="kv-row"><span class="kv-key">✓</span><span class="kv-val">${u}</span></div>`).join('')
-        : 'Laporan sudah dibuat, belum ada update tercatat.';
-      const row=document.getElementById('sk-lap-linkrow');
-      const a=document.getElementById('sk-lap-link');
-      if(row&&a){ a.href=json.url; row.style.display='flex'; }
-    } else {
-      st.textContent='Belum ada laporan — tekan "Perbarui Laporan" untuk membuat yang pertama.';
-    }
-  }catch(e){
-    const cached=localStorage.getItem('ibass_sk_lap_url');
-    if(cached){
-      const row=document.getElementById('sk-lap-linkrow');
-      const a=document.getElementById('sk-lap-link');
-      if(row&&a){ a.href=cached; row.style.display='flex'; }
-      st.textContent='Tidak bisa memuat riwayat — periksa koneksi.';
-    } else st.textContent='Belum ada laporan — tekan "Perbarui Laporan" untuk membuat yang pertama.';
-  }
-}
-
-async function skLapUpdate(){
-  if(!hasGasUrl()){ showToast('Belum terhubung', 'warning'); return; }
-  const btn=document.getElementById('sk-lap-btn'), lbl=document.getElementById('sk-lap-btnlbl');
-  btn.disabled=true; lbl.innerHTML='<span class="spinner"></span>Memperbarui...';
-  try{
-    await fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      action:'laporan',
-      catatan:document.getElementById('sk-lap-catatan').value,
-      penulis:document.getElementById('sk-lap-penulis').value
-    })});
-    showToast('Laporan diperbarui — bagian baru ditambahkan', 'success');
-    document.getElementById('sk-lap-catatan').value='';
-    setTimeout(skLapRefresh, 2500);
-  }catch(e){ showToast('Gagal memperbarui — periksa koneksi', 'error'); }
-  finally{ btn.disabled=false; lbl.textContent='Perbarui Laporan →'; }
 }
 
 /* ── Save History ── */
@@ -3961,15 +3887,25 @@ function renderLogistikBarang(){
   );
 
   const rows = shown.length ? shown.map(({item,i})=>{
-    const statusClass = item.status==='Sudah Beli'?'selesai':item.status==='Proses'?'berlangsung':'belum';
     const totalFmt = item.total ? fmtRp(item.total) : '—';
+    const stBtns = LG_STATUS.map(s=>{
+      const on = (item.status||'Belum Beli')===s;
+      const cls = s==='Sudah Beli'?'beli':s==='Proses'?'proses':'belum';
+      return `<span class="lg-st ${cls}${on?' on':''}" onclick="lgSetStatus(${i},'${s}')">${s}</span>`;
+    }).join('');
+    const buktiBits = item.status==='Sudah Beli'
+      ? (item.bukti
+          ? `<a href="${item.bukti}" target="_blank" rel="noopener" style="font-size:0.56rem;color:var(--green);text-decoration:underline;display:inline-block;margin-top:2px">Lihat Bukti</a>`
+          : `<span style="font-size:0.56rem;color:var(--amber);cursor:pointer" onclick="lgAddBukti(${i})">+ Tambah Bukti</span>`)
+        + ` <span style="font-size:0.56rem;color:var(--blue2);cursor:pointer;display:inline-block;margin-top:2px;margin-left:6px" onclick="lgCopyFinance(${i})">Kabari Finance</span>`
+      : '';
     return `<tr>
-      <td style="max-width:160px;line-height:1.4">${item.nama||'—'}${item.catatan?`<div style="font-size:0.58rem;color:var(--muted);margin-top:1px">${item.catatan}</div>`:''}${item.status==='Sudah Beli'&&item.bukti?`<a href="${item.bukti}" target="_blank" rel="noopener" style="font-size:0.56rem;color:var(--green);text-decoration:underline;display:inline-block;margin-top:2px">Lihat Bukti</a>`:item.status==='Sudah Beli'&&!item.bukti?`<span style="font-size:0.56rem;color:var(--amber);cursor:pointer" onclick="lgAddBukti(${i})">+ Tambah Bukti</span>`:''}</td>
+      <td style="max-width:160px;line-height:1.4">${item.nama||'—'}${item.catatan?`<div style="font-size:0.58rem;color:var(--muted);margin-top:1px">${item.catatan}</div>`:''}${buktiBits}</td>
       <td style="font-size:0.66rem;color:var(--muted)">${item.kategori||'—'}</td>
       <td style="font-size:0.66rem;text-align:center;white-space:nowrap">${item.qty||'—'} ${item.satuan||''}</td>
       <td class="num" style="font-size:0.68rem;color:var(--gold2);white-space:nowrap;text-align:right">${totalFmt}</td>
       <td style="font-size:0.62rem;color:var(--muted)">${item.sesi||'—'}</td>
-      <td><span class="tf-status ${statusClass}" onclick="lgCycleStatus(${i})">${item.status||'Belum Beli'}</span></td>
+      <td><div class="lg-st-col">${stBtns}</div></td>
       <td style="white-space:nowrap">
         <button class="tf-del-btn" title="Edit barang" onclick="lgEdit(${i})">✎</button>
         <button class="tf-del-btn" title="Hapus" onclick="lgDelete(${i})">×</button>
@@ -4149,19 +4085,34 @@ function lgDelete(idx){
   renderLogistikBarang(); showToast('Dihapus', 'success');
 }
 
-function lgCycleStatus(idx){
+function lgSetStatus(idx, status){
   const data = lgLoad();
-  const cur = data[idx].status||'Belum Beli';
-  const next = LG_STATUS[(LG_STATUS.indexOf(cur)+1)%LG_STATUS.length];
-  data[idx].status = next;
-  if(next==='Sudah Beli' && !data[idx].bukti){
+  if(!data[idx] || (data[idx].status||'Belum Beli')===status) return;
+  data[idx].status = status;
+  if(status==='Sudah Beli' && !data[idx].tglBeli){
     data[idx].tglBeli = new Date().toISOString();
   }
   lgSave(data);
   renderLogistikBarang();
-  if(next==='Sudah Beli'){
-    showToast('Tercatat! Sisa saldo kas: '+fmtRp(fnKasCalc().saldo)+' — jangan lupa lampirkan bukti pembayaran', 'success');
+  if(status==='Sudah Beli'){
+    showToast('Tercatat! Sisa saldo kas: '+fmtRp(fnKasCalc().saldo)+' — lampirkan bukti lalu tekan "Kabari Finance"', 'success');
   }
+}
+
+function lgCopyFinance(idx){
+  const d = lgLoad()[idx];
+  if(!d) return;
+  const tglOpt = {day:'numeric',month:'long',year:'numeric'};
+  const tgl = d.tglBeli ? new Date(d.tglBeli).toLocaleDateString('id-ID',tglOpt) : new Date().toLocaleDateString('id-ID',tglOpt);
+  const teks = '*Info Pembelian Logistik — I-BASS 2026*\n'
+    +'Barang: '+(d.nama||'—')+' ('+(d.qty||'-')+' '+(d.satuan||'')+')\n'
+    +'Total: '+fmtRp(d.total||0)+'\n'
+    +'Tanggal beli: '+tgl+'\n'
+    +'Bukti pembayaran: '+(d.bukti||'(belum dilampirkan)')+'\n'
+    +'Sisa saldo kas: '+fmtRp(fnKasCalc().saldo);
+  navigator.clipboard.writeText(teks)
+    .then(()=>showToast('Tersalin — tinggal kirim ke Kadiv Finance via WhatsApp','success'))
+    .catch(()=>showToast('Gagal menyalin','error'));
 }
 
 function lgAddBukti(idx){
@@ -4615,6 +4566,26 @@ function renderFnDAP(){
     ? 'Terakhir dicek: '+new Date(pay.synced).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
     : 'Belum pernah dicek';
 
+  // Pembelian Logistik terbaru — supaya Finance tahu tiap barang yang sudah dibeli
+  const lgBeli = lgLoad().map((d,i)=>({...d,_i:i})).filter(d=>d.status==='Sudah Beli')
+    .sort((a,b)=>String(b.tglBeli||'').localeCompare(String(a.tglBeli||'')));
+  const lgBeliRows = lgBeli.slice(0,8).map(d=>{
+    const tgl = d.tglBeli ? new Date(d.tglBeli).toLocaleDateString('id-ID',{day:'numeric',month:'short'}) : '—';
+    const bukti = d.bukti
+      ? `<a href="${d.bukti}" target="_blank" rel="noopener" style="color:var(--green);font-size:0.6rem;text-decoration:underline">Bukti</a>`
+      : `<span style="color:var(--amber);font-size:0.6rem">tanpa bukti</span>`;
+    return `<div class="kv-row">
+      <div class="kv-key">${d.nama||'—'} <span style="opacity:0.6">· ${tgl}</span> ${bukti}</div>
+      <div class="kv-val num" style="color:var(--red);white-space:nowrap">− ${fmtRp(d.total||0)}</div>
+    </div>`;
+  }).join('');
+  const lgBeliCard = lgBeli.length ? `
+    <div class="card accent-logistik">
+      <div class="card-label">Pembelian Logistik</div>
+      <div class="card-desc" style="margin-bottom:0.5rem">${lgBeli.length} barang sudah dibeli — otomatis memotong saldo kas. ${lgBeli.filter(d=>!d.bukti).length?`<span style="color:var(--amber)">${lgBeli.filter(d=>!d.bukti).length} belum ada bukti pembayaran.</span>`:'Semua ada bukti pembayaran.'}</div>
+      ${lgBeliRows}
+    </div>` : '';
+
   el.innerHTML = `
     <div class="sec-head">
       <div class="sec-eye">Finance · Kas</div>
@@ -4630,6 +4601,8 @@ function renderFnDAP(){
         <span>▼ <strong class="num" style="color:var(--red)">${fmtRp(kas.keluar)}</strong></span>
       </div>
     </div>
+
+    ${lgBeliCard}
 
     <div class="card accent-finance">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.8rem">

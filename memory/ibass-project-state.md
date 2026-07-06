@@ -145,6 +145,16 @@ pakai claude-in-chrome ke localhost:8321.
   belanja di Laporan Finance. Sesi remote memperbaiki 2 hal: CSS var salah
   (`--border/--card` → `--bdr/--bg3`) dan pencarian baris `tr:nth-child` yang salah sasaran
   saat filter aktif → sekarang cari via `[onclick].closest('tr')`.
+- **REVISI Boss (06-07): tab Laporan Sekretaris DIHAPUS dari web** — laporan HANYA lewat
+  menu spreadsheet "Laporan I-BASS → Perbarui Laporan" (fungsi renderSkLaporan/skLap* dihapus;
+  endpoint GAS laporan/laporanurl tetap ada). Panduan sk diarahkan ke menu sheet.
+- **Logistik: tombol progres 3 tahap** — badge cycle diganti 3 tombol jelas per baris
+  (Belum Beli / Proses / Sudah Beli, CSS `.lg-st`/`.lg-st-col`, fungsi `lgSetStatus` —
+  `lgCycleStatus` DIHAPUS). Tombol **"Kabari Finance"** di barang Sudah Beli (`lgCopyFinance`)
+  menyalin info pembelian format WA (barang, total, tanggal, link bukti, sisa saldo).
+- **Finance: kartu "Pembelian Logistik"** di tab Kas & DAP (dalam `renderFnDAP`) — daftar
+  barang Sudah Beli terbaru (max 8, sort tglBeli desc) dengan tanggal, link bukti /
+  peringatan "tanpa bukti", dan total; plus hitungan yang belum ada bukti.
 - **Laporan Perkembangan (turunan) — REVISI Boss: di SHEET, bukan Google Doc** —
   tab "Laporan" di Sekretaris (`sk-laporan`, `renderSkLaporan/skLapUpdate/skLapRefresh`):
   tombol "Perbarui Laporan" POST `action:'laporan'` → GAS `generateLaporanSheet()`
