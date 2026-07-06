@@ -15,8 +15,16 @@
  * 1. Paste kode baru ini menggantikan yang lama
  * 2. Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy
  *    (URL TIDAK berubah, dashboard tetap jalan)
- * 3. Saat diminta izin baru (akses Google Forms), klik Allow —
- *    dipakai untuk membaca pembayaran DAP dari Google Form.
+ * 3. Saat diminta izin baru, klik Allow:
+ *    - Google Forms  → membaca pembayaran DAP dari form
+ *    - Google Docs   → tombol "Kirim ke Google Docs" untuk notulen
+ *
+ * ── FITUR ──
+ * - Track File per divisi + REKAP (sync otomatis dari Dashboard Kadiv)
+ * - Sheet "Penilaian" (skor dari web Penilaian Bizstar)
+ * - Sheet "LAPORAN" (laporan turunan ber-stempel waktu) — generate lewat
+ *   menu "Laporan I-BASS → Perbarui Laporan" di bar menu spreadsheet ini
+ * - ?action=dap (pembayaran form), ?action=penilaian, ?action=laporanurl
  */
 
 // ─── Konfigurasi ────────────────────────────────────────────────
