@@ -2103,10 +2103,11 @@ function renderPanduan(prefix){
     ],'Notulen tersimpan di perangkat ini. Simpan ke Riwayat setiap selesai rapat supaya tidak hilang.')}
     ${pgCard('Laporan Perkembangan untuk Penerus',[
       'Buka tab <strong>Laporan</strong>. Tulis <strong>Catatan Evaluasi</strong>: kesalahan yang terjadi, kendala, dan saran perbaikan untuk kepengurusan berikutnya.',
-      'Tekan <strong>Perbarui Laporan</strong>. Satu bagian baru ber-stempel waktu ditambahkan ke dokumen Google Docs — berisi ringkasan Track File semua divisi, kegiatan lewat deadline, dana DAP, penilaian Bizstar, dan catatanmu.',
+      'Tekan <strong>Perbarui Laporan</strong>. Satu bagian baru ber-stempel waktu ditambahkan ke sheet <strong>LAPORAN</strong> di spreadsheet Track File — berisi ringkasan Track File semua divisi, kegiatan lewat deadline, dana DAP, penilaian Bizstar, dan catatanmu.',
+      'Bisa juga langsung dari spreadsheet: buka menu <strong>Laporan I-BASS → Perbarui Laporan</strong> di bar menu Google Sheets.',
       'Lakukan rutin (misalnya tiap akhir bulan atau setelah tiap sesi besar) — riwayat waktu setiap update tercatat di laporan.',
-      'Tekan <strong>Buka Laporan di Google Docs</strong> untuk membaca atau merapikan dokumennya.'
-    ],'Dokumen ini adalah warisan untuk turunan I-BASS — makin jujur evaluasinya, makin berguna untuk mereka.')}
+      'Tekan <strong>Buka Sheet LAPORAN</strong> untuk membaca atau merapikannya.'
+    ],'Laporan ini adalah warisan untuk turunan I-BASS — makin jujur evaluasinya, makin berguna untuk mereka.')}
     ${tfGuide}`,
   pd: `
     <div class="sec-head">
@@ -2767,12 +2768,12 @@ function renderSkLaporan(){
     <div class="sec-head">
       <div class="sec-eye">Sekretaris · Turunan</div>
       <div class="sec-title">Laporan Perkembangan</div>
-      <div class="sec-desc">Laporan berjalan di Google Docs untuk kepengurusan berikutnya — supaya mereka tahu apa yang terjadi, apa kendalanya, dan apa yang perlu diperbaiki.</div>
+      <div class="sec-desc">Laporan berjalan di sheet LAPORAN pada spreadsheet Track File — untuk kepengurusan berikutnya, supaya mereka tahu apa yang terjadi, apa kendalanya, dan apa yang perlu diperbaiki.</div>
     </div>
     <div class="card">
       <div class="card-label">Perbarui Laporan</div>
       <div class="info-box" style="font-size:0.68rem">
-        Setiap kali tombol ditekan, laporan bertambah satu bagian ber-stempel waktu berisi kondisi terkini: ringkasan Track File semua divisi, kegiatan yang lewat deadline atau batal, dana DAP, dan penilaian Bizstar — plus catatan evaluasimu di bawah ini.
+        Setiap kali tombol ditekan, sheet LAPORAN bertambah satu bagian ber-stempel waktu berisi kondisi terkini: ringkasan Track File semua divisi, kegiatan yang lewat deadline atau batal, dana DAP, dan penilaian Bizstar — plus catatan evaluasimu di bawah ini. Bisa juga dari dalam spreadsheet lewat menu <strong>Laporan I-BASS</strong>.
       </div>
       <div class="field">
         <label>Catatan Evaluasi — kesalahan, kendala, saran perbaikan</label>
@@ -2788,7 +2789,7 @@ function renderSkLaporan(){
       <div class="card-label">Riwayat Update</div>
       <div id="sk-lap-status" style="font-size:0.7rem;color:var(--muted)">Memuat...</div>
       <div class="btn-row" id="sk-lap-linkrow" style="display:none">
-        <a class="btn btn-ghost" id="sk-lap-link" href="#" target="_blank" rel="noopener" style="text-decoration:none;flex:1">Buka Laporan di Google Docs ↗</a>
+        <a class="btn btn-ghost" id="sk-lap-link" href="#" target="_blank" rel="noopener" style="text-decoration:none;flex:1">Buka Sheet LAPORAN ↗</a>
       </div>
     </div>`;
   }

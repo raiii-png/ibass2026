@@ -78,12 +78,12 @@ function doGet(e) {
     }
 
     if (action === 'laporanurl') {
-      // URL + riwayat waktu update Laporan Perkembangan
+      // URL sheet LAPORAN + riwayat waktu update
       const props = PropertiesService.getScriptProperties();
-      const id = props.getProperty('laporan_doc_id');
       let ups = [];
       try { ups = JSON.parse(props.getProperty('laporan_updates') || '[]'); } catch (e) {}
-      return jsonOk({ url: id ? 'https://docs.google.com/document/d/' + id + '/edit' : '', updates: ups });
+      const sh = ss.getSheetByName(LAPORAN_SHEET);
+      return jsonOk({ url: sh ? ss.getUrl() + '#gid=' + sh.getSheetId() : '', updates: ups });
     }
 
     return jsonOk({ ok: true, message: 'Track File I-BASS 2026 API aktif' });
@@ -222,9 +222,9 @@ function doPost(e) {
       return jsonOk({ message: 'Notulen tersimpan di Google Docs', url: doc.getUrl() });
     }
 
-    // Laporan Perkembangan — tiap panggilan menambah bagian ber-stempel waktu
+    // Laporan Perkembangan — tiap panggilan menambah bagian ber-stempel waktu di sheet LAPORAN
     if (action === 'laporan') {
-      return jsonOk(appendLaporanUpdate(ss, body.catatan || '', body.penulis || ''));
+      return jsonOk(generateLaporanSheet(ss, body.catatan || '', body.penulis || ''));
     }
 
     // Setup ulang struktur spreadsheet
@@ -292,7 +292,7 @@ function readPenilaian(ss) {
   }));
 }
 
-// ─── Laporan Perkembangan (Google Docs, untuk penerus) ────────────
+// ─── Laporan Perkembangan (sheet LAPORAN, untuk penerus) ──────────
 function tglIndo(d) {
   const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -306,37 +306,78 @@ function tglIndo(d) {
 }
 function rp(n) { return 'Rp' + String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
 
-function appendLaporanUpdate(ss, catatan, penulis) {
-  const props = PropertiesService.getScriptProperties();
-  let docId = props.getProperty('laporan_doc_id');
-  let doc = null;
-  if (docId) { try { doc = DocumentApp.openById(docId); } catch (e) { doc = null; } }
-  if (!doc) {
-    doc = DocumentApp.create('LAPORAN PERKEMBANGAN I-BASS 2026');
-    docId = doc.getId();
-    props.setProperty('laporan_doc_id', docId);
-    const b = doc.getBody();
-    b.appendParagraph('LAPORAN PERKEMBANGAN I-BASS 2026').setHeading(DocumentApp.ParagraphHeading.TITLE);
-    b.appendParagraph('Dokumen turunan untuk kepengurusan berikutnya. Setiap bagian di bawah adalah potret kondisi saat tombol "Perbarui Laporan" ditekan di Dashboard Kadiv — lengkap dengan evaluasi, kendala, dan hal yang perlu diperbaiki ke depannya.');
+const LAPORAN_SHEET = 'LAPORAN';
+const LAP_W = 7; // lebar kolom laporan
+
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('Laporan I-BASS')
+    .addItem('Perbarui Laporan', 'menuGenerateLaporan')
+    .addToUi();
+}
+
+function menuGenerateLaporan() {
+  const ui = SpreadsheetApp.getUi();
+  const resp = ui.prompt('Catatan Evaluasi',
+    'Tulis evaluasi, kendala, dan saran perbaikan untuk penerus (boleh dikosongkan):',
+    ui.ButtonSet.OK_CANCEL);
+  if (resp.getSelectedButton() !== ui.Button.OK) return;
+  generateLaporanSheet(SpreadsheetApp.getActiveSpreadsheet(), resp.getResponseText(), '');
+  ui.alert('Laporan diperbarui — buka sheet "LAPORAN".');
+}
+
+function ensureLaporanSheet(ss) {
+  let sh = ss.getSheetByName(LAPORAN_SHEET);
+  if (sh) return sh;
+  sh = ss.insertSheet(LAPORAN_SHEET);
+  sh.getRange(1, 1, 1, LAP_W).merge();
+  sh.getRange(1, 1).setValue('LAPORAN PERKEMBANGAN — I-BASS 2026')
+    .setBackground('#1e3a5f').setFontColor('#e8bf6a').setFontWeight('bold').setFontSize(13);
+  sh.getRange(2, 1, 1, LAP_W).merge();
+  sh.getRange(2, 1).setValue('Dokumen turunan untuk kepengurusan berikutnya · setiap update ber-stempel waktu · dibuat dari tombol "Perbarui Laporan" di Dashboard Kadiv atau menu "Laporan I-BASS" di sheet ini')
+    .setBackground('#13141f').setFontColor('#666688').setFontSize(9).setFontStyle('italic');
+  sh.setFrozenRows(2);
+  const widths = [130, 260, 110, 120, 95, 110, 220];
+  widths.forEach((w, i) => sh.setColumnWidth(i + 1, w));
+  return sh;
+}
+
+// Tulis 1 baris ke sheet LAPORAN dengan gaya opsional
+function lapRow(sh, values, opt) {
+  opt = opt || {};
+  const row = sh.getLastRow() + 1;
+  const vals = values.concat(Array(Math.max(0, LAP_W - values.length)).fill('')).slice(0, LAP_W);
+  const rng = sh.getRange(row, 1, 1, LAP_W);
+  if (opt.merge) {
+    rng.merge();
+    sh.getRange(row, 1).setValue(values[0]);
+  } else {
+    rng.setValues([vals]);
   }
-  const body = doc.getBody();
+  if (opt.bg) rng.setBackground(opt.bg);
+  if (opt.fg) rng.setFontColor(opt.fg);
+  if (opt.bold) rng.setFontWeight('bold');
+  if (opt.size) rng.setFontSize(opt.size);
+  if (opt.italic) rng.setFontStyle('italic');
+  if (opt.wrap) rng.setWrap(true);
+  return row;
+}
+
+function generateLaporanSheet(ss, catatan, penulis) {
+  const sh = ensureLaporanSheet(ss);
   const now = new Date();
 
-  body.appendHorizontalRule();
-  body.appendParagraph('Update — ' + tglIndo(now)).setHeading(DocumentApp.ParagraphHeading.HEADING1);
-  if (penulis) {
-    const p = body.appendParagraph('Dicatat oleh: ' + penulis);
-    p.editAsText().setItalic(true);
-  }
+  lapRow(sh, ['']); // spacer
+  lapRow(sh, ['UPDATE — ' + tglIndo(now)], { merge: true, bg: '#1e3a5f', fg: '#e8bf6a', bold: true, size: 11 });
+  if (penulis) lapRow(sh, ['Dicatat oleh: ' + penulis], { merge: true, fg: '#666688', italic: true, size: 9 });
 
-  // Ringkasan Track File per divisi
-  body.appendParagraph('Ringkasan Track File').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  // Ringkasan per divisi
+  lapRow(sh, ['RINGKASAN DIVISI'], { merge: true, bg: '#13141f', fg: '#5bc4f5', bold: true, size: 10 });
+  lapRow(sh, ['Divisi', 'Total Kegiatan', 'Selesai', 'Berlangsung', 'Belum', 'Terlambat', 'Batal'], { bg: '#13141f', fg: '#9999bb', bold: true, size: 9 });
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const lateAll = [];
   const cancelAll = [];
   SHEET_DIVISI.forEach(name => {
     const rows = readSheet(ss, name);
-    if (!rows.length) { body.appendListItem(name + ': belum ada kegiatan tercatat'); return; }
     const c = { Selesai: 0, Berlangsung: 0, Terlambat: 0, Cancel: 0, Belum: 0 };
     rows.forEach(r => {
       let st = r.status || 'Belum';
@@ -346,16 +387,20 @@ function appendLaporanUpdate(ss, catatan, penulis) {
       if (st === 'Terlambat') lateAll.push({ divisi: name, r });
       if (st === 'Cancel') cancelAll.push({ divisi: name, r });
     });
-    body.appendListItem(name + ': ' + rows.length + ' kegiatan — ' + c.Selesai + ' selesai, ' + c.Berlangsung + ' berlangsung, ' + c.Belum + ' belum, ' + c.Terlambat + ' terlambat, ' + c.Cancel + ' batal');
+    lapRow(sh, [name, rows.length, c.Selesai, c.Berlangsung, c.Belum, c.Terlambat, c.Cancel]);
   });
 
   // Kegiatan bermasalah = bahan evaluasi
-  body.appendParagraph('Perlu Perhatian — Lewat Deadline').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-  if (!lateAll.length) body.appendParagraph('Tidak ada — semua kegiatan berjalan sesuai jadwal.');
-  else lateAll.forEach(x => body.appendListItem('[' + x.divisi + '] ' + (x.r.kegiatan || '—') + ' — PIC: ' + (x.r.pic || '—') + ', deadline ' + (x.r.deadline || '—') + (x.r.catatan ? ' · ' + x.r.catatan : '')));
+  lapRow(sh, ['PERLU PERHATIAN — LEWAT DEADLINE'], { merge: true, bg: '#13141f', fg: '#f87171', bold: true, size: 10 });
+  if (!lateAll.length) {
+    lapRow(sh, ['Tidak ada — semua kegiatan berjalan sesuai jadwal.'], { merge: true, fg: '#4ecb8d' });
+  } else {
+    lapRow(sh, ['Divisi', 'Kegiatan', 'PIC', 'Deadline', '', '', 'Catatan'], { bg: '#13141f', fg: '#9999bb', bold: true, size: 9 });
+    lateAll.forEach(x => lapRow(sh, [x.divisi, x.r.kegiatan || '—', x.r.pic || '—', x.r.deadline || '—', '', '', x.r.catatan || ''], { wrap: true }));
+  }
   if (cancelAll.length) {
-    body.appendParagraph('Kegiatan yang Dibatalkan').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-    cancelAll.forEach(x => body.appendListItem('[' + x.divisi + '] ' + (x.r.kegiatan || '—') + (x.r.catatan ? ' — ' + x.r.catatan : '')));
+    lapRow(sh, ['KEGIATAN DIBATALKAN'], { merge: true, bg: '#13141f', fg: '#888899', bold: true, size: 10 });
+    cancelAll.forEach(x => lapRow(sh, [x.divisi, x.r.kegiatan || '—', x.r.pic || '—', '', '', '', x.r.catatan || ''], { wrap: true }));
   }
 
   // Dana DAP
@@ -364,8 +409,8 @@ function appendLaporanUpdate(ss, catatan, penulis) {
     if (pays.length) {
       const total = pays.reduce((a, p) => a + (p.nominal || 0), 0);
       const lunas = pays.filter(p => /lunas/i.test(p.termin || '')).length;
-      body.appendParagraph('Dana DAP').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-      body.appendParagraph('Terkumpul ' + rp(total) + ' dari ' + pays.length + ' pembayaran (' + lunas + ' lunas).');
+      lapRow(sh, ['DANA DAP'], { merge: true, bg: '#13141f', fg: '#4ecb8d', bold: true, size: 10 });
+      lapRow(sh, ['Terkumpul ' + rp(total) + ' dari ' + pays.length + ' pembayaran (' + lunas + ' lunas).'], { merge: true });
     }
   } catch (e) {}
 
@@ -375,24 +420,24 @@ function appendLaporanUpdate(ss, catatan, penulis) {
     if (pen.length) {
       const perMile = {};
       pen.forEach(p => { const k = p.milestone || '—'; perMile[k] = (perMile[k] || 0) + 1; });
-      body.appendParagraph('Penilaian Bizstar').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-      body.appendParagraph(pen.length + ' penilaian masuk — ' + Object.keys(perMile).map(k => k + ': ' + perMile[k]).join(', ') + '.');
+      lapRow(sh, ['PENILAIAN BIZSTAR'], { merge: true, bg: '#13141f', fg: '#a78bfa', bold: true, size: 10 });
+      lapRow(sh, [pen.length + ' penilaian masuk — ' + Object.keys(perMile).map(k => k + ': ' + perMile[k]).join(', ') + '.'], { merge: true });
     }
   } catch (e) {}
 
-  // Evaluasi manual dari dashboard
-  body.appendParagraph('Catatan Evaluasi untuk Penerus').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-  body.appendParagraph(catatan && catatan.trim() ? catatan.trim() : '—');
+  // Evaluasi manual
+  lapRow(sh, ['CATATAN EVALUASI UNTUK PENERUS'], { merge: true, bg: '#13141f', fg: '#e8bf6a', bold: true, size: 10 });
+  lapRow(sh, [catatan && catatan.trim() ? catatan.trim() : '—'], { merge: true, wrap: true });
 
-  doc.saveAndClose();
-
+  // Catat waktu update
+  const props = PropertiesService.getScriptProperties();
   let ups = [];
   try { ups = JSON.parse(props.getProperty('laporan_updates') || '[]'); } catch (e) {}
   ups.push(tglIndo(now));
   ups = ups.slice(-100);
   props.setProperty('laporan_updates', JSON.stringify(ups));
 
-  return { message: 'Laporan diperbarui', url: 'https://docs.google.com/document/d/' + docId + '/edit', updates: ups };
+  return { message: 'Laporan diperbarui', url: ss.getUrl() + '#gid=' + sh.getSheetId(), updates: ups };
 }
 
 // ─── Helper: baca sheet → array of objects ───────────────────────
