@@ -130,6 +130,14 @@ pakai claude-in-chrome ke localhost:8321.
   video track 'ended' (tombol Stop sharing browser) otomatis stopRecord. Tanpa audio track →
   ditolak + toast. Panduan sk dapat kartu "Merekam Rapat Online". Dites headless: online mock
   & mic biasa dua-duanya OK, nol error.
+- **Hosting Netlify `ibass2026.netlify.app`** — Boss tidak suka link github.io (nama akun
+  pribadi, panjang) untuk dibagikan ke kadiv. Project Netlify "ibass2026" dibuat
+  (siteId `4e29c3c3-94f6-4c1e-b6b0-cf92075d1147`, team sama dgn kpiadbis/absensihimaadbis).
+  `_redirects`: root `/` → dashboard (200!), `/kadiv` → dashboard, `/penilaian` → index.html.
+  `netlify.toml` publish=".". Upload langsung dari sandbox DIBLOKIR egress policy →
+  solusinya link repo GitHub di UI Netlify (sekali): app.netlify.com/projects/ibass2026 →
+  connect to Git → raiii-png/ibass2026 branch main → tiap push main auto-deploy.
+  GitHub Pages tetap jalan paralel (link penilaian lama tetap hidup).
 - **Bukti Pembayaran Logistik (dikerjakan Boss di laptop, commit 8f27b66 05-07 — memory
   belum sempat diupdate dari laptop, dicatat di sini)** — field `bukti` (link) di form
   barang, link "Lihat Bukti" / tombol "+ Tambah Bukti" (input inline `lgAddBukti/lgSaveBukti`)
