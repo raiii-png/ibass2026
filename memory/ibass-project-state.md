@@ -130,6 +130,13 @@ pakai claude-in-chrome ke localhost:8321.
   video track 'ended' (tombol Stop sharing browser) otomatis stopRecord. Tanpa audio track →
   ditolak + toast. Panduan sk dapat kartu "Merekam Rapat Online". Dites headless: online mock
   & mic biasa dua-duanya OK, nol error.
+- **Bukti Pembayaran Logistik (dikerjakan Boss di laptop, commit 8f27b66 05-07 — memory
+  belum sempat diupdate dari laptop, dicatat di sini)** — field `bukti` (link) di form
+  barang, link "Lihat Bukti" / tombol "+ Tambah Bukti" (input inline `lgAddBukti/lgSaveBukti`)
+  untuk barang "Sudah Beli", `tglBeli` otomatis, bukti tampil di Laporan Logistik + rincian
+  belanja di Laporan Finance. Sesi remote memperbaiki 2 hal: CSS var salah
+  (`--border/--card` → `--bdr/--bg3`) dan pencarian baris `tr:nth-child` yang salah sasaran
+  saat filter aktif → sekarang cari via `[onclick].closest('tr')`.
 - **Laporan Perkembangan (turunan)** — tab "Laporan" di Sekretaris (`sk-laporan`,
   `renderSkLaporan/skLapUpdate/skLapRefresh`): tombol "Perbarui Laporan" POST
   `action:'laporan'` → GAS `appendLaporanUpdate()` menambah bagian ber-stempel waktu

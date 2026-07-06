@@ -4171,13 +4171,13 @@ function lgAddBukti(idx){
   if(!el) return;
   const existing = document.getElementById('lg-bukti-inline');
   if(existing){ existing.remove(); return; }
-  const row = el.querySelector(`tr:nth-child(${idx+1})`);
+  const row = el.querySelector(`[onclick="lgAddBukti(${idx})"]`)?.closest('tr');
   if(!row) return;
   const div = document.createElement('tr');
   div.id = 'lg-bukti-inline';
   div.innerHTML = `<td colspan="7" style="padding:0.5rem">
     <div style="display:flex;gap:0.4rem;align-items:center">
-      <input type="text" id="lg-bukti-input" placeholder="Paste link bukti pembayaran (foto/Drive/nota)..." style="flex:1;font-size:0.72rem;padding:0.4rem 0.6rem;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text)">
+      <input type="text" id="lg-bukti-input" placeholder="Paste link bukti pembayaran (foto/Drive/nota)..." style="flex:1;font-size:0.72rem;padding:0.4rem 0.6rem;border-radius:var(--r);border:1px solid var(--bdr);background:var(--bg3);color:var(--text);outline:none">
       <button class="btn btn-sm" onclick="lgSaveBukti(${idx})" style="white-space:nowrap">Simpan</button>
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('lg-bukti-inline')?.remove()">Batal</button>
     </div>
