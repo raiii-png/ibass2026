@@ -145,16 +145,17 @@ pakai claude-in-chrome ke localhost:8321.
   belanja di Laporan Finance. Sesi remote memperbaiki 2 hal: CSS var salah
   (`--border/--card` → `--bdr/--bg3`) dan pencarian baris `tr:nth-child` yang salah sasaran
   saat filter aktif → sekarang cari via `[onclick].closest('tr')`.
-- **Laporan Perkembangan (turunan)** — tab "Laporan" di Sekretaris (`sk-laporan`,
-  `renderSkLaporan/skLapUpdate/skLapRefresh`): tombol "Perbarui Laporan" POST
-  `action:'laporan'` → GAS `appendLaporanUpdate()` menambah bagian ber-stempel waktu
-  (tglIndo, WIB) ke Google Doc persisten "LAPORAN PERKEMBANGAN I-BASS 2026"
-  (doc id di ScriptProperties `laporan_doc_id`, riwayat di `laporan_updates`).
-  Isi tiap update: ringkasan Track File per divisi, kegiatan lewat deadline/batal,
-  dana DAP, penilaian Bizstar, + Catatan Evaluasi manual. GET `?action=laporanurl`
-  → {url, updates} untuk tampilan riwayat. BONUS FIX: handler `action:'createDoc'`
-  (notulen → GDocs) yang selama ini TIDAK ADA di GAS sudah ditambahkan.
-  **GAS wajib re-deploy** + izin baru Docs saat authorize.
+- **Laporan Perkembangan (turunan) — REVISI Boss: di SHEET, bukan Google Doc** —
+  tab "Laporan" di Sekretaris (`sk-laporan`, `renderSkLaporan/skLapUpdate/skLapRefresh`):
+  tombol "Perbarui Laporan" POST `action:'laporan'` → GAS `generateLaporanSheet()`
+  menambah bagian ber-stempel waktu (tglIndo WIB) ke sheet **"LAPORAN"** di spreadsheet
+  Track File (helper `lapRow` + `ensureLaporanSheet`; riwayat waktu di ScriptProperties
+  `laporan_updates`). Ada juga **menu di spreadsheet**: `onOpen()` → "Laporan I-BASS →
+  Perbarui Laporan" (prompt catatan evaluasi) supaya bisa generate dari sheet langsung.
+  Isi tiap update: tabel ringkasan per divisi, kegiatan lewat deadline/batal, dana DAP,
+  penilaian Bizstar, + Catatan Evaluasi. GET `?action=laporanurl` → {url(#gid), updates}.
+  Handler `action:'createDoc'` (notulen → GDocs) tetap ada (fix bonus sesi ini).
+  **GAS wajib re-deploy** + izin Forms/Docs saat authorize.
 - **Track File DIHIDUPKAN LAGI (keputusan Boss, membatalkan "keep it secret" sesi-4)** —
   tab "Track File" di 5 divisi, panel baru id `{sk,pd,lg,ac,fn}-tugas` (JANGAN pakai
   `-trackfile`: `fn-trackfile`=Kas&DAP, `pd-trackfile`=Upload Konten). Engine tf* lama
