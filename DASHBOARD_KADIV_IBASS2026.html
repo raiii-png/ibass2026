@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
@@ -2226,7 +2226,7 @@ function renderPanduan(prefix){
 }
 
 const GEMINI_KEY   = 'AQ.Ab8RN6LTUpFCDFjKxA6a4WRzi05KEaiquJUzxYBUC8K1oQMTLQ';   // aistudio.google.com → Get API key
-const GAS_URL      = 'https://script.google.com/macros/s/AKfycbx5iNCi7rFpi8sXj5hyflk2W08OH4_4sUYFpJget4XQTgdbhKsp3vX8BXzQ8sa5_zla/exec';  // script.google.com → Deploy → Web App URL
+const GAS_URL      = 'https://script.google.com/macros/s/AKfycbxCTCMFY1KEBuT6TeiBbMeDgB-JL2o3zOXtdvpDagd1E-tMScq45uxX-nwUqA9qf9Becg/exec';  // script.google.com → Deploy → Web App URL
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`;
 
@@ -2237,6 +2237,32 @@ function getSupportedMime(){
 }
 function hasGeminiKey(){ return GEMINI_KEY && !GEMINI_KEY.startsWith('ISI_'); }
 function hasGasUrl()   { return GAS_URL   && !GAS_URL.startsWith('ISI_'); }
+/* POST ke GAS via hidden form — bypass CORS, 100% reliable */
+function gasPost(url, data){
+  return new Promise((resolve)=>{
+    const f = document.createElement('form');
+    f.method = 'POST';
+    f.action = url;
+    f.target = 'gas_iframe';
+    f.style.display = 'none';
+    const inp = document.createElement('input');
+    inp.type = 'hidden';
+    inp.name = 'payload';
+    inp.value = JSON.stringify(data);
+    f.appendChild(inp);
+    let iframe = document.getElementById('gas_iframe');
+    if(!iframe){
+      iframe = document.createElement('iframe');
+      iframe.name = 'gas_iframe';
+      iframe.id = 'gas_iframe';
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+    }
+    document.body.appendChild(f);
+    f.submit();
+    setTimeout(()=>{ f.remove(); resolve(); }, 2000);
+  });
+}
 function fmtRp(n){ return 'Rp '+Math.round(n||0).toLocaleString('id-ID'); }
 function esc(str){ const d=document.createElement('div'); d.textContent=String(str); return d.innerHTML; }
 
@@ -2763,7 +2789,7 @@ async function sendToGDocs(){
   };
 
   try{
-    await fetch(url, {method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    await gasPost(url, payload);
     showToast('Notulen dikirim ke Google Docs!', 'success');
     var _pf=document.getElementById('progFill'); if(_pf) _pf.style.width='20%';
   }catch(e){
@@ -3305,11 +3331,7 @@ function tfAutoSync(div){
   clearTimeout(tfAutoTimers[div]);
   tfAutoTimers[div]=setTimeout(async ()=>{
     try{
-      await fetch(tfGetUrl(), {
-        method:'POST', mode:'no-cors',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ action:'sync', divisi: TF_DIV_LABEL[div]||div, data: tfExportRows(div) })
-      });
+      await gasPost(tfGetUrl(), { action:'sync', divisi: TF_DIV_LABEL[div]||div, data: tfExportRows(div) });
       localStorage.setItem('ibass_tf_sync_'+div, new Date().toLocaleString('id-ID'));
       const el=document.getElementById('tf-sync-info-'+div);
       if(el) el.textContent='Tersimpan ke Sheet · '+tfLastSync(div);
@@ -3334,11 +3356,7 @@ async function tfSyncToSheets(div){
   const btn = document.getElementById('tf-sync-btn-'+div);
   if(btn){btn.disabled=true;btn.textContent='...';}
   try{
-    await fetch(url, {
-      method:'POST', mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ action:'sync', divisi: TF_DIV_LABEL[div]||div, data: tfExportRows(div) })
-    });
+    await gasPost(url, { action:'sync', divisi: TF_DIV_LABEL[div]||div, data: tfExportRows(div) });
     localStorage.setItem('ibass_tf_sync_'+div, new Date().toLocaleString('id-ID'));
     showToast('Tersimpan ke Google Sheets ✓');
     renderTrackFileTab(div);

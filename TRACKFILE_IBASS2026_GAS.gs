@@ -139,7 +139,13 @@ function parseNominalDAP(teks) {
 // ─── POST: tulis data ────────────────────────────────────────────
 function doPost(e) {
   try {
-    const body = JSON.parse(e.postData.contents);
+    // Support both raw JSON body and form-encoded payload field
+    let body;
+    if (e.parameter && e.parameter.payload) {
+      body = JSON.parse(e.parameter.payload);
+    } else {
+      body = JSON.parse(e.postData.contents);
+    }
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const action = body.action;
 
