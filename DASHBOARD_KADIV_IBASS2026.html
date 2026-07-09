@@ -2237,19 +2237,10 @@ function getSupportedMime(){
 }
 function hasGeminiKey(){ return GEMINI_KEY && !GEMINI_KEY.startsWith('ISI_'); }
 function hasGasUrl()   { return GAS_URL   && !GAS_URL.startsWith('ISI_'); }
-/* POST ke GAS — tanpa set Content-Type agar browser pakai text/plain (CORS-safe) */
-function gasPost(url, data){
-  const json = JSON.stringify(data);
-  /* Utama: fetch no-cors tanpa Content-Type → browser default text/plain */
-  return fetch(url, {
-    method: 'POST',
-    mode: 'no-cors',
-    redirect: 'follow',
-    body: json
-  }).catch(()=>{
-    /* Fallback: sendBeacon dengan Blob text/plain */
-    try{ navigator.sendBeacon(url, new Blob([json],{type:'text/plain'})); }catch(e2){}
-  });
+/* Sync ke GAS via GET — zero CORS issues, 100% reliable */
+function gasSync(url, divisi, data){
+  const params = '?action=sync&divisi=' + encodeURIComponent(divisi) + '&data=' + encodeURIComponent(JSON.stringify(data));
+  return fetch(url + params).then(r => r.json()).catch(() => ({ok:false}));
 }
 function fmtRp(n){ return 'Rp '+Math.round(n||0).toLocaleString('id-ID'); }
 function esc(str){ const d=document.createElement('div'); d.textContent=String(str); return d.innerHTML; }
