@@ -2237,10 +2237,13 @@ function getSupportedMime(){
 }
 function hasGeminiKey(){ return GEMINI_KEY && !GEMINI_KEY.startsWith('ISI_'); }
 function hasGasUrl()   { return GAS_URL   && !GAS_URL.startsWith('ISI_'); }
-/* Sync ke GAS via GET — zero CORS issues, 100% reliable */
-function gasSync(url, divisi, data){
-  const params = '?action=sync&divisi=' + encodeURIComponent(divisi) + '&data=' + encodeURIComponent(JSON.stringify(data));
-  return fetch(url + params).then(r => r.json()).catch(() => ({ok:false}));
+/* POST ke GAS via fetch no-cors — 100% reliable untuk original doPost */
+function gasPost(url, data){
+  return fetch(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify(data)
+  });
 }
 function fmtRp(n){ return 'Rp '+Math.round(n||0).toLocaleString('id-ID'); }
 function esc(str){ const d=document.createElement('div'); d.textContent=String(str); return d.innerHTML; }
@@ -3301,7 +3304,14 @@ function tfLoad(div){
 function tfSave(div,data){
   localStorage.setItem(tfKey(div), JSON.stringify(data));
 }
-function tfGetUrl(){ return localStorage.getItem('ibass_tf_sheets_url') || (hasGasUrl()?GAS_URL:''); }
+function tfGetUrl(){
+  let url = localStorage.getItem('ibass_tf_sheets_url');
+  if (url && url.includes('AKfycbx5iNCi7rFpi8sXj5hyflk2W08OH4_4sUYFpJget4XQTgdbhKsp3vX8BXzQ8sa5_zla')) {
+    localStorage.removeItem('ibass_tf_sheets_url');
+    url = null;
+  }
+  return url || (hasGasUrl()?GAS_URL:'');
+}
 
 /* Auto-sync: setiap perubahan track file terkirim sendiri ke Sheets (debounce 2 detik) */
 const tfAutoTimers = {};

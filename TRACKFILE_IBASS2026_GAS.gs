@@ -94,43 +94,6 @@ function doGet(e) {
       return jsonOk({ url: sh ? ss.getUrl() + '#gid=' + sh.getSheetId() : '', updates: ups });
     }
 
-    // Sync track file via GET (bypass CORS — dipanggil dari Dashboard Kadiv)
-    if (action === 'sync') {
-      const jsonData = e.parameter.data || '[]';
-      const sheetName = e.parameter.divisi || 'Unknown';
-      const items = JSON.parse(jsonData);
-
-      let sheet = ss.getSheetByName(sheetName);
-      if (!sheet) sheet = createDivisiSheet(ss, sheetName);
-
-      // Hapus data lama (baris 5 ke bawah)
-      const lastRow = sheet.getLastRow();
-      if (lastRow >= DATA_START_ROW) {
-        sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, HEADER_ROW.length).clearContent();
-      }
-
-      // Tulis data baru
-      if (items.length > 0) {
-        const rows = items.map((item, i) => [
-          i + 1,
-          sheetName,
-          item.kegiatan || '',
-          item.priority || '',
-          item.pic || '',
-          item.mulai || '',
-          item.deadline || '',
-          item.status || 'Belum',
-          item.catatan || '',
-          item.file || ''
-        ]);
-        sheet.getRange(DATA_START_ROW, 1, rows.length, HEADER_ROW.length).setValues(rows);
-        applyStatusColors(sheet, DATA_START_ROW, rows.length);
-      }
-
-      rebuildRekap(ss);
-      return jsonOk({ message: 'Sync ' + items.length + ' item ke sheet ' + sheetName });
-    }
-
     return jsonOk({ ok: true, message: 'Track File I-BASS 2026 API aktif' });
 
   } catch (err) {
