@@ -2237,30 +2237,18 @@ function getSupportedMime(){
 }
 function hasGeminiKey(){ return GEMINI_KEY && !GEMINI_KEY.startsWith('ISI_'); }
 function hasGasUrl()   { return GAS_URL   && !GAS_URL.startsWith('ISI_'); }
-/* POST ke GAS via hidden form — bypass CORS, 100% reliable */
+/* POST ke GAS — tanpa set Content-Type agar browser pakai text/plain (CORS-safe) */
 function gasPost(url, data){
-  return new Promise((resolve)=>{
-    const f = document.createElement('form');
-    f.method = 'POST';
-    f.action = url;
-    f.target = 'gas_iframe';
-    f.style.display = 'none';
-    const inp = document.createElement('input');
-    inp.type = 'hidden';
-    inp.name = 'payload';
-    inp.value = JSON.stringify(data);
-    f.appendChild(inp);
-    let iframe = document.getElementById('gas_iframe');
-    if(!iframe){
-      iframe = document.createElement('iframe');
-      iframe.name = 'gas_iframe';
-      iframe.id = 'gas_iframe';
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-    }
-    document.body.appendChild(f);
-    f.submit();
-    setTimeout(()=>{ f.remove(); resolve(); }, 2000);
+  const json = JSON.stringify(data);
+  /* Utama: fetch no-cors tanpa Content-Type → browser default text/plain */
+  return fetch(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    redirect: 'follow',
+    body: json
+  }).catch(()=>{
+    /* Fallback: sendBeacon dengan Blob text/plain */
+    try{ navigator.sendBeacon(url, new Blob([json],{type:'text/plain'})); }catch(e2){}
   });
 }
 function fmtRp(n){ return 'Rp '+Math.round(n||0).toLocaleString('id-ID'); }
