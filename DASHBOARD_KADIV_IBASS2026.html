@@ -1658,6 +1658,7 @@ body::after {
                 <span id="sk-gdocsLbl">Kirim ke Google Docs →</span>
               </button>
             </div>
+            <div id="sk-gdocs-link" style="display:none;margin-top:0.4rem;font-size:0.68rem;color:var(--muted)"></div>
             <div class="btn-row" style="margin-top:0.4rem">
               <button class="btn btn-ghost btn-sm" onclick="saveToHistory()" style="flex:1">Simpan ke Riwayat</button>
               <button class="btn btn-ghost btn-sm" onclick="rekamUlang()" style="flex:1">Rekam Ulang →</button>
@@ -2240,6 +2241,33 @@ function hasGasUrl()   { return GAS_URL   && !GAS_URL.startsWith('ISI_'); }
 function fmtRp(n){ return 'Rp '+Math.round(n||0).toLocaleString('id-ID'); }
 function esc(str){ const d=document.createElement('div'); d.textContent=String(str); return d.innerHTML; }
 
+/* ── Kirim ke Apps Script dan BACA balasannya ──
+   Pakai Content-Type text/plain → "simple request", jadi tak ada preflight CORS
+   dan balasan Apps Script bisa dibaca (tahu sukses/gagal + dapat link Docs).
+   Kalau CORS/redirect tak terbaca, jatuh ke no-cors supaya data tetap masuk. */
+async function gasPost(payload, url){
+  url = url || GAS_URL;
+  try{
+    const res = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    return json || { ok:false, error:'Balasan kosong' };
+  }catch(e){
+    // Balasan tak terbaca (CORS) — kirim buta supaya data tetap tertulis
+    try{
+      await fetch(url, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify(payload)
+      });
+      return { ok:true, blind:true };
+    }catch(e2){ return { ok:false, error:e2.message }; }
+  }
+}
+
 /* ══════════════════════════════════════
    SEKRETARIS STATE
 ══════════════════════════════════════ */
@@ -2759,8 +2787,20 @@ async function sendToGDocs(){
   };
 
   try{
-    await fetch(url, {method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-    showToast('Notulen dikirim ke Google Docs!', 'success');
+    const r = await gasPost(payload, url);
+    if(r && r.ok && r.url){
+      showToast('Notulen tersimpan di Google Docs ✓', 'success');
+      const box = document.getElementById('sk-gdocs-link');
+      if(box){
+        box.style.display='block';
+        box.innerHTML = 'Notulen tersimpan — <a href="'+esc(r.url)+'" target="_blank" rel="noopener" style="color:var(--blue2)">buka di Google Docs ↗</a>';
+      }
+    } else if(r && r.ok){
+      // Terkirim tapi balasan tak terbaca (CORS) — dokumen tetap dibuat
+      showToast('Notulen dikirim — cek Google Drive Sekretaris', 'success');
+    } else {
+      showToast('Gagal simpan: '+((r&&r.error)||'Apps Script perlu di-deploy ulang'), 'error');
+    }
     var _pf=document.getElementById('progFill'); if(_pf) _pf.style.width='20%';
   }catch(e){
     showToast('Gagal mengirim ke Google Docs', 'error');
@@ -3294,22 +3334,34 @@ function tfSave(div,data){
 }
 function tfGetUrl(){ return localStorage.getItem('ibass_tf_sheets_url') || (hasGasUrl()?GAS_URL:''); }
 
+/* Baca jumlah baris yang benar-benar ada di Sheet divisi (verifikasi sync).
+   Return angka, atau null kalau tak bisa dibaca (URL salah / Apps Script belum deploy). */
+async function tfSheetCount(div){
+  try{
+    const divLabel = TF_DIV_LABEL[div]||div;
+    const res = await fetch(tfGetUrl()+'?action=read&divisi='+encodeURIComponent(divLabel));
+    const json = await res.json();
+    if(json && json.ok && Array.isArray(json.data)) return json.data.length;
+    return null;
+  }catch(e){ return null; }
+}
+
 /* Auto-sync: setiap perubahan track file terkirim sendiri ke Sheets (debounce 2 detik) */
 const tfAutoTimers = {};
 function tfAutoSync(div){
   if(!tfGetUrl()) return;
   clearTimeout(tfAutoTimers[div]);
   tfAutoTimers[div]=setTimeout(async ()=>{
-    try{
-      await fetch(tfGetUrl(), {
-        method:'POST', mode:'no-cors',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ action:'sync', divisi: TF_DIV_LABEL[div]||div, data: tfExportRows(div) })
-      });
+    await gasPost({ action:'sync', divisi: TF_DIV_LABEL[div]||div, data: tfExportRows(div) });
+    const el=document.getElementById('tf-sync-info-'+div);
+    const cnt=await tfSheetCount(div);
+    if(cnt!==null){
       localStorage.setItem('ibass_tf_sync_'+div, new Date().toLocaleString('id-ID'));
-      const el=document.getElementById('tf-sync-info-'+div);
-      if(el) el.textContent='Tersimpan ke Sheet · '+tfLastSync(div);
-    }catch(e){}
+      if(el){ el.style.color='var(--green)'; el.textContent=cnt+' tugas tersimpan di Sheet · '+tfLastSync(div); }
+    } else if(el){
+      el.style.color='var(--amber)';
+      el.textContent='Belum tersimpan — Sheet tak merespons. Minta Sekretaris deploy ulang Apps Script.';
+    }
   },2000);
 }
 
@@ -3330,15 +3382,20 @@ async function tfSyncToSheets(div){
   const btn = document.getElementById('tf-sync-btn-'+div);
   if(btn){btn.disabled=true;btn.textContent='...';}
   try{
-    await fetch(url, {
-      method:'POST', mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ action:'sync', divisi: TF_DIV_LABEL[div]||div, data: tfExportRows(div) })
-    });
-    localStorage.setItem('ibass_tf_sync_'+div, new Date().toLocaleString('id-ID'));
-    showToast('Tersimpan ke Google Sheets ✓');
+    const r = await gasPost({ action:'sync', divisi: TF_DIV_LABEL[div]||div, data: tfExportRows(div) });
+    // Verifikasi ke Sheet — sumber kebenaran apakah data benar-benar masuk
+    const cnt = await tfSheetCount(div);
+    if(cnt!==null){
+      localStorage.setItem('ibass_tf_sync_'+div, new Date().toLocaleString('id-ID'));
+      showToast(cnt+' tugas tersimpan di Sheet ✓', 'success');
+    } else if(r && r.ok && !r.blind){
+      localStorage.setItem('ibass_tf_sync_'+div, new Date().toLocaleString('id-ID'));
+      showToast('Tersimpan ke Google Sheets ✓', 'success');
+    } else {
+      showToast('Belum masuk — Sheet tak merespons. Apps Script perlu di-deploy ulang.', 'error');
+    }
     renderTrackFileTab(div);
-  }catch(e){ showToast('Gagal kirim — periksa koneksi'); }
+  }catch(e){ showToast('Gagal kirim — periksa koneksi', 'error'); }
   finally{ if(btn){btn.disabled=false;btn.textContent='→ Simpan ke Sheets';} }
 }
 

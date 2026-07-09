@@ -192,6 +192,28 @@ pakai claude-in-chrome ke localhost:8321.
   Endpoint baca baru: `?action=penilaian`. Verifikasi: node --check OK, kedua HTML load
   tanpa error console di Chromium headless.
 
+**Sesi 2026-07-09 (branch `claude/trackfile-sheet-data-sync-xjp0c7`): perbaiki sync Track File→Sheet + notulen GDocs terverifikasi**
+- **Akar masalah "data trackfile tidak masuk":** semua POST ke GAS pakai `mode:'no-cors'` +
+  `Content-Type: application/json` → balasan GAS TAK PERNAH terbaca, jadi toast selalu
+  "Tersimpan ✓" walau sebenarnya gagal (mis. deployment GAS lama tanpa handler `action:'sync'`).
+- **Fix:** helper baru `gasPost(payload,url)` (dekat GAS_URL, ~baris 2242) kirim pakai
+  `Content-Type: text/plain;charset=utf-8` = *simple request* (tanpa preflight CORS) → balasan
+  Apps Script bisa dibaca `{ok, message, url}`. Kalau CORS/redirect tak terbaca, fallback
+  `no-cors` supaya data tetap tertulis, return `{ok:true, blind:true}`. GAS tak perlu diubah
+  (`e.postData.contents` tetap ke-`JSON.parse`).
+- **Verifikasi nyata:** `tfSheetCount(div)` GET `?action=read&divisi=` (GET lintas-origin sudah
+  terbukti jalan) → hitung baris asli di Sheet. `tfSyncToSheets` & `tfAutoSync` sekarang tampilkan
+  "N tugas tersimpan di Sheet ✓" atau, kalau Sheet tak merespons, pesan jelas "Apps Script perlu
+  di-deploy ulang" (bukan lagi sukses palsu).
+- **Notulen (termasuk hasil rekam GMeet) → GDocs:** `sendToGDocs` pakai `gasPost`, tampilkan
+  link "buka di Google Docs ↗" (elemen baru `#sk-gdocs-link` di bawah tombol) saat balasan
+  terbaca; kalau blind, tetap sukses "cek Google Drive"; kalau gagal, pesan deploy ulang.
+  Pipeline GMeet (getDisplayMedia → transcribeWithGemini → notulen) tak diubah, sudah utuh.
+- **TETAP WAJIB dari Boss (sekali):** re-deploy GAS — Apps Script → Deploy → Manage deployments
+  → Edit → New version (URL tetap). Tanpa ini sheet balas HTML lama & sync tetap gagal; sekarang
+  dashboard akan MEMBERITAHU kalau itu yang terjadi.
+- Verif: `new Function(script)` nol syntax error. Live GAS/browser tak bisa dites dari sandbox.
+
 **Yang MUNGKIN masih perlu:**
 - **User RE-DEPLOY GAS (wajib, sekali):** paste kode .gs terbaru → Manage deployments →
   Edit → New version → Deploy (URL tetap). Ini sekaligus menghidupkan `?action=dap` DAN
