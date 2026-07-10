@@ -2237,13 +2237,22 @@ function getSupportedMime(){
 }
 function hasGeminiKey(){ return GEMINI_KEY && !GEMINI_KEY.startsWith('ISI_'); }
 function hasGasUrl()   { return GAS_URL   && !GAS_URL.startsWith('ISI_'); }
-/* POST ke GAS via fetch no-cors — 100% reliable untuk original doPost */
-function gasPost(url, data){
-  return fetch(url, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify(data)
-  });
+/* POST ke GAS. Jalur utama: baca balasan server supaya sukses/gagal ketahuan beneran.
+   Jalur cadangan: kirim tanpa baca balasan (beberapa browser HP memblokir baca lintas situs). */
+async function gasPost(url, data){
+  const body = JSON.stringify(data);
+  let res;
+  try{
+    res = await fetch(url, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body });
+  }catch(err){
+    await fetch(url, { method:'POST', mode:'no-cors', body });
+    return { ok:true, blind:true };
+  }
+  const txt = await res.text();
+  let js = null;
+  try{ js = JSON.parse(txt); }catch(_){}
+  if(js && js.ok === false) throw new Error(js.error || 'ditolak server');
+  return js || { ok:true };
 }
 function fmtRp(n){ return 'Rp '+Math.round(n||0).toLocaleString('id-ID'); }
 function esc(str){ const d=document.createElement('div'); d.textContent=String(str); return d.innerHTML; }
