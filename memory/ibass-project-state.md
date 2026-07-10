@@ -91,6 +91,18 @@ metadata:
   Tiap push baru dengan kunci baru akan kena blok lagi — kasih link unblock ke Boss.
 - Catatan: ada branch cloud `claude/*` di remote dari sesi HP — belum di-merge, abaikan
   kecuali Boss menyebutnya.
+- **HOSTING: Boss pakai `kadivibass2026.netlify.app`** (dashboard = halaman utama, dibuat
+  sesi Antigravity). Versi di sana BUILD RUSAK (panggil `gasPost` yang tak ada → semua
+  kirim gagal "Gagal kirim"). Deploy ulang GAGAL: kredit akun Netlify habis
+  ("account credit usage exceeded", plan gratis). RENCANA saat kredit reset (awal bulan):
+  deploy sekali isi `netlify_site/_redirects` (proxy 200! ke GitHub Pages) via MCP Netlify
+  (siteId `9982f851-f4e6-4ad4-ba42-c20b66eed2e8`) — setelah itu Netlify jadi cermin
+  otomatis GitHub selamanya tanpa build. `netlify.toml` publish=netlify_site sudah di repo.
+- **Sementara Boss pakai link GitHub Pages** (selalu auto-update tiap push, terverifikasi
+  serve versi terbaru): `raiii-png.github.io/ibass2026/DASHBOARD_KADIV_IBASS2026.html`.
+  Script auto-sync di laptop Boss ikut push ke GitHub otomatis.
+- localStorage per origin: data Track File yang diketik di netlify.app tidak muncul di
+  github.io — pakai tombol "Muat dari Sheets" untuk menarik data dari sheet.
 
 ## ⏭️ Resume (per 2026-07-05)
 
