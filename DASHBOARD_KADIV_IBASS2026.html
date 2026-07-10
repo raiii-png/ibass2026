@@ -4356,6 +4356,7 @@ function initFinance(){
     const old = t.onclick;
     t.onclick = function(){ if(old) old.call(this); fnRenderActive(); };
   });
+  fnDapAutoStart();
 }
 
 function fnRenderActive(){
@@ -4800,20 +4801,36 @@ function fnDapPerOrang(){
   return Object.values(map).sort((a,b)=>a.nama.localeCompare(b.nama,'id'));
 }
 
-async function fnFetchDAP(){
-  if(!hasGasUrl()){ showToast('Server dashboard belum terhubung','warning'); return; }
+async function fnFetchDAP(quiet){
+  if(!hasGasUrl()){ if(!quiet) showToast('Server dashboard belum terhubung','warning'); return; }
   const btn = document.getElementById('fn-dap-refresh');
-  if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Memuat...'; }
+  if(btn && !quiet){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Memuat...'; }
   try{
     const res = await fetch(GAS_URL + '?action=dap');
     const js = await res.json();
     if(!js.ok) throw new Error(js.error||'gagal');
-    fnDapPaySave({ list: js.payments||[], synced: new Date().toISOString() });
-    showToast((js.payments||[]).length + ' pembayaran termuat', 'success');
+    const prevCount = fnDapPay().list.length;
+    const newList = js.payments||[];
+    fnDapPaySave({ list: newList, synced: new Date().toISOString() });
+    if(!quiet) showToast(newList.length + ' pembayaran termuat', 'success');
+    else if(newList.length > prevCount) showToast((newList.length - prevCount) + ' pembayaran baru masuk', 'success');
+    renderFnDAP();
   }catch(e){
-    showToast('Gagal memuat pembayaran — cek koneksi', 'error');
+    if(!quiet) showToast('Gagal memuat pembayaran — cek koneksi', 'error');
+    if(!quiet) renderFnDAP();
   }
-  renderFnDAP();
+}
+
+/* Auto-update: cek pembayaran baru dari form tiap 60 detik selama Finance terbuka */
+let fnDapAutoTimer = null;
+function fnDapAutoStart(){
+  clearInterval(fnDapAutoTimer);
+  fnFetchDAP(true);
+  fnDapAutoTimer = setInterval(()=>{
+    if(currentDiv !== 'finance'){ clearInterval(fnDapAutoTimer); fnDapAutoTimer = null; return; }
+    if(document.visibilityState !== 'visible') return;
+    fnFetchDAP(true);
+  }, 60000);
 }
 
 function fnAddIncome(){
