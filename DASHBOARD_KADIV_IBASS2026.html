@@ -2225,18 +2225,24 @@ function renderPanduan(prefix){
   el.innerHTML = P[prefix] || '';
 }
 
-const GEMINI_KEY   = 'AQ.Ab8RN6LCJdsDYVOX6_pGNsLWudRNupVCsuJMi7mUvyrNi0LGCg';   // aistudio.google.com → Get API key
+// Kunci AI TIDAK ada di file ini — tersimpan aman di server (Apps Script Script Properties).
+// Semua panggilan AI lewat aiCall() di bawah.
 const GAS_URL      = 'https://script.google.com/macros/s/AKfycbxCTCMFY1KEBuT6TeiBbMeDgB-JL2o3zOXtdvpDagd1E-tMScq45uxX-nwUqA9qf9Becg/exec';  // script.google.com → Deploy → Web App URL
-const GEMINI_MODEL = 'gemini-2.5-flash';
-const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`;
 
 function getSupportedMime(){
   const types=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];
   for(const t of types){ if(MediaRecorder.isTypeSupported(t)) return t; }
   return '';
 }
-function hasGeminiKey(){ return GEMINI_KEY && !GEMINI_KEY.startsWith('ISI_'); }
-function hasGasUrl()   { return GAS_URL   && !GAS_URL.startsWith('ISI_'); }
+function hasGeminiKey(){ return hasGasUrl(); }
+function hasGasUrl()   { return GAS_URL && !GAS_URL.startsWith('ISI_'); }
+
+/* Panggil AI lewat server — balasannya sama persis dengan balasan Gemini asli */
+async function aiCall(payload){
+  const js = await gasPost(GAS_URL, { action:'ai', payload });
+  if(!js || !js.ai) throw new Error(js && js.error ? js.error : 'AI tidak merespons');
+  return js.ai;
+}
 /* POST ke GAS. Jalur utama: baca balasan server supaya sukses/gagal ketahuan beneran.
    Jalur cadangan: kirim tanpa baca balasan (beberapa browser HP memblokir baca lintas situs). */
 async function gasPost(url, data){
@@ -2462,8 +2468,6 @@ async function transcribeWithGemini(){
   document.getElementById('sk-stage-fixing').style.display='none';
   document.getElementById('sk-transcribed-card').style.display='none';
 
-  const ctrl=new AbortController();
-  const timer=setTimeout(()=>ctrl.abort(),60000);
   try{
     const base64=await blobToBase64(skAudioBlob);
     const b64data=base64.split(',')[1];
@@ -2472,10 +2476,7 @@ async function transcribeWithGemini(){
     const sesi=getSesiName();
     const peserta=document.getElementById('sk-peserta')?.value||'';
 
-    const res=await fetch(GEMINI_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[
+    const data=await aiCall({contents:[{parts:[
         {text:`Transkripsi audio rapat berikut ke Bahasa Indonesia yang lengkap dan akurat.
 
 Konteks: rapat internal I-BASS 2026 (HIMA Administrasi Bisnis, Universitas Telkom), sesi "${sesi}"${peserta?', peserta: '+peserta:''}.
@@ -2489,20 +2490,8 @@ Instruksi:
 - Jika ada bagian yang tidak terdengar sama sekali, tulis [...]
 - Jangan tambah komentar, judul, atau penjelasan apapun — transkripsi murni saja`},
         {inlineData:{mimeType,data:b64data}}
-      ]}]}),
-      signal:ctrl.signal
-    });
-    clearTimeout(timer);
+      ]}]});
 
-    if(res.status===400){
-      const e=await res.json().catch(()=>({}));
-      const m=e.error?.message||'';
-      throw new Error(m.includes('key')||m.includes('API_KEY')?'Konfigurasi AI tidak valid':('Transkripsi gagal: '+m));
-    }
-    if(res.status===429) throw new Error('Layanan AI sedang sibuk, coba lagi sebentar');
-    if(!res.ok) throw new Error('Transkripsi gagal ('+res.status+')');
-
-    const data=await res.json();
     const text=data.candidates?.[0]?.content?.parts?.[0]?.text?.trim()||'';
     if(!text){
       const reason=data.candidates?.[0]?.finishReason;
@@ -2514,9 +2503,8 @@ Instruksi:
     await fixWithGemini(text);
 
   }catch(err){
-    clearTimeout(timer);
     document.getElementById('sk-stage-transcribing').style.display='none';
-    const msg=err.name==='AbortError'?'Timeout — AI tidak merespon, coba lagi':err.message;
+    const msg=err.message;
 
     if(skLiveText.trim()){
       skRawTranscript=skLiveText;
@@ -2526,7 +2514,7 @@ Instruksi:
       showToast(msg||'Transkripsi gagal');
       setStage('rec');
       const area=document.getElementById('sk-process-area');
-      if(area) area.innerHTML+='<div class="info-box warning" style="margin-top:0.5rem;font-size:0.68rem"><strong>Detail error:</strong> '+msg+'<br>Solusi: Pastikan GEMINI_KEY sudah diisi di file, atau gunakan input manual.</div>';
+      if(area) area.innerHTML+='<div class="info-box warning" style="margin-top:0.5rem;font-size:0.68rem"><strong>Detail error:</strong> '+msg+'<br>Solusi: Coba lagi, atau gunakan input manual.</div>';
     }
   }
 }
@@ -2539,12 +2527,7 @@ async function fixWithGemini(rawText){
   const peserta=document.getElementById('sk-peserta')?.value||'';
 
   try{
-    const ctrl=new AbortController();
-    const t=setTimeout(()=>ctrl.abort(),30000);
-    const res=await fetch(GEMINI_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:`Kamu adalah editor notulen I-BASS 2026, HIMA Administrasi Bisnis Universitas Telkom.
+    const data=await aiCall({contents:[{parts:[{text:`Kamu adalah editor notulen I-BASS 2026, HIMA Administrasi Bisnis Universitas Telkom.
 
 Koreksi hasil transkripsi otomatis dari rapat "${sesi}"${peserta?', peserta: '+peserta:''}.
 Perbaiki: nama orang/divisi salah eja (fiqri→Fikri, pupdok→Pubdok, logistick→Logistik, sektretaris→Sekretaris, acra→Acara, ibas→I-BASS, finan→Finance), kata terpotong/salah dengar, [tidak jelas] jika bisa ditebak dari konteks, tanda baca dasar, huruf kapital nama.
@@ -2552,17 +2535,12 @@ LARANGAN: Jangan ubah makna, jangan tambah/hapus info, jangan rangkum.
 OUTPUT: HANYA teks terkoreksi, tanpa penjelasan apapun.
 
 Transkripsi:
-${rawText}`}]}]}),
-      signal:ctrl.signal
-    });
-    clearTimeout(t);
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const data=await res.json();
+${rawText}`}]}]});
     const fixed=data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
     skTranscript = fixed || rawText;
   }catch(err){
     skTranscript=rawText;
-    if(err.name!=='AbortError') console.warn('fix err:',err.message);
+    console.warn('fix err:',err.message);
   }finally{
     document.getElementById('sk-stage-fixing').style.display='none';
     showTranscriptResult();
@@ -2707,18 +2685,11 @@ Bahasa Indonesia formal. Ringkas tapi informatif.`;
   let notulenText = '';
   try{
     if(hasGeminiKey()){
-      const res = await fetch(GEMINI_URL,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
-      });
-      if(res.ok){
-        const data = await res.json();
-        let raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        // Strip kalimat pembuka kalau Gemini masih nambahi
-        raw = raw.replace(/^[\s\S]*?(###\s)/m, '$1').trim();
-        notulenText = raw;
-      }
+      const data = await aiCall({contents:[{parts:[{text:prompt}]}]});
+      let raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      // Strip kalimat pembuka kalau Gemini masih nambahi
+      raw = raw.replace(/^[\s\S]*?(###\s)/m, '$1').trim();
+      notulenText = raw;
     }
   }catch(e){}
 
@@ -2964,13 +2935,7 @@ OUTPUT FORMAT WAJIB — tulis persis seperti ini, tanpa teks lain:
 
   try{
     if(!hasGeminiKey()) throw new Error('AI tidak terhubung');
-    const res = await fetch(GEMINI_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
-    });
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const data = await res.json();
+    const data = await aiCall({contents:[{parts:[{text:prompt}]}]});
     const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
     const igMatch = raw.match(/===IG===([\s\S]*?)(?====WA===|$)/);
@@ -3088,12 +3053,7 @@ Buat 5-8 scene, spesifik dan actionable untuk tim kamera.`;
 
   try{
     if(!hasGeminiKey()) throw new Error('AI tidak terhubung');
-    const res = await fetch(GEMINI_URL,{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
-    });
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const data = await res.json();
+    const data = await aiCall({contents:[{parts:[{text:prompt}]}]});
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
     if(!text) throw new Error('AI tidak menghasilkan teks');
 

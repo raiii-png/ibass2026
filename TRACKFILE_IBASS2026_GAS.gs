@@ -34,6 +34,14 @@ const DAP_FORM_ID = '1Ko8M-oRQisCxnOO5KDQXF2g8sS854yurR_qSxfJrYyE';
 const HEADER_ROW = ['No', 'Divisi', 'Kegiatan & Detail', 'Priority', 'Penanggung Jawab', 'Tanggal Mulai', 'Deadline', 'Status', 'Catatan', 'File/Link'];
 const DATA_START_ROW = 2; // header di baris 1, data mulai baris 2 — layout polos tanpa warna
 
+// ─── AI (Gemini) — kunci disimpan AMAN di Script Properties, bukan di web ───
+// Setup sekali: Project Settings (ikon gerigi) → Script properties → Add script property
+//   Property: GEMINI_KEY   Value: <kunci dari aistudio.google.com/apikey>
+const GEMINI_MODEL = 'gemini-2.5-flash';
+function geminiKey() {
+  return PropertiesService.getScriptProperties().getProperty('GEMINI_KEY') || '';
+}
+
 // Web Penilaian Bizstar — token harus sama dengan SUBMIT_TOKEN di index.html
 const PENILAIAN_TOKEN = 'ibass26-vGDnSmco7cBoju';
 const PENILAIAN_SHEET = 'Penilaian';
@@ -94,6 +102,15 @@ function doGet(e) {
       return jsonOk({ url: sh ? ss.getUrl() + '#gid=' + sh.getSheetId() : '', updates: ups });
     }
 
+    if (action === 'aifilestatus') {
+      // Cek status file yang di-upload ke AI (dipakai fitur potong video Pubdok)
+      if (!geminiKey()) return jsonErr('Kunci AI belum diisi di Script Properties');
+      const r = UrlFetchApp.fetch(
+        'https://generativelanguage.googleapis.com/v1beta/' + e.parameter.name + '?key=' + geminiKey(),
+        { muteHttpExceptions: true });
+      return jsonOk({ file: JSON.parse(r.getContentText()) });
+    }
+
     return jsonOk({ ok: true, message: 'Track File I-BASS 2026 API aktif' });
 
   } catch (err) {
@@ -149,6 +166,41 @@ function doPost(e) {
     if (body.submissions) {
       if (body.token !== PENILAIAN_TOKEN) return jsonErr('Token salah');
       return savePenilaian(ss, body.submissions);
+    }
+
+    // ── Proxy AI: kunci tidak pernah keluar dari server ──
+    if (action === 'ai') {
+      if (!geminiKey()) return jsonErr('Kunci AI belum diisi di Script Properties');
+      const r = UrlFetchApp.fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent?key=' + geminiKey(),
+        { method: 'post', contentType: 'application/json',
+          payload: JSON.stringify(body.payload || {}), muteHttpExceptions: true });
+      const parsed = JSON.parse(r.getContentText());
+      if (r.getResponseCode() >= 400) {
+        return jsonErr((parsed.error && parsed.error.message) || ('AI error ' + r.getResponseCode()));
+      }
+      return jsonOk({ ai: parsed });
+    }
+
+    // ── Tiket upload file AI (video Pubdok): server buat sesi upload,
+    //    file mengalir langsung browser → Google tanpa lewat sini ──
+    if (action === 'aifileinit') {
+      if (!geminiKey()) return jsonErr('Kunci AI belum diisi di Script Properties');
+      const r = UrlFetchApp.fetch(
+        'https://generativelanguage.googleapis.com/upload/v1beta/files?key=' + geminiKey() + '&uploadType=resumable',
+        { method: 'post', contentType: 'application/json',
+          headers: {
+            'X-Goog-Upload-Protocol': 'resumable',
+            'X-Goog-Upload-Command': 'start',
+            'X-Goog-Upload-Header-Content-Length': String(body.size || 0),
+            'X-Goog-Upload-Header-Content-Type': body.mime || 'application/octet-stream'
+          },
+          payload: JSON.stringify({ file: { display_name: body.displayName || 'upload' } }),
+          muteHttpExceptions: true });
+      const headers = r.getAllHeaders();
+      const uploadUrl = headers['x-goog-upload-url'] || headers['X-Goog-Upload-URL'] || '';
+      if (!uploadUrl) return jsonErr('Gagal membuat sesi upload (' + r.getResponseCode() + ')');
+      return jsonOk({ uploadUrl: uploadUrl });
     }
 
     // Sync seluruh data divisi dari dashboard
