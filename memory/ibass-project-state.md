@@ -9,6 +9,18 @@ metadata:
 
 # Proyek I-BASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
 
+## KEAMANAN KUNCI AI (per 2026-07-11) — PENTING
+- **Kunci Gemini TIDAK ADA lagi di HTML/repo.** Semua panggilan AI lewat proxy GAS:
+  `aiCall(payload)` di dashboard → `gasPost(GAS_URL,{action:'ai',payload})` → GAS
+  `UrlFetchApp` ke Gemini pakai kunci dari **Script Properties `GEMINI_KEY`**.
+- Upload file besar (audio/video >18MB): `action:'aifileinit'` bikin tiket upload di server,
+  file mengalir langsung browser→Google. Status file: GET `?action=aifilestatus&name=...`.
+- **Kunci tipe `AQ...` (AI Studio express) kadaluarsa tiap beberapa hari.** Kalau AI mati:
+  user cukup ganti VALUE Script Property GEMINI_KEY (Project Settings → Script properties)
+  — TANPA redeploy, langsung aktif. Jangan pernah taruh kunci di HTML lagi.
+- Kunci-kunci lama yang bocor di riwayat git akan direvoke user (hapus service account
+  `ais-gemini-key-*` di console.cloud.google.com Credentials, project ibass-2026).
+
 ## Arsitektur
 - **Single-file HTML** (semua CSS + JS inline) — bukan framework, murni vanilla.
 - **localStorage** untuk semua data persisten (tidak ada backend database).
