@@ -3360,7 +3360,7 @@ async function tfSyncToSheets(div){
     localStorage.setItem('ibass_tf_sync_'+div, new Date().toLocaleString('id-ID'));
     showToast('Tersimpan ke Google Sheets ✓');
     renderTrackFileTab(div);
-  }catch(e){ showToast('Gagal kirim — periksa koneksi'); }
+  }catch(e){ showToast('Gagal kirim — '+((e&&e.message)||'periksa koneksi'), 'error'); }
   finally{ if(btn){btn.disabled=false;btn.textContent='→ Simpan ke Sheets';} }
 }
 
