@@ -1692,6 +1692,7 @@ body::after {
   <div id="dash-pubdok" style="display:none">
     <div class="tabs">
       <div class="tab active" onclick="switchTab('pd','caption',this)">Caption</div>
+      <div class="tab" onclick="switchTab('pd','referensi',this);renderPdReferensi()">Referensi</div>
       <div class="tab" onclick="switchTab('pd','storyboard',this)">Storyboard</div>
       <div class="tab" onclick="switchTab('pd','video',this)">Edit Video</div>
       <div class="tab" onclick="switchTab('pd','trackfile',this);initUploadTracker()">Upload Konten</div>
@@ -1700,6 +1701,9 @@ body::after {
       <div class="tab" onclick="switchTab('pd','panduan',this)">Panduan</div>
     </div>
     <div class="main">
+
+      <!-- TAB: Referensi Desain -->
+      <div class="pd-content" id="pd-referensi" style="display:none"></div>
 
       <!-- TAB: Caption Generator -->
       <div class="pd-content" id="pd-caption">
@@ -1921,6 +1925,7 @@ body::after {
   <div id="dash-acara" style="display:none">
     <div class="tabs">
       <div class="tab active" onclick="switchTab('ac','rundown',this)">Rundown</div>
+      <div class="tab" onclick="switchTab('ac','penilaian',this);renderAcPenilaian()">Penilaian</div>
       <div class="tab" onclick="switchTab('ac','laporan',this)">Laporan</div>
       <div class="tab" onclick="switchTab('ac','tugas',this)">Track File</div>
       <div class="tab" onclick="switchTab('ac','panduan',this)">Panduan</div>
@@ -2859,6 +2864,110 @@ function getPdSesiName(){
   if(!sel) return '';
   if(sel.value==='other') return document.getElementById('pd-sesi-other')?.value || 'Sesi Lainnya';
   return sel.value || '';
+}
+
+/* ══ PUBDOK: REFERENSI DESAIN FEED IG ══ */
+function pdRefLoad(){ try{ return JSON.parse(localStorage.getItem('ibass_pd_ref')||'null'); }catch{ return null; } }
+
+function renderPdReferensi(){
+  const el = document.getElementById('pd-referensi'); if(!el) return;
+  const saved = pdRefLoad();
+  el.innerHTML = `
+    <div class="sec-head">
+      <div class="sec-eye">Pubdok · Referensi</div>
+      <div class="sec-title">Inspirasi Desain Feed</div>
+      <div class="sec-desc">Bingung mau desain feed seperti apa? Isi topiknya — dapat konsep desain lengkap plus kata kunci pencarian referensi.</div>
+    </div>
+    <div class="card accent-pubdok" style="margin-bottom:0.65rem">
+      <div class="tf-row" style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.5rem">
+        <div class="field" style="margin:0">
+          <label>Jenis Konten</label>
+          <select id="pdref-jenis">
+            <option>Feed post (1 gambar)</option>
+            <option>Carousel (beberapa slide)</option>
+            <option>Story</option>
+            <option>Cover Reels</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0">
+          <label>Gaya / Mood</label>
+          <select id="pdref-mood">
+            <option>Elegan magis (tema NEXUS)</option>
+            <option>Playful dan fun</option>
+            <option>Formal kampus</option>
+            <option>Minimalis modern</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin:0 0 0.5rem">
+        <label>Topik / Isi Postingan <span class="req">*</span></label>
+        <input type="text" id="pdref-topik" placeholder="Contoh: pengumuman TWN1, ucapan selamat buddy terbaik, countdown acara...">
+      </div>
+      <button class="btn" id="pdref-btn" onclick="pdGenReferensi()" style="width:100%">Cari Inspirasi →</button>
+      <div id="pdref-loading" style="display:none;text-align:center;padding:0.75rem;font-size:0.7rem;color:var(--muted)"><span class="spinner"></span> Menyusun konsep desain...</div>
+    </div>
+    <div id="pdref-result">${saved?pdRefHtml(saved):''}</div>`;
+}
+
+function pdRefHtml(data){
+  const cards = (data.konsep||[]).map((k,i)=>`
+    <div class="card accent-pubdok" style="margin-bottom:0.5rem">
+      <div class="card-label">Konsep ${i+1} — ${esc(k.nama||'')}</div>
+      <div style="font-size:0.72rem;color:var(--text);line-height:1.55;margin-bottom:0.5rem">${esc(k.konsep||'')}</div>
+      <div class="kv-row"><div class="kv-key">Layout</div><div class="kv-val" style="text-align:right;max-width:60%">${esc(k.layout||'')}</div></div>
+      <div class="kv-row"><div class="kv-key">Tipografi</div><div class="kv-val" style="text-align:right;max-width:60%">${esc(k.tipografi||'')}</div></div>
+      <div style="display:flex;align-items:center;gap:0.4rem;margin:0.5rem 0">
+        <span style="font-size:0.6rem;color:var(--muted)">Palet:</span>
+        ${(k.palet||[]).map(p=>`<span title="${esc(p.nama||p.hex||'')}" style="width:20px;height:20px;border-radius:50%;background:${esc(p.hex||'#888')};border:1px solid rgba(255,255,255,0.25);display:inline-block"></span><code style="font-size:0.56rem;color:var(--muted)">${esc(p.hex||'')}</code>`).join('')}
+      </div>
+      ${k.hook?`<div class="info-box" style="font-size:0.66rem;margin-bottom:0.5rem">Hook caption: "${esc(k.hook)}"</div>`:''}
+      <div style="display:flex;gap:0.3rem;flex-wrap:wrap">
+        ${(k.keywords||[]).map(q=>`<a href="https://id.pinterest.com/search/pins/?q=${encodeURIComponent(q)}" target="_blank" rel="noopener" class="chip" style="text-decoration:none">${esc(q)} ↗</a>`).join('')}
+      </div>
+    </div>`).join('');
+  return `
+    <div class="list-title">Konsep untuk: ${esc(data.topik||'')} <span style="color:var(--muted);font-weight:400">· ${esc(data.jenis||'')} · ${esc(data.mood||'')}</span></div>
+    ${cards}
+    <div style="font-size:0.6rem;color:var(--muted);margin-top:0.4rem">Klik kata kunci untuk membuka pencarian referensi di Pinterest.</div>`;
+}
+
+async function pdGenReferensi(){
+  const topik = document.getElementById('pdref-topik')?.value.trim();
+  if(!topik){ showToast('Isi dulu topik postingannya','warning'); return; }
+  const jenis = document.getElementById('pdref-jenis')?.value||'';
+  const mood = document.getElementById('pdref-mood')?.value||'';
+  const btn = document.getElementById('pdref-btn');
+  const load = document.getElementById('pdref-loading');
+  if(btn) btn.disabled = true;
+  if(load) load.style.display = 'block';
+  try{
+    const data = await aiCall({contents:[{parts:[{text:`Kamu art director berpengalaman untuk konten Instagram organisasi mahasiswa.
+
+Buat 3 konsep desain ${jenis} Instagram untuk topik: "${topik}".
+Konteks: akun IG resmi I-BASS 2026 (program HIMA Administrasi Bisnis, Universitas Telkom, tema besar "NEXUS" — kastil, bintang, magis, navy dan emas).
+Gaya yang diminta: ${mood}.
+
+Ketiga konsep harus BERBEDA arah satu sama lain (jangan tiga variasi dari ide yang sama).
+"keywords" = 3 frasa pencarian Pinterest dalam bahasa Inggris yang spesifik untuk menemukan referensi visual konsep itu (contoh: "navy gold event poster instagram", bukan kata umum seperti "design").
+
+Balas HANYA JSON array valid, tanpa teks lain:
+[
+  {"nama":"nama konsep singkat","konsep":"deskripsi visual 2-3 kalimat","layout":"susunan elemen singkat","tipografi":"saran font/gaya huruf","palet":[{"hex":"#0d1c3a","nama":"navy"},{"hex":"#e8bf6a","nama":"emas"}],"hook":"kalimat pembuka caption","keywords":["...","...","..."]}
+]`}]}]});
+    let text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim()||'[]';
+    text = text.replace(/```json|```/g,'').trim();
+    const konsep = JSON.parse(text);
+    if(!Array.isArray(konsep)||!konsep.length) throw new Error('Hasil kosong — coba lagi');
+    const hasil = { topik, jenis, mood, konsep, waktu:new Date().toISOString() };
+    localStorage.setItem('ibass_pd_ref', JSON.stringify(hasil));
+    document.getElementById('pdref-result').innerHTML = pdRefHtml(hasil);
+    showToast('3 konsep desain siap!','success');
+  }catch(e){
+    showToast('Gagal: '+(e.message||'coba lagi'),'error');
+  }finally{
+    if(btn) btn.disabled = false;
+    if(load) load.style.display = 'none';
+  }
 }
 
 /* ── Platform switcher ── */
@@ -5035,7 +5144,8 @@ function renderAcaraRundown(){
          <button class="ac-mini" onclick="acMoveItem(${idx},1)" title="Turun">↓</button>
          <button class="ac-mini" onclick="acEditItem(${idx})" title="Edit">✎</button>
          <button class="ac-mini danger" onclick="acDelItem(${idx})" title="Hapus">×</button>`
-      : `<button class="ac-mini go" onclick="acStartItem(${idx})" title="Mulai timer">▸</button>
+      : `<button class="ac-mini" onclick="acEditItem(${idx})" title="Ganti nama / durasi agenda">✎</button>
+         <button class="ac-mini go" onclick="acStartItem(${idx})" title="Mulai timer">▸</button>
          <button class="ac-mini go" onclick="acMarkDone('${item.id}')" title="Tandai selesai">✓</button>`;
     return `<div id="ac-row-${item.id}" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.65rem;margin-bottom:0.3rem;background:${st==='berjalan'?'rgba(240,160,35,0.08)':'var(--bg2s)'};border:1px solid ${st==='berjalan'?'rgba(240,160,35,0.3)':'var(--bdr2)'};border-radius:var(--r);transition:all 0.3s">
       <div style="width:22px;height:22px;border-radius:50%;background:${st==='selesai'?'rgba(68,201,138,0.15)':st==='berjalan'?'rgba(240,160,35,0.15)':'var(--bg3)'};border:1px solid ${stColor};display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:${stColor};flex-shrink:0">${idx+1}</div>
