@@ -1932,6 +1932,7 @@ body::after {
     </div>
     <div class="main">
       <div class="ac-content" id="ac-rundown"></div>
+      <div class="ac-content" id="ac-penilaian" style="display:none"></div>
       <div class="ac-content" id="ac-trackfile" style="display:none"></div>
       <div class="ac-content" id="ac-laporan" style="display:none"></div>
       <div class="ac-content" id="ac-tugas" style="display:none"></div>
@@ -2014,6 +2015,15 @@ function openApp(div){
   if(div==='acara') initAcara();
   if(div==='finance') initFinance();
   injectTrackFile(div);
+  statePullAll();
+}
+
+/* Render ulang tampilan divisi aktif setelah data baru masuk dari perangkat lain */
+function reinitCurrentDiv(){
+  const div = currentDiv;
+  if(div==='logistik') initLogistik();
+  if(div==='acara') initAcara();
+  if(div==='finance') initFinance();
 }
 
 function backToDivisi(){
@@ -2049,7 +2059,37 @@ function switchTab(prefix, id, el){
   if(prefix==='fn' && id==='trackfile') renderFnDAP();
   if(prefix==='fn' && id==='laporan') renderFnLaporan();
   if(id==='panduan') renderPanduan(prefix);
-  if(id==='tugas') renderTrackFileTab(currentDiv);
+  if(id==='tugas'){ renderTrackFileTab(currentDiv); tfAutoLoad(currentDiv); }
+}
+
+/* Track File: muat otomatis dari Sheets saat tab dibuka (maks tiap 60 dtk),
+   supaya isian dari perangkat/kadiv lain langsung kelihatan */
+const tfLastAutoLoad = {};
+async function tfAutoLoad(div){
+  if(!tfGetUrl()) return;
+  const now = Date.now();
+  if(tfLastAutoLoad[div] && now - tfLastAutoLoad[div] < 60000) return;
+  tfLastAutoLoad[div] = now;
+  try{
+    const divLabel = TF_DIV_LABEL[div]||div;
+    const res = await fetch(tfGetUrl()+'?action=read&divisi='+encodeURIComponent(divLabel));
+    const json = await res.json();
+    if(json.ok && Array.isArray(json.data)){
+      const items = json.data.map(r=>{
+        const m = /^\[([^\]]+)\]\s*/.exec(r.kegiatan||'');
+        return m ? {...r, sesi:m[1], kegiatan:String(r.kegiatan||'').slice(m[0].length)} : r;
+      });
+      const localRaw = JSON.stringify(tfLoad(div).map(d=>d.kegiatan));
+      const remoteRaw = JSON.stringify(items.map(d=>d.kegiatan));
+      // Jangan timpa kalau lokal punya isi tapi server kosong (belum sempat sync)
+      if(items.length || !tfLoad(div).length){
+        if(localRaw !== remoteRaw){
+          tfSave(div, items);
+          renderTrackFileTab(div);
+        }
+      }
+    }
+  }catch(e){}
 }
 
 /* ══════════════════════════════════════
@@ -2267,6 +2307,54 @@ async function gasPost(url, data){
 }
 function fmtRp(n){ return 'Rp '+Math.round(n||0).toLocaleString('id-ID'); }
 function esc(str){ const d=document.createElement('div'); d.textContent=String(str); return d.innerHTML; }
+
+/* ══ SYNC ANTAR-PERANGKAT ══
+   Data penting otomatis tersimpan ke server tiap ada perubahan, dan dimuat
+   ulang saat dashboard dibuka — jadi isian kadiv muncul di semua perangkat. */
+const STATE_KEYS = ['ibass_lg_items','ibass_ac_data','ibass_ac_notes',
+  'ibass_fn_income','ibass_fn_manual','ibass_fn_npanitia','ibass_fn_roster',
+  'ibass_ac_buddy','ibass_sk_history','ibass_pd_captions'];
+const _lsSet = localStorage.setItem.bind(localStorage);
+const stateTimers = {};
+localStorage.setItem = function(k, v){
+  _lsSet(k, v);
+  if(STATE_KEYS.indexOf(k) > -1) statePush(k);
+};
+function statePush(key){
+  if(!hasGasUrl()) return;
+  clearTimeout(stateTimers[key]);
+  stateTimers[key] = setTimeout(async ()=>{
+    try{
+      const updated = new Date().toISOString();
+      await gasPost(GAS_URL, { action:'savestate', key, json: localStorage.getItem(key)||'', updated });
+      _lsSet('ibass_state_ts_'+key, updated);
+    }catch(e){}
+  }, 2500);
+}
+let statePulling = false;
+async function statePullAll(){
+  if(!hasGasUrl() || statePulling) return;
+  statePulling = true;
+  try{
+    const res = await fetch(GAS_URL+'?action=loadstate&keys='+STATE_KEYS.join(','));
+    const js = await res.json();
+    if(js.ok && js.states){
+      let changed = false;
+      Object.entries(js.states).forEach(([k, v])=>{
+        if(!v || !v.json) return;
+        const localTs = localStorage.getItem('ibass_state_ts_'+k)||'';
+        const remoteTs = String(v.updated||'');
+        if(remoteTs && remoteTs > localTs && v.json !== localStorage.getItem(k)){
+          _lsSet(k, v.json);
+          _lsSet('ibass_state_ts_'+k, remoteTs);
+          changed = true;
+        }
+      });
+      if(changed) reinitCurrentDiv();
+    }
+  }catch(e){}
+  statePulling = false;
+}
 
 /* ══════════════════════════════════════
    SEKRETARIS STATE
@@ -4189,14 +4277,61 @@ function lgAddBukti(idx){
   const div = document.createElement('tr');
   div.id = 'lg-bukti-inline';
   div.innerHTML = `<td colspan="7" style="padding:0.5rem">
-    <div style="display:flex;gap:0.4rem;align-items:center">
-      <input type="text" id="lg-bukti-input" placeholder="Paste link bukti pembayaran (foto/Drive/nota)..." style="flex:1;font-size:0.72rem;padding:0.4rem 0.6rem;border-radius:var(--r);border:1px solid var(--bdr);background:var(--bg3);color:var(--text);outline:none">
+    <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap">
+      <label class="btn btn-sm" style="white-space:nowrap;cursor:pointer;margin:0">
+        Foto / Pilih Gambar
+        <input type="file" accept="image/*" style="display:none" onchange="lgUploadBukti(${idx}, this)">
+      </label>
+      <span style="font-size:0.6rem;color:var(--muted)">atau</span>
+      <input type="text" id="lg-bukti-input" placeholder="paste link bukti..." style="flex:1;min-width:140px;font-size:0.72rem;padding:0.4rem 0.6rem;border-radius:var(--r);border:1px solid var(--bdr);background:var(--bg3);color:var(--text);outline:none">
       <button class="btn btn-sm" onclick="lgSaveBukti(${idx})" style="white-space:nowrap">Simpan</button>
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('lg-bukti-inline')?.remove()">Batal</button>
     </div>
+    <div id="lg-bukti-status" style="display:none;font-size:0.62rem;color:var(--muted);margin-top:0.35rem"><span class="spinner"></span> Mengunggah foto...</div>
   </td>`;
   row.after(div);
-  document.getElementById('lg-bukti-input')?.focus();
+}
+
+/* Kompres foto di browser supaya cepat terkirim (max 1280px, JPEG) */
+function lgCompressImage(file){
+  return new Promise((res,rej)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const max = 1280;
+      let w = img.width, h = img.height;
+      if(w>max||h>max){ const k = Math.min(max/w, max/h); w = Math.round(w*k); h = Math.round(h*k); }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(img.src);
+      res(c.toDataURL('image/jpeg', 0.72));
+    };
+    img.onerror = ()=>rej(new Error('Gagal membaca gambar'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+async function lgUploadBukti(idx, input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const st = document.getElementById('lg-bukti-status');
+  if(st) st.style.display = 'block';
+  try{
+    const dataUrl = await lgCompressImage(file);
+    const b64 = dataUrl.split(',')[1];
+    const data = lgLoad();
+    const namaFile = 'bukti - '+(data[idx]?.nama||'barang')+' - '+new Date().toISOString().slice(0,10)+'.jpg';
+    const js = await gasPost(GAS_URL, { action:'uploadbukti', data:b64, mime:'image/jpeg', nama:namaFile });
+    if(!js || !js.url) throw new Error(js && js.error ? js.error : 'foto tidak terunggah — coba lagi');
+    if(!data[idx]) return;
+    data[idx].bukti = js.url;
+    lgSave(data);
+    renderLogistikBarang();
+    showToast('Foto bukti tersimpan — Finance otomatis bisa lihat','success');
+  }catch(e){
+    if(st) st.style.display = 'none';
+    showToast('Gagal unggah: '+(e.message||'coba lagi'),'error');
+  }
 }
 
 function lgSaveBukti(idx){
@@ -5379,6 +5514,118 @@ function acFmtTime(s){
   s = Math.max(0, Math.round(s));
   const m = Math.floor(s/60), sec = s%60;
   return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+
+/* ── Monitoring Penilaian Bizstar ───────────────────── */
+const AC_MILESTONES = ['Townhall 1','Pematerian 1','Townhall 2','Pematerian 2','Townhall 3'];
+function acBuddyRoster(){ try{ return JSON.parse(localStorage.getItem('ibass_ac_buddy')||'[]'); }catch{ return []; } }
+function acPenData(){ try{ return JSON.parse(localStorage.getItem('ibass_ac_pen')||'{"list":[],"synced":""}'); }catch{ return {list:[],synced:''}; } }
+
+async function acPenLoad(){
+  if(!hasGasUrl()){ showToast('Server dashboard belum terhubung','warning'); return; }
+  const btn = document.getElementById('acpen-refresh');
+  if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Memuat...'; }
+  try{
+    const res = await fetch(GAS_URL + '?action=penilaian');
+    const js = await res.json();
+    if(!js.ok) throw new Error(js.error||'gagal');
+    localStorage.setItem('ibass_ac_pen', JSON.stringify({ list: js.penilaian||[], synced: new Date().toISOString() }));
+    showToast((js.penilaian||[]).length + ' penilaian termuat','success');
+  }catch(e){
+    showToast('Gagal memuat penilaian — coba lagi','error');
+  }
+  renderAcPenilaian();
+}
+
+function acToggleBuddyForm(){
+  const f = document.getElementById('acpen-roster-form');
+  if(f) f.style.display = f.style.display==='none' ? 'block' : 'none';
+}
+function acSaveBuddyRoster(){
+  const raw = document.getElementById('acpen-roster-input')?.value || '';
+  const names = raw.split('\n').map(s=>s.trim()).filter(Boolean);
+  localStorage.setItem('ibass_ac_buddy', JSON.stringify(names));
+  showToast(names.length ? names.length+' nama buddy tersimpan' : 'Daftar buddy dikosongkan','success');
+  renderAcPenilaian();
+}
+
+function acPenNorm(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
+
+function renderAcPenilaian(){
+  const el = document.getElementById('ac-penilaian'); if(!el) return;
+  const pen = acPenData();
+  const roster = acBuddyRoster();
+  const syncTxt = pen.synced
+    ? 'Terakhir dimuat: '+new Date(pen.synced).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+    : 'Belum pernah dimuat — tekan tombol di atas';
+
+  const sections = AC_MILESTONES.map(ms=>{
+    const isi = pen.list.filter(p=>acPenNorm(p.milestone)===acPenNorm(ms));
+    const penilaiSet = [...new Set(isi.map(p=>acPenNorm(p.penilai)))];
+    const sudah = [...new Set(isi.map(p=>String(p.penilai||'').trim()))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'id'));
+    const belum = roster.filter(n=>{
+      const nn = acPenNorm(n);
+      return !penilaiSet.some(p=>p===nn || p.includes(nn) || nn.includes(p));
+    });
+    return `<div class="card accent-acara" style="margin-bottom:0.5rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.4rem">
+        <div class="card-label" style="margin:0">${ms}</div>
+        <div style="font-size:0.62rem;color:var(--muted)">${isi.length} penilaian · ${sudah.length} penilai${roster.length?` · <span style="color:${belum.length?'var(--amber)':'var(--green)'}">${belum.length} belum isi</span>`:''}</div>
+      </div>
+      ${sudah.length?`<div style="margin-top:0.4rem;font-size:0.64rem;color:var(--text2)">Sudah isi: ${sudah.map(esc).join(', ')}</div>`:'<div style="margin-top:0.4rem;font-size:0.64rem;color:var(--muted)">Belum ada yang mengisi.</div>'}
+      ${roster.length&&belum.length?`<div style="margin-top:0.3rem;font-size:0.64rem;color:var(--amber)">Belum isi: ${belum.map(esc).join(', ')}</div>`:''}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="sec-head">
+      <div class="sec-eye">Acara · Penilaian</div>
+      <div class="sec-title">Monitoring Penilaian Bizstar</div>
+      <div class="sec-desc">Pantau siapa saja yang sudah dan belum mengisi penilaian di web Penilaian per milestone.</div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.65rem">
+      <div style="font-size:0.62rem;color:var(--muted)">${syncTxt}</div>
+      <div style="display:flex;gap:0.4rem">
+        <button class="btn btn-sm" id="acpen-refresh" onclick="acPenLoad()">Muat Data Penilaian</button>
+        <button class="btn btn-ghost btn-sm" onclick="acPenCopyBelum()">Salin Belum Isi</button>
+      </div>
+    </div>
+
+    <div class="mini-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0.65rem">
+      <div class="mini-stat"><div class="mini-val num" style="color:var(--acara)">${pen.list.length}</div><div class="mini-lbl">Total Penilaian</div></div>
+      <div class="mini-stat"><div class="mini-val num" style="color:var(--blue2)">${[...new Set(pen.list.map(p=>acPenNorm(p.penilai)))].filter(Boolean).length}</div><div class="mini-lbl">Penilai Aktif</div></div>
+      <div class="mini-stat"><div class="mini-val num" style="color:var(--green)">${roster.length}</div><div class="mini-lbl">Buddy Terdaftar</div></div>
+    </div>
+
+    ${sections}
+
+    <div style="margin-top:0.6rem">
+      <button class="btn btn-ghost btn-sm" onclick="acToggleBuddyForm()">${roster.length?'Daftar Buddy ('+roster.length+' nama)':'+ Isi Daftar Nama Buddy'}</button>
+      <div id="acpen-roster-form" style="display:none;margin-top:0.5rem">
+        <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.35rem">Satu nama per baris — sama seperti nama yang mereka pakai saat mengisi web Penilaian.</div>
+        <textarea id="acpen-roster-input" style="width:100%;min-height:120px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.72rem;padding:0.5rem;border-radius:var(--r);outline:none;resize:vertical" placeholder="Nama buddy 1&#10;Nama buddy 2&#10;...">${acBuddyRoster().join('\n')}</textarea>
+        <button class="btn btn-sm" onclick="acSaveBuddyRoster()" style="margin-top:0.4rem">Simpan Daftar</button>
+      </div>
+    </div>`;
+}
+
+function acPenCopyBelum(){
+  const pen = acPenData();
+  const roster = acBuddyRoster();
+  if(!roster.length){ showToast('Isi dulu Daftar Nama Buddy di bawah','warning'); return; }
+  let txt = '*MONITORING PENILAIAN BIZSTAR — I-BASS 2026*\n\n';
+  AC_MILESTONES.forEach(ms=>{
+    const penilaiSet = [...new Set(pen.list.filter(p=>acPenNorm(p.milestone)===acPenNorm(ms)).map(p=>acPenNorm(p.penilai)))];
+    const belum = roster.filter(n=>{
+      const nn = acPenNorm(n);
+      return !penilaiSet.some(p=>p===nn || p.includes(nn) || nn.includes(p));
+    });
+    txt += '*'+ms+'*'+(belum.length?' — belum isi ('+belum.length+'):\n'+belum.map(n=>'- '+n).join('\n'):' — semua sudah isi')+'\n\n';
+  });
+  navigator.clipboard.writeText(txt.trim())
+    .then(()=>showToast('Daftar tersalin — tempel di WhatsApp','success'))
+    .catch(()=>showToast('Gagal menyalin','error'));
 }
 
 /* ── Laporan Acara ───────────────────── */

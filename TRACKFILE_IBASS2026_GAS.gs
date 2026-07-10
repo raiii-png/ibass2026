@@ -102,6 +102,21 @@ function doGet(e) {
       return jsonOk({ url: sh ? ss.getUrl() + '#gid=' + sh.getSheetId() : '', updates: ups });
     }
 
+    if (action === 'loadstate') {
+      // Baca state dashboard untuk sync antar-perangkat
+      const wanted = String(e.parameter.keys || '').split(',').filter(Boolean);
+      const sh = ss.getSheetByName('STATE');
+      const out = {};
+      if (sh && sh.getLastRow() > 1) {
+        sh.getRange(2, 1, sh.getLastRow() - 1, 3).getValues().forEach(r => {
+          if (r[0] && (!wanted.length || wanted.indexOf(r[0]) > -1)) {
+            out[r[0]] = { json: String(r[1] || ''), updated: String(r[2] || '') };
+          }
+        });
+      }
+      return jsonOk({ states: out });
+    }
+
     if (action === 'aifilestatus') {
       // Cek status file yang di-upload ke AI (dipakai fitur potong video Pubdok)
       if (!geminiKey()) return jsonErr('Kunci AI belum diisi di Script Properties');
@@ -180,6 +195,39 @@ function doPost(e) {
         return jsonErr((parsed.error && parsed.error.message) || ('AI error ' + r.getResponseCode()));
       }
       return jsonOk({ ai: parsed });
+    }
+
+    // ── Simpan state dashboard (sync antar-perangkat) ──
+    if (action === 'savestate') {
+      if (!body.key) return jsonErr('key kosong');
+      const sh = stateSheet(ss);
+      const last = sh.getLastRow();
+      let rowIdx = 0;
+      if (last > 1) {
+        const keys = sh.getRange(2, 1, last - 1, 1).getValues();
+        for (let i = 0; i < keys.length; i++) {
+          if (keys[i][0] === body.key) { rowIdx = i + 2; break; }
+        }
+      }
+      const rowVals = [[body.key, body.json || '', body.updated || new Date().toISOString()]];
+      if (rowIdx) sh.getRange(rowIdx, 1, 1, 3).setValues(rowVals);
+      else sh.appendRow(rowVals[0]);
+      return jsonOk({ saved: body.key });
+    }
+
+    // ── Upload foto bukti pembayaran Logistik → Google Drive ──
+    if (action === 'uploadbukti') {
+      if (!body.data) return jsonErr('Tidak ada gambar');
+      const blob = Utilities.newBlob(
+        Utilities.base64Decode(body.data),
+        body.mime || 'image/jpeg',
+        body.nama || ('bukti-' + Date.now() + '.jpg'));
+      let folder;
+      const it = DriveApp.getFoldersByName('Bukti Pembayaran I-BASS 2026');
+      folder = it.hasNext() ? it.next() : DriveApp.createFolder('Bukti Pembayaran I-BASS 2026');
+      const file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      return jsonOk({ url: file.getUrl() });
     }
 
     // ── Tiket upload file AI (video Pubdok): server buat sesi upload,
@@ -532,6 +580,17 @@ function fmtDate(val) {
   if (!val) return '';
   if (val instanceof Date) return Utilities.formatDate(val, 'Asia/Jakarta', 'yyyy-MM-dd');
   return String(val);
+}
+
+// ─── Helper: sheet STATE (sync antar-perangkat, tersembunyi) ──────
+function stateSheet(ss) {
+  let sh = ss.getSheetByName('STATE');
+  if (!sh) {
+    sh = ss.insertSheet('STATE');
+    sh.getRange(1, 1, 1, 3).setValues([['key', 'json', 'updated']]);
+    try { sh.hideSheet(); } catch (e) {}
+  }
+  return sh;
 }
 
 // ─── Helper: layout polos ─────────────────────────────────────────
