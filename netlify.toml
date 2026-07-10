@@ -1,3 +1,2 @@
-# Konfigurasi Netlify — situs statis murni, tanpa build
 [build]
-  publish = "."
+  publish = "netlify_site"
