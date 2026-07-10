@@ -4622,7 +4622,10 @@ function renderFnDAP(){
           <div class="card-title" style="margin-bottom:0.1rem">Pembayaran DAP</div>
           <div style="font-size:0.62rem;color:var(--muted)">${syncTxt}</div>
         </div>
-        <button class="btn btn-sm" id="fn-dap-refresh" onclick="fnFetchDAP()" style="flex-shrink:0">Cek Pembayaran Baru</button>
+        <div style="display:flex;gap:0.4rem;flex-shrink:0;flex-wrap:wrap">
+          <button class="btn btn-sm" id="fn-dap-refresh" onclick="fnFetchDAP()">Cek Pembayaran Baru</button>
+          <button class="btn btn-ghost btn-sm" onclick="fnCopyBelumBayar()">Salin Belum Bayar</button>
+        </div>
       </div>
 
       <div class="mini-grid">
@@ -4650,6 +4653,15 @@ function renderFnDAP(){
         <input type="number" value="${nPanitia}" min="1" onchange="fnSetNPanitia(this.value)"
           style="width:56px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.72rem;padding:0.25rem 0.4rem;outline:none;border-radius:var(--r);text-align:center">
         <span>× ${fmtRp(DAP_WAJIB)}</span>
+      </div>
+
+      <div style="margin-top:0.6rem">
+        <button class="btn btn-ghost btn-sm" onclick="fnToggleRoster()">${fnRoster().length?'Daftar Panitia ('+fnRoster().length+' nama)':'+ Isi Daftar Nama Panitia'}</button>
+        <div id="fn-roster-form" style="display:none;margin-top:0.5rem">
+          <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.35rem">Satu nama per baris. Dipakai untuk tahu siapa yang belum bayar sama sekali.</div>
+          <textarea id="fn-roster-input" style="width:100%;min-height:120px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.72rem;padding:0.5rem;border-radius:var(--r);outline:none;resize:vertical" placeholder="Aghni&#10;Fakhri Haidar Sawego&#10;...">${fnRoster().join('\n')}</textarea>
+          <button class="btn btn-sm" onclick="fnSaveRoster()" style="margin-top:0.4rem">Simpan Daftar</button>
+        </div>
       </div>
     </div>
 
@@ -4819,6 +4831,55 @@ async function fnFetchDAP(quiet){
     if(!quiet) showToast('Gagal memuat pembayaran — cek koneksi', 'error');
     if(!quiet) renderFnDAP();
   }
+}
+
+/* Daftar nama panitia — untuk tahu siapa yang belum bayar sama sekali */
+function fnRoster(){ try{ return JSON.parse(localStorage.getItem('ibass_fn_roster')||'[]'); }catch{ return []; } }
+function fnToggleRoster(){
+  const f = document.getElementById('fn-roster-form');
+  if(f) f.style.display = f.style.display==='none' ? 'block' : 'none';
+}
+function fnSaveRoster(){
+  const raw = document.getElementById('fn-roster-input')?.value || '';
+  const names = raw.split('\n').map(s=>s.trim()).filter(Boolean);
+  localStorage.setItem('ibass_fn_roster', JSON.stringify(names));
+  if(names.length) fnSetNPanitia(names.length);
+  else renderFnDAP();
+  showToast(names.length ? names.length+' nama panitia tersimpan' : 'Daftar panitia dikosongkan','success');
+}
+
+function fnCopyBelumBayar(){
+  const orang = fnDapPerOrang();
+  const roster = fnRoster();
+  const norm = s => String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+  const payerSet = orang.map(o=>norm(o.nama));
+  const kurang = orang.filter(o=>o.total<DAP_WAJIB);
+  const lunas = orang.filter(o=>o.total>=DAP_WAJIB);
+  const belumSamaSekali = roster.filter(n=>{
+    const nn = norm(n);
+    return !payerSet.some(p=>p===nn || p.includes(nn) || nn.includes(p));
+  });
+
+  let txt = '*STATUS PEMBAYARAN DAP — I-BASS 2026*\n';
+  txt += 'Wajib per orang: '+fmtRp(DAP_WAJIB)+'\n\n';
+  if(belumSamaSekali.length){
+    txt += '*Belum bayar sama sekali ('+belumSamaSekali.length+'):*\n';
+    belumSamaSekali.forEach(n=>{ txt += '- '+n+'\n'; });
+    txt += '\n';
+  }
+  if(kurang.length){
+    txt += '*Belum lunas ('+kurang.length+'):*\n';
+    kurang.forEach(o=>{ txt += '- '+o.nama+' — kurang '+fmtRp(DAP_WAJIB-o.total)+'\n'; });
+    txt += '\n';
+  }
+  txt += '*Sudah lunas ('+lunas.length+'):*\n';
+  lunas.forEach(o=>{ txt += '- '+o.nama+'\n'; });
+  if(!roster.length){
+    txt += '\n_Catatan: isi Daftar Nama Panitia di dashboard supaya yang belum bayar sama sekali ikut terdata._';
+  }
+  navigator.clipboard.writeText(txt)
+    .then(()=>showToast('Status DAP tersalin — tempel di WhatsApp','success'))
+    .catch(()=>showToast('Gagal menyalin','error'));
 }
 
 /* Auto-update: cek pembayaran baru dari form tiap 60 detik selama Finance terbuka */

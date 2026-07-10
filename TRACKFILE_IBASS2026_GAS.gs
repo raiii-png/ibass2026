@@ -113,16 +113,18 @@ function readDapPayments() {
     resp.getItemResponses().forEach(ir => {
       const judul = ir.getItem().getTitle().toLowerCase();
       const val = ir.getResponse();
-      if (judul.indexOf('nama') > -1) {
-        out.nama = String(val);
+      // Cek upload/bukti DULUAN — judul pertanyaan upload bisa mengandung kata 'nama'
+      // (mis. "Upload bukti atas nama Anda") dan menimpa nama asli kalau dicek belakangan
+      if (judul.indexOf('bukti') > -1 || judul.indexOf('upload') > -1 || Array.isArray(val)) {
+        const ids = Array.isArray(val) ? val : [val];
+        if (ids.length && ids[0]) out.bukti = 'https://drive.google.com/open?id=' + ids[0];
       } else if (judul.indexOf('divisi') > -1) {
         out.divisi = String(val);
       } else if (judul.indexOf('termin') > -1) {
         out.termin = String(val);
         out.nominal = parseNominalDAP(String(val));
-      } else if (judul.indexOf('bukti') > -1) {
-        const ids = Array.isArray(val) ? val : [val];
-        if (ids.length && ids[0]) out.bukti = 'https://drive.google.com/open?id=' + ids[0];
+      } else if (judul.indexOf('nama') > -1) {
+        out.nama = String(val);
       }
     });
     return out;
