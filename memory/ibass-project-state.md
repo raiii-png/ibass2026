@@ -21,6 +21,34 @@ metadata:
 - Kunci-kunci lama yang bocor di riwayat git akan direvoke user (hapus service account
   `ais-gemini-key-*` di console.cloud.google.com Credentials, project ibass-2026).
 
+## Sesi 8 (2026-07-11 malam, Boss tidur — kerja mandiri): 6 fitur + fix kritis
+- **Background dicerahkan** (2 panitia komplain gelap): gradasi canvas galaxy `#22406f→#0b1c3c`,
+  token `--bg` dkk naik, kabut intro ikut. Jangan digelapkan lagi.
+- **Pubdok tab "Referensi"** (untuk Tika): `renderPdReferensi/pdGenReferensi` — 3 konsep desain
+  feed IG via aiCall (JSON), palet hex visual, link pencarian Pinterest. Storage `ibass_pd_ref`.
+- **Acara tab "Penilaian"**: `renderAcPenilaian/acPenLoad/acPenCopyBelum` — fetch `?action=penilaian`,
+  roster buddy editable (`ibass_ac_buddy`), status per milestone (AC_MILESTONES 5), salin WA.
+- **Logistik foto bukti**: `lgUploadBukti/lgCompressImage` (canvas 1280px JPEG) → GAS
+  `action:uploadbukti` → Drive folder "Bukti Pembayaran I-BASS 2026" (anyone-with-link) → URL.
+- **Edit nama agenda rundown**: tombol ✎ sekarang selalu tampil per baris (dulu hanya di mode Atur).
+- **Sync antar-perangkat**: GAS sheet STATE (hidden, key/json/updated) + `action:savestate` /
+  `?action=loadstate`. Dashboard: `STATE_KEYS` (lg_items, ac_data, ac_notes, fn_income, fn_manual,
+  fn_npanitia, fn_roster, ac_buddy, sk_history, pd_captions), intersepsi `localStorage.setItem`
+  → `statePush` debounce 2.5s; `statePullAll()` di `openApp` (timestamp menang yang baru) →
+  `reinitCurrentDiv()`. Track File: `tfAutoLoad(div)` saat buka tab tugas (throttle 60 dtk).
+- **FIX KRITIS: `index.html` APPS_URL masih URL GAS lama yang MATI** — penilaian yang disubmit
+  selama ini hilang. Sudah diganti ke URL baru.
+- Auto-sync script laptop Boss commit+push sendiri tiap jam (a4b3c0b dkk) — cek `git log` dulu
+  sebelum commit manual, sering sudah ter-commit.
+
+## PENDING pagi Boss (2026-07-11):
+1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
+   (UrlFetchApp + Drive) → Deploy New version. Tanpa ini: AI, foto bukti, sync state MATI
+   (error "tidak memiliki izin UrlFetchApp"). Fitur lama tetap jalan.
+2. Hapus 3 service account `ais-gemini-key-*` LAMA di console.cloud.google.com Credentials
+   (revoke kunci bocor di riwayat git) — sisakan yang dipakai Script Property.
+3. Hapus repo `kadivibass2026/kadivibass2026.github.io` + organisasinya (Danger Zone) — batal dipakai.
+
 ## Arsitektur
 - **Single-file HTML** (semua CSS + JS inline) — bukan framework, murni vanilla.
 - **localStorage** untuk semua data persisten (tidak ada backend database).
