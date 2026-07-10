@@ -70,6 +70,28 @@ metadata:
 | 5 | 07-03 | Remote+HP | PR #1-#7 | Penilaian→GAS, rekam online, laporan, Track File aktif, UI V8 |
 | 6 | 07-05 | Laptop | `458591e`,`fc26dcc` | Bukti pembayaran Logistik, fix loop SR, kunci AI baru, rekam online terverifikasi |
 
+## Sesi 7 (2026-07-10) — GAS beres total, Finance live dari form
+- **GAS URL BARU** (deployment baru dari sesi Antigravity): `AKfycbxCTCMFY1KEBuT6TeiBbMeDgB-JL2o3zOXtdvpDagd1E-tMScq45uxX-nwUqA9qf9Becg`.
+  Yang lama (`AKfycbx5iNCi...`) MATI. `tfGetUrl()` sekarang SELALU pakai konstanta `GAS_URL`
+  dan auto-hapus URL nyangkut di localStorage.
+- **Track File → Sheets JALAN** (POST sync dibalas `{"ok":true}`). Bug sebelumnya: kode
+  ter-deploy ≠ repo (error "action is not defined") → fixed dengan paste ulang + redeploy.
+- **DAP parsing fix di GAS**: cek 'bukti'/'upload'/Array SEBELUM 'nama' — judul pertanyaan
+  upload form mengandung kata "nama" sehingga ID file menimpa nama asli. Sekarang 13 nama
+  asli + link bukti transfer semua muncul.
+- **Finance auto-update**: `fnDapAutoStart()` fetch diam-diam saat Finance dibuka + tiap 60 dtk
+  (hanya saat tab visible), notif "X pembayaran baru masuk". Selalu menimpa data lama.
+- **Fitur roster + salin belum bayar**: `fnRoster()` (localStorage `ibass_fn_roster`, satu nama
+  per baris, auto-set jumlah panitia), `fnCopyBelumBayar()` — teks WA 3 seksi: belum bayar
+  sama sekali (dari roster), belum lunas (+ kurang berapa), sudah lunas.
+- **Kunci AI diganti lagi (10 Jul)**, notulen diverifikasi end-to-end. Ingat: kunci `AQ...`
+  umurnya pendek — kalau AI mati (401), minta Boss buat kunci baru. Kunci permanen `AIza`
+  gagal dibuat (Cloud Console ruwet buat Boss) — jangan paksa, cukup ganti kunci saat mati.
+- **Push ke origin/main sukses** (`848c655`) setelah Boss klik Allow di GitHub secret scanning.
+  Tiap push baru dengan kunci baru akan kena blok lagi — kasih link unblock ke Boss.
+- Catatan: ada branch cloud `claude/*` di remote dari sesi HP — belum di-merge, abaikan
+  kecuali Boss menyebutnya.
+
 ## ⏭️ Resume (per 2026-07-05)
 
 **Status: semua fitur selesai, commit `fc26dcc` (main).**
