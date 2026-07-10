@@ -158,8 +158,9 @@ function doPost(e) {
 
       let sheet = ss.getSheetByName(sheetName);
       if (!sheet) sheet = createDivisiSheet(ss, sheetName);
+      ensurePlainLayout(sheet);
 
-      // Hapus data lama (baris 5 ke bawah)
+      // Hapus data lama
       const lastRow = sheet.getLastRow();
       if (lastRow >= DATA_START_ROW) {
         sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, HEADER_ROW.length).clearContent();
@@ -180,7 +181,6 @@ function doPost(e) {
           item.file || ''
         ]);
         sheet.getRange(DATA_START_ROW, 1, rows.length, HEADER_ROW.length).setValues(rows);
-        applyStatusColors(sheet, DATA_START_ROW, rows.length);
       }
 
       // Update sheet REKAP
@@ -193,6 +193,7 @@ function doPost(e) {
       const sheetName = body.divisi || 'Unknown';
       let sheet = ss.getSheetByName(sheetName);
       if (!sheet) sheet = createDivisiSheet(ss, sheetName);
+      ensurePlainLayout(sheet);
 
       const no = Math.max(sheet.getLastRow() - DATA_START_ROW + 2, 1);
       const newRow = [
@@ -207,13 +208,12 @@ function doPost(e) {
         body.file || ''
       ];
       sheet.appendRow(newRow);
-      applyStatusColors(sheet, sheet.getLastRow(), 1);
 
       // Tambah ke REKAP juga
       const rekap = ss.getSheetByName('REKAP');
       if (rekap) {
+        ensurePlainLayout(rekap);
         rekap.appendRow(newRow);
-        applyStatusColors(rekap, rekap.getLastRow(), 1);
       }
 
       return jsonOk({ message: 'Item ditambahkan' });
@@ -459,7 +459,8 @@ function readSheet(ss, sheetName) {
 
   const values = sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, HEADER_ROW.length).getValues();
   return values
-    .filter(r => r[2]) // skip baris kosong (kolom Kegiatan harus ada)
+    // skip baris kosong + baris header sisa layout lama (sebelum sheet termigrasi)
+    .filter(r => r[2] && r[2] !== 'Kegiatan & Detail')
     .map(r => ({
       no:        r[0],
       divisi:    r[1],
@@ -481,28 +482,24 @@ function fmtDate(val) {
   return String(val);
 }
 
-// ─── Helper: warna status ─────────────────────────────────────────
-function applyStatusColors(sheet, startRow, numRows) {
-  const STATUS_COLORS = {
-    'Selesai':     { bg: '#1a3a2a', fg: '#4ecb8d' },
-    'Berlangsung': { bg: '#2a2a15', fg: '#f0c040' },
-    'Terlambat':   { bg: '#3a1a1a', fg: '#f87171' },
-    'Cancel':      { bg: '#222228', fg: '#888899' },
-    'Belum':       { bg: '#1e1f2e', fg: '#9999bb' },
-  };
-  const statusCol = 8; // kolom H
-  for (let i = 0; i < numRows; i++) {
-    const cell = sheet.getRange(startRow + i, statusCol);
-    const status = cell.getValue();
-    const color = STATUS_COLORS[status] || STATUS_COLORS['Belum'];
-    cell.setBackground(color.bg).setFontColor(color.fg);
-  }
+// ─── Helper: layout polos ─────────────────────────────────────────
+// Header di baris 1 (bold saja), data mulai baris 2. Tanpa judul, tanpa warna,
+// tanpa catatan. Sheet berformat lama (judul 📋 dsb) otomatis dibangun ulang.
+function ensurePlainLayout(sheet) {
+  if (sheet.getRange(1, 1).getValue() === 'No') return;
+  try { sheet.getDataRange().breakApart(); } catch (e) {}
+  sheet.clear();
+  sheet.getRange(1, 1, 1, HEADER_ROW.length).setValues([HEADER_ROW]).setFontWeight('bold');
+  sheet.setFrozenRows(1);
+  const colWidths = [40, 100, 280, 80, 150, 100, 100, 100, 200, 200];
+  colWidths.forEach((w, i) => sheet.setColumnWidth(i + 1, w));
 }
 
 // ─── Rebuild REKAP dari semua divisi ─────────────────────────────
 function rebuildRekap(ss) {
   const rekap = ss.getSheetByName('REKAP');
   if (!rekap) return;
+  ensurePlainLayout(rekap);
 
   // Hapus data lama
   const lastRow = rekap.getLastRow();
@@ -516,14 +513,13 @@ function rebuildRekap(ss) {
     const sheet = ss.getSheetByName(name);
     if (!sheet || sheet.getLastRow() < DATA_START_ROW) return;
     const rows = sheet.getRange(DATA_START_ROW, 1, sheet.getLastRow() - DATA_START_ROW + 1, HEADER_ROW.length).getValues();
-    rows.filter(r => r[2]).forEach(r => {
+    rows.filter(r => r[2] && r[2] !== 'Kegiatan & Detail').forEach(r => {
       allRows.push([no++, r[1] || name, r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9]]);
     });
   });
 
   if (allRows.length > 0) {
     rekap.getRange(DATA_START_ROW, 1, allRows.length, HEADER_ROW.length).setValues(allRows);
-    applyStatusColors(rekap, DATA_START_ROW, allRows.length);
   }
 }
 
@@ -540,21 +536,13 @@ function setupSpreadsheet() {
     ss.setActiveSheet(rekap);
     ss.moveActiveSheet(1);
   }
-  setupSheetHeader(rekap, 'REKAP KESELURUHAN — I-BASS 2026', '#1e3a5f', '#5bc4f5');
+  ensurePlainLayout(rekap);
 
   // Sheet per divisi
   SHEET_DIVISI.forEach((name, i) => {
     let sheet = ss.getSheetByName(name);
     if (!sheet) sheet = ss.insertSheet(name, i + 1);
-    const colors = {
-      Secretary: { bg: '#1e2a3e', fg: '#5bc4f5' },
-      Pubdok:    { bg: '#2a1e3e', fg: '#a78bfa' },
-      Logistik:  { bg: '#2a2a15', fg: '#f0c040' },
-      Event:     { bg: '#1e2a2a', fg: '#4ecb8d' },
-      Finance:   { bg: '#1a2e1a', fg: '#4ecb8d' },
-    };
-    const c = colors[name] || { bg: '#1e1f2e', fg: '#9999cc' };
-    setupSheetHeader(sheet, 'TRACK FILE ' + name.toUpperCase() + ' — I-BASS 2026', c.bg, c.fg);
+    ensurePlainLayout(sheet);
   });
 
   // Hapus Sheet1 default jika ada dan masih kosong
@@ -563,49 +551,13 @@ function setupSpreadsheet() {
     ss.deleteSheet(default1);
   }
 
-  SpreadsheetApp.getUi().alert('✓ Setup selesai!\n\nSheet yang dibuat:\n- REKAP\n- Secretary\n- Pubdok\n- Logistik\n- Event\n- Finance\n\nSekarang deploy sebagai Web App.');
+  SpreadsheetApp.getUi().alert('Setup selesai.\n\nSheet yang dibuat:\n- REKAP\n- Secretary\n- Pubdok\n- Logistik\n- Event\n- Finance\n\nSekarang deploy sebagai Web App.');
 }
 
 function createDivisiSheet(ss, name) {
   const sheet = ss.insertSheet(name);
-  setupSheetHeader(sheet, 'TRACK FILE ' + name.toUpperCase() + ' — I-BASS 2026', '#1e1f2e', '#9999cc');
+  ensurePlainLayout(sheet);
   return sheet;
-}
-
-function setupSheetHeader(sheet, title, bgColor, fgColor) {
-  sheet.clearContents();
-
-  // Baris 1: judul
-  sheet.getRange(1, 1, 1, HEADER_ROW.length).merge();
-  const titleCell = sheet.getRange(1, 1);
-  titleCell.setValue('📋 ' + title)
-    .setBackground(bgColor).setFontColor(fgColor)
-    .setFontWeight('bold').setFontSize(12);
-
-  // Baris 2: catatan
-  sheet.getRange(2, 1, 1, HEADER_ROW.length).merge();
-  sheet.getRange(2, 1).setValue('Setelah update, konfirmasi ke Sekretaris I-BASS 2026 · Sync via Dashboard Kadiv')
-    .setBackground('#13141f').setFontColor('#666688').setFontSize(9).setFontStyle('italic');
-
-  // Baris 3: kosong (spacer)
-  sheet.getRange(3, 1).setValue('');
-
-  // Baris 4: header kolom
-  const headerRange = sheet.getRange(4, 1, 1, HEADER_ROW.length);
-  headerRange.setValues([HEADER_ROW])
-    .setBackground('#13141f').setFontColor(fgColor)
-    .setFontWeight('bold').setFontSize(10);
-  headerRange.setBorder(false, false, true, false, false, false, fgColor, SpreadsheetApp.BorderStyle.SOLID);
-
-  // Freeze header
-  sheet.setFrozenRows(4);
-
-  // Lebar kolom
-  const colWidths = [40, 100, 280, 80, 150, 100, 100, 100, 200, 200];
-  colWidths.forEach((w, i) => sheet.setColumnWidth(i + 1, w));
-
-  // Warna background baris 1–3
-  sheet.getRange(1, 1, 3, HEADER_ROW.length).setBackground(bgColor);
 }
 
 // ─── JSON helpers ─────────────────────────────────────────────────
