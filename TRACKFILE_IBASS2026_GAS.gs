@@ -32,7 +32,7 @@ const SHEET_DIVISI = ['Secretary', 'Pubdok', 'Logistik', 'Event', 'Finance'];
 // Form "PEMBAYARAN DAP IBASS 2026"
 const DAP_FORM_ID = '1Ko8M-oRQisCxnOO5KDQXF2g8sS854yurR_qSxfJrYyE';
 const HEADER_ROW = ['No', 'Divisi', 'Kegiatan & Detail', 'Priority', 'Penanggung Jawab', 'Tanggal Mulai', 'Deadline', 'Status', 'Catatan', 'File/Link'];
-const DATA_START_ROW = 5; // header di baris 4, data mulai baris 5
+const DATA_START_ROW = 2; // header di baris 1, data mulai baris 2 — layout polos tanpa warna
 
 // Web Penilaian Bizstar — token harus sama dengan SUBMIT_TOKEN di index.html
 const PENILAIAN_TOKEN = 'ibass26-vGDnSmco7cBoju';
