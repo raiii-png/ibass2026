@@ -3305,12 +3305,14 @@ function tfSave(div,data){
   localStorage.setItem(tfKey(div), JSON.stringify(data));
 }
 function tfGetUrl(){
-  let url = localStorage.getItem('ibass_tf_sheets_url');
-  if (url && url.includes('AKfycbx5iNCi7rFpi8sXj5hyflk2W08OH4_4sUYFpJget4XQTgdbhKsp3vX8BXzQ8sa5_zla')) {
-    localStorage.removeItem('ibass_tf_sheets_url');
-    url = null;
+  // URL di kode = sumber utama. Simpanan lama di browser (dari versi sebelumnya) diabaikan
+  // dan dibersihkan supaya tidak pernah kirim ke deployment yang sudah mati.
+  const stored = localStorage.getItem('ibass_tf_sheets_url');
+  if (hasGasUrl()) {
+    if (stored && stored !== GAS_URL) localStorage.removeItem('ibass_tf_sheets_url');
+    return GAS_URL;
   }
-  return url || (hasGasUrl()?GAS_URL:'');
+  return stored || '';
 }
 
 /* Auto-sync: setiap perubahan track file terkirim sendiri ke Sheets (debounce 2 detik) */
