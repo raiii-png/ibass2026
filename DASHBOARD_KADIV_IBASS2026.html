@@ -2313,7 +2313,7 @@ function esc(str){ const d=document.createElement('div'); d.textContent=String(s
    ulang saat dashboard dibuka — jadi isian kadiv muncul di semua perangkat. */
 const STATE_KEYS = ['ibass_lg_items','ibass_ac_data','ibass_ac_notes',
   'ibass_fn_income','ibass_fn_manual','ibass_fn_npanitia','ibass_fn_roster',
-  'ibass_ac_buddy','ibass_sk_history','ibass_pd_captions'];
+  'ibass_ac_buddy','ibass_sk_history','ibass_pd_captions','ibass_fn2'];
 const _lsSet = localStorage.setItem.bind(localStorage);
 const stateTimers = {};
 localStorage.setItem = function(k, v){
@@ -4658,6 +4658,7 @@ function renderFnPerSesi(){
       const ovr = (d[s.id]||{})[item.id]||{};
       const qty   = ovr.qty   ?? item.qty;
       const harga = ovr.harga ?? item.harga;
+      const nama  = ovr.nama  || item.nama;
       const real  = ovr.real  ?? '';
       const rab   = qty * harga;
       rabDiv += rab;
@@ -4667,7 +4668,7 @@ function renderFnPerSesi(){
         : selisih<0 ? `<span style="color:var(--red);font-size:0.6rem">-${fmt(Math.abs(selisih))}</span>`
         : `<span style="color:var(--green);font-size:0.6rem">${fmt(selisih)}</span>`;
       return `<tr>
-        <td style="font-size:0.7rem;max-width:130px;line-height:1.3">${item.nama}</td>
+        <td><input type="text" value="${String(nama).replace(/"/g,'&quot;')}" title="Klik untuk mengubah nama item" style="width:100%;min-width:110px;max-width:150px;background:transparent;border:1px solid transparent;color:var(--text);font-size:0.7rem;padding:0.2rem 0.3rem;outline:none;border-radius:var(--r-sm)" onfocus="this.style.borderColor='var(--bdr)';this.style.background='var(--bg3)'" onblur="this.style.borderColor='transparent';this.style.background='transparent';fnSetItem('${s.id}','${item.id}','nama',this.value)"></td>
         <td><input type="number" value="${qty}" min="0" style="width:44px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.7rem;padding:0.2rem 0.3rem;outline:none" onchange="fnSetItem('${s.id}','${item.id}','qty',this.value)"></td>
         <td><input type="number" value="${harga}" min="0" style="width:72px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.7rem;padding:0.2rem 0.3rem;outline:none" onchange="fnSetItem('${s.id}','${item.id}','harga',this.value)"></td>
         <td style="font-size:0.65rem;color:var(--blue2);white-space:nowrap">${fmt(rab)}</td>
@@ -4725,7 +4726,8 @@ function renderFnDAP(){
   const lunas = orang.filter(o=>o.total>=DAP_WAJIB).length;
   const target = nPanitia * DAP_WAJIB;
   const pctDap = target>0 ? Math.min(Math.round(kas.dapTotal/target*100),100) : 0;
-  const belumBayar = Math.max(nPanitia - orang.length, 0);
+  const belumList = fnBelumBayarList();
+  const belumBayar = belumList.length;
 
   const perDiv = {};
   orang.forEach(o=>{ const d=(o.divisi||'—').replace(/\s*\(.*\)$/,'').trim(); perDiv[d]=(perDiv[d]||0)+o.total; });
@@ -4825,6 +4827,8 @@ function renderFnDAP(){
       </div>
 
       ${divChips?`<div class="pill-row" style="margin-bottom:0.75rem">${divChips}</div>`:''}
+
+      ${belumList.length?`<div class="info-box" style="font-size:0.66rem;margin-bottom:0.75rem;border-left:2px solid var(--amber)"><strong style="color:var(--amber)">Belum bayar sama sekali (${belumList.length}):</strong> ${belumList.map(esc).join(', ')}</div>`:''}
 
       <div style="overflow-x:auto">
         <table class="tf-table">
@@ -4931,6 +4935,11 @@ function fnSetItem(sesiId, itemId, field, val){
   if(!d[sesiId]) d[sesiId] = {};
   if(!d[sesiId][itemId]) d[sesiId][itemId] = {};
   if(field==='real') d[sesiId][itemId].real = val===''?null:parseFloat(val)||0;
+  else if(field==='nama'){
+    const v = String(val||'').trim();
+    if(v) d[sesiId][itemId].nama = v;
+    else delete d[sesiId][itemId].nama;
+  }
   else d[sesiId][itemId][field] = parseFloat(val)||0;
   fnSave(d);
 }
@@ -5018,8 +5027,39 @@ async function fnFetchDAP(quiet){
   }
 }
 
-/* Daftar nama panitia — untuk tahu siapa yang belum bayar sama sekali */
-function fnRoster(){ try{ return JSON.parse(localStorage.getItem('ibass_fn_roster')||'[]'); }catch{ return []; } }
+/* Daftar nama panitia — untuk tahu siapa yang belum bayar sama sekali.
+   Nama lengkap sesuai mastersheet KPI (dicocokkan dari daftar workshirt 2026-07-11).
+   "Dyba" dan "Tika (Acara)" belum ketemu nama lengkapnya — pakai panggilan dulu. */
+const FN_ROSTER_SEED = [
+  'Aghni Alicia Sofi',
+  'Fikri Haidar Sawego',
+  'Fakhri Haidar Sawego',
+  'Muhammad Raffi Athallasyah Maenaki',
+  'Tri Utami Widyaningsih',
+  'Aqila Diana Sofi',
+  'Nella Extitania',
+  'Khanza Hanifah',
+  'Dyba',
+  'Oktavina Rizky Alana',
+  'Tika (Acara)',
+  'Yulia Dwi Kartika',
+  'Atika Kurniati Fatoni',
+  'Nicholas Saputra',
+  'Revina Dwi Ananda',
+  'Tommy Rizkya',
+  'Khotibul Umam Al Isyrafi',
+  'Rizky Akmal Fadhillah'
+];
+function fnRoster(){
+  try{
+    const r = JSON.parse(localStorage.getItem('ibass_fn_roster')||'null');
+    return (r && r.length) ? r : FN_ROSTER_SEED.slice();
+  }catch{ return FN_ROSTER_SEED.slice(); }
+}
+/* Samakan nama untuk pencocokan: huruf kecil, buang tanda baca (Al 'Isyrafi = Al Isyrafi) */
+function fnNormName(s){
+  return String(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+}
 function fnToggleRoster(){
   const f = document.getElementById('fn-roster-form');
   if(f) f.style.display = f.style.display==='none' ? 'block' : 'none';
@@ -5033,17 +5073,21 @@ function fnSaveRoster(){
   showToast(names.length ? names.length+' nama panitia tersimpan' : 'Daftar panitia dikosongkan','success');
 }
 
+/* Siapa di roster yang belum bayar sama sekali (cocokkan longgar dengan nama pembayar) */
+function fnBelumBayarList(){
+  const payerSet = fnDapPerOrang().map(o=>fnNormName(o.nama));
+  return fnRoster().filter(n=>{
+    const nn = fnNormName(n);
+    return !payerSet.some(p=>p===nn || p.includes(nn) || nn.includes(p));
+  });
+}
+
 function fnCopyBelumBayar(){
   const orang = fnDapPerOrang();
   const roster = fnRoster();
-  const norm = s => String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
-  const payerSet = orang.map(o=>norm(o.nama));
   const kurang = orang.filter(o=>o.total<DAP_WAJIB);
   const lunas = orang.filter(o=>o.total>=DAP_WAJIB);
-  const belumSamaSekali = roster.filter(n=>{
-    const nn = norm(n);
-    return !payerSet.some(p=>p===nn || p.includes(nn) || nn.includes(p));
-  });
+  const belumSamaSekali = fnBelumBayarList();
 
   let txt = '*STATUS PEMBAYARAN DAP — I-BASS 2026*\n';
   txt += 'Wajib per orang: '+fmtRp(DAP_WAJIB)+'\n\n';
@@ -5549,7 +5593,7 @@ function acSaveBuddyRoster(){
   renderAcPenilaian();
 }
 
-function acPenNorm(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
+function acPenNorm(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim(); }
 
 function renderAcPenilaian(){
   const el = document.getElementById('ac-penilaian'); if(!el) return;
