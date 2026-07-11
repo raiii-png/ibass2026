@@ -4735,20 +4735,47 @@ function renderFnDAP(){
     ? Object.entries(perDiv).map(([d,v])=>`<span class="pill">${d} <strong class="num">${fmtRp(v)}</strong></span>`).join('')
     : '';
 
-  const rows = orang.length ? orang.map(o=>{
-    const st = o.total>=DAP_WAJIB
-      ? '<span class="tf-status selesai">Lunas</span>'
-      : `<span class="tf-status berlangsung">Kurang ${fmtRp(DAP_WAJIB-o.total)}</span>`;
-    const bukti = o.bukti.length
-      ? `<a href="${o.bukti[o.bukti.length-1]}" target="_blank" rel="noopener" style="color:var(--blue2);font-size:0.64rem;text-decoration:none;white-space:nowrap">Bukti ↗</a>`
-      : '<span style="color:var(--muted)">—</span>';
-    return `<tr>
-      <td style="line-height:1.35">${o.nama}<div style="font-size:0.6rem;color:var(--muted)">${o.divisi}</div></td>
+  /* Status per anggota, dikelompokkan per divisi (roster resmi dari proposal) */
+  const rstat = fnRosterStatus();
+  const divUrut = FN_DIVISI_URUTAN.concat(
+    [...new Set(rstat.anggota.map(m=>m.d))].filter(d=>FN_DIVISI_URUTAN.indexOf(d)<0));
+  let rows = '';
+  divUrut.forEach(div=>{
+    const grup = rstat.anggota.filter(m=>m.d===div);
+    if(!grup.length) return;
+    const lunasDiv = grup.filter(m=>m.total>=DAP_WAJIB).length;
+    rows += `<tr><td colspan="4" style="padding:0.55rem 0.5rem 0.3rem;border-bottom:1px solid var(--bdr2)">
+      <span style="font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.15em;color:var(--gold2);text-transform:uppercase">${esc(div)}</span>
+      <span style="font-size:0.58rem;color:var(--muted);margin-left:0.5rem">${lunasDiv}/${grup.length} lunas</span>
+    </td></tr>`;
+    rows += grup.map(m=>{
+      const st = !m.bayar
+        ? '<span class="tf-status belum">Belum Bayar</span>'
+        : m.total>=DAP_WAJIB
+          ? '<span class="tf-status selesai">Lunas</span>'
+          : `<span class="tf-status berlangsung">Kurang ${fmtRp(DAP_WAJIB-m.total)}</span>`;
+      const bukti = m.bayar && m.bayar.bukti.length
+        ? `<a href="${m.bayar.bukti[m.bayar.bukti.length-1]}" target="_blank" rel="noopener" style="color:var(--blue2);font-size:0.64rem;text-decoration:none;white-space:nowrap">Bukti ↗</a>`
+        : '<span style="color:var(--muted)">—</span>';
+      return `<tr>
+        <td style="line-height:1.35">${esc(m.n)}</td>
+        <td class="num" style="color:${m.total?'var(--green)':'var(--muted)'};white-space:nowrap;text-align:right">${m.total?fmtRp(m.total):'—'}</td>
+        <td>${st}</td>
+        <td style="text-align:center">${bukti}</td>
+      </tr>`;
+    }).join('');
+  });
+  if(rstat.lain.length){
+    rows += `<tr><td colspan="4" style="padding:0.55rem 0.5rem 0.3rem;border-bottom:1px solid var(--bdr2)">
+      <span style="font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase">Pembayar Lain (tidak ada di daftar panitia)</span>
+    </td></tr>`;
+    rows += rstat.lain.map(o=>`<tr>
+      <td style="line-height:1.35">${esc(o.nama)}<div style="font-size:0.6rem;color:var(--muted)">${esc(o.divisi)}</div></td>
       <td class="num" style="color:var(--green);white-space:nowrap;text-align:right">${fmtRp(o.total)}</td>
-      <td>${st}</td>
-      <td style="text-align:center">${bukti}</td>
-    </tr>`;
-  }).join('') : `<tr><td colspan="4"><div class="tf-empty">Belum ada data pembayaran.<br>Tekan <strong>Cek Pembayaran Baru</strong> untuk memuat dari form.</div></td></tr>`;
+      <td>${o.total>=DAP_WAJIB?'<span class="tf-status selesai">Lunas</span>':`<span class="tf-status berlangsung">Kurang ${fmtRp(DAP_WAJIB-o.total)}</span>`}</td>
+      <td style="text-align:center">${o.bukti.length?`<a href="${o.bukti[o.bukti.length-1]}" target="_blank" rel="noopener" style="color:var(--blue2);font-size:0.64rem;text-decoration:none">Bukti ↗</a>`:'—'}</td>
+    </tr>`).join('');
+  }
 
   const inList = fnIncome();
   const outList = fnManualOut();
@@ -4848,7 +4875,7 @@ function renderFnDAP(){
         <button class="btn btn-ghost btn-sm" onclick="fnToggleRoster()">${fnRoster().length?'Daftar Panitia ('+fnRoster().length+' nama)':'+ Isi Daftar Nama Panitia'}</button>
         <div id="fn-roster-form" style="display:none;margin-top:0.5rem">
           <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.35rem">Satu nama per baris. Dipakai untuk tahu siapa yang belum bayar sama sekali.</div>
-          <textarea id="fn-roster-input" style="width:100%;min-height:120px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.72rem;padding:0.5rem;border-radius:var(--r);outline:none;resize:vertical" placeholder="Aghni&#10;Fakhri Haidar Sawego&#10;...">${fnRoster().join('\n')}</textarea>
+          <textarea id="fn-roster-input" style="width:100%;min-height:140px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.72rem;padding:0.5rem;border-radius:var(--r);outline:none;resize:vertical" placeholder="Nama Lengkap, Divisi&#10;contoh: Aghni Alicia Sofi, Inti">${fnRoster().map(m=>m.n+', '+m.d).join('\n')}</textarea>
           <button class="btn btn-sm" onclick="fnSaveRoster()" style="margin-top:0.4rem">Simpan Daftar</button>
         </div>
       </div>
@@ -5027,34 +5054,57 @@ async function fnFetchDAP(quiet){
   }
 }
 
-/* Daftar nama panitia — untuk tahu siapa yang belum bayar sama sekali.
-   Nama lengkap sesuai mastersheet KPI (dicocokkan dari daftar workshirt 2026-07-11).
-   "Dyba" dan "Tika (Acara)" belum ketemu nama lengkapnya — pakai panggilan dulu. */
+/* Daftar panitia resmi per divisi — nama lengkap dari Proposal I-BASS 2026.
+   Panggilan: Sofi=Aghni Alicia Sofi, Tami=Tri Utami, Dyba=Nadya Badzlin,
+   Tika Acara=Thyka Agusthy, Vina=Oktavina, Tika Pubdok=Yulia Dwi Kartika,
+   Nichol=Nicholas, Rikep=Rizky Akmal, Tibul=Khotibul Umam. */
 const FN_ROSTER_SEED = [
-  'Aghni Alicia Sofi',
-  'Fikri Haidar Sawego',
-  'Fakhri Haidar Sawego',
-  'Muhammad Raffi Athallasyah Maenaki',
-  'Tri Utami Widyaningsih',
-  'Aqila Diana Sofi',
-  'Nella Extitania',
-  'Khanza Hanifah',
-  'Dyba',
-  'Oktavina Rizky Alana',
-  'Tika (Acara)',
-  'Yulia Dwi Kartika',
-  'Atika Kurniati Fatoni',
-  'Nicholas Saputra',
-  'Revina Dwi Ananda',
-  'Tommy Rizkya',
-  'Khotibul Umam Al Isyrafi',
-  'Rizky Akmal Fadhillah'
+  { n:'Fikri Haidar Sawego', d:'Inti' },
+  { n:'Fakhri Haidar Sawego', d:'Inti' },
+  { n:'Muhammad Raffi Athallasyah Maenaki', d:'Inti' },
+  { n:'Tri Utami Widyaningsih', d:'Inti' },
+  { n:'Aghni Alicia Sofi', d:'Inti' },
+  { n:'Nadya Badzlin', d:'Acara' },
+  { n:'Khanza Hanifah', d:'Acara' },
+  { n:'Nella Extitania', d:'Acara' },
+  { n:'Thyka Agusthy Dwi Yumandha', d:'Acara' },
+  { n:'Oktavina Rizky Alana', d:'Acara' },
+  { n:'Yulia Dwi Kartika', d:'Pubdok' },
+  { n:'Atika Kurniati Fatoni', d:'Pubdok' },
+  { n:'Nicholas Saputra', d:'Pubdok' },
+  { n:'Revina Dwi Ananda', d:'Pubdok' },
+  { n:'Rizky Akmal Fadhillah', d:'Logistik' },
+  { n:'Khotibul Umam Al Isyrafi', d:'Logistik' },
+  { n:'Tommy Rizkya', d:'Logistik' },
+  { n:'Nur Hafiizh Puta Iskandar', d:'Logistik' }
 ];
+const FN_DIVISI_URUTAN = ['Inti','Acara','Pubdok','Logistik'];
 function fnRoster(){
   try{
     const r = JSON.parse(localStorage.getItem('ibass_fn_roster')||'null');
-    return (r && r.length) ? r : FN_ROSTER_SEED.slice();
+    if(!r || !r.length) return FN_ROSTER_SEED.slice();
+    return r.map(x => typeof x === 'string' ? { n:x, d:'—' } : x);
   }catch{ return FN_ROSTER_SEED.slice(); }
+}
+/* Cocokkan anggota roster dengan data pembayar (longgar dua arah) */
+function fnRosterStatus(){
+  const orang = fnDapPerOrang();
+  const dipakai = new Set();
+  const anggota = fnRoster().map(m=>{
+    const nn = fnNormName(m.n);
+    let best = null;
+    orang.forEach((o,i)=>{
+      if(dipakai.has(i)) return;
+      const p = fnNormName(o.nama);
+      if(p===nn){ best = i; }
+      else if(best===null && (p.includes(nn)||nn.includes(p))){ best = i; }
+    });
+    if(best!==null) dipakai.add(best);
+    const bayar = best!==null ? orang[best] : null;
+    return { ...m, bayar, total: bayar?bayar.total:0 };
+  });
+  const lain = orang.filter((_,i)=>!dipakai.has(i));
+  return { anggota, lain };
 }
 /* Samakan nama untuk pencocokan: huruf kecil, buang tanda baca (Al 'Isyrafi = Al Isyrafi) */
 function fnNormName(s){
@@ -5066,46 +5116,41 @@ function fnToggleRoster(){
 }
 function fnSaveRoster(){
   const raw = document.getElementById('fn-roster-input')?.value || '';
-  const names = raw.split('\n').map(s=>s.trim()).filter(Boolean);
-  localStorage.setItem('ibass_fn_roster', JSON.stringify(names));
-  if(names.length) fnSetNPanitia(names.length);
+  const list = raw.split('\n').map(s=>s.trim()).filter(Boolean).map(line=>{
+    const i = line.lastIndexOf(',');
+    if(i > 0) return { n:line.slice(0,i).trim(), d:line.slice(i+1).trim()||'—' };
+    return { n:line, d:'—' };
+  });
+  localStorage.setItem('ibass_fn_roster', JSON.stringify(list));
+  if(list.length) fnSetNPanitia(list.length);
   else renderFnDAP();
-  showToast(names.length ? names.length+' nama panitia tersimpan' : 'Daftar panitia dikosongkan','success');
+  showToast(list.length ? list.length+' nama panitia tersimpan' : 'Daftar panitia dikosongkan','success');
 }
 
-/* Siapa di roster yang belum bayar sama sekali (cocokkan longgar dengan nama pembayar) */
+/* Siapa di roster yang belum bayar sama sekali */
 function fnBelumBayarList(){
-  const payerSet = fnDapPerOrang().map(o=>fnNormName(o.nama));
-  return fnRoster().filter(n=>{
-    const nn = fnNormName(n);
-    return !payerSet.some(p=>p===nn || p.includes(nn) || nn.includes(p));
-  });
+  return fnRosterStatus().anggota.filter(m=>!m.bayar);
 }
 
 function fnCopyBelumBayar(){
-  const orang = fnDapPerOrang();
-  const roster = fnRoster();
-  const kurang = orang.filter(o=>o.total<DAP_WAJIB);
-  const lunas = orang.filter(o=>o.total>=DAP_WAJIB);
-  const belumSamaSekali = fnBelumBayarList();
-
+  const { anggota } = fnRosterStatus();
   let txt = '*STATUS PEMBAYARAN DAP — I-BASS 2026*\n';
-  txt += 'Wajib per orang: '+fmtRp(DAP_WAJIB)+'\n\n';
-  if(belumSamaSekali.length){
-    txt += '*Belum bayar sama sekali ('+belumSamaSekali.length+'):*\n';
-    belumSamaSekali.forEach(n=>{ txt += '- '+n+'\n'; });
-    txt += '\n';
-  }
-  if(kurang.length){
-    txt += '*Belum lunas ('+kurang.length+'):*\n';
-    kurang.forEach(o=>{ txt += '- '+o.nama+' — kurang '+fmtRp(DAP_WAJIB-o.total)+'\n'; });
-    txt += '\n';
-  }
-  txt += '*Sudah lunas ('+lunas.length+'):*\n';
-  lunas.forEach(o=>{ txt += '- '+o.nama+'\n'; });
-  if(!roster.length){
-    txt += '\n_Catatan: isi Daftar Nama Panitia di dashboard supaya yang belum bayar sama sekali ikut terdata._';
-  }
+  txt += 'Wajib per orang: '+fmtRp(DAP_WAJIB)+'\n';
+  FN_DIVISI_URUTAN.concat([...new Set(anggota.map(m=>m.d))].filter(d=>FN_DIVISI_URUTAN.indexOf(d)<0)).forEach(div=>{
+    const grup = anggota.filter(m=>m.d===div);
+    if(!grup.length) return;
+    txt += '\n*'+div+'*\n';
+    grup.forEach(m=>{
+      const st = !m.bayar ? 'BELUM BAYAR'
+        : m.total>=DAP_WAJIB ? 'Lunas'
+        : 'kurang '+fmtRp(DAP_WAJIB-m.total);
+      txt += '- '+m.n+' — '+st+'\n';
+    });
+  });
+  const belum = anggota.filter(m=>!m.bayar).length;
+  const kurang = anggota.filter(m=>m.bayar&&m.total<DAP_WAJIB).length;
+  const lunas = anggota.filter(m=>m.total>=DAP_WAJIB).length;
+  txt += '\nRekap: '+lunas+' lunas · '+kurang+' belum lunas · '+belum+' belum bayar';
   navigator.clipboard.writeText(txt)
     .then(()=>showToast('Status DAP tersalin — tempel di WhatsApp','success'))
     .catch(()=>showToast('Gagal menyalin','error'));
