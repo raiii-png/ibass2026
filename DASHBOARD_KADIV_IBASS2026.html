@@ -1909,12 +1909,14 @@ body::after {
   <div id="dash-logistik" style="display:none">
     <div class="tabs">
       <div class="tab active" onclick="switchTab('lg','barang',this)">Pengadaan Barang</div>
+      <div class="tab" onclick="switchTab('lg','harih',this);renderLgHariH()">Hari-H</div>
       <div class="tab" onclick="switchTab('lg','laporan',this)">Laporan</div>
       <div class="tab" onclick="switchTab('lg','tugas',this)">Track File</div>
       <div class="tab" onclick="switchTab('lg','panduan',this)">Panduan</div>
     </div>
     <div class="main">
       <div class="lg-content" id="lg-barang"></div>
+      <div class="lg-content" id="lg-harih" style="display:none"></div>
       <div class="lg-content" id="lg-trackfile" style="display:none"></div>
       <div class="lg-content" id="lg-laporan" style="display:none"></div>
       <div class="lg-content" id="lg-tugas" style="display:none"></div>
@@ -2315,7 +2317,7 @@ function esc(str){ const d=document.createElement('div'); d.textContent=String(s
    ulang saat dashboard dibuka — jadi isian kadiv muncul di semua perangkat. */
 const STATE_KEYS = ['ibass_lg_items','ibass_ac_data','ibass_ac_notes',
   'ibass_fn_income','ibass_fn_manual','ibass_fn_npanitia','ibass_fn_roster',
-  'ibass_ac_buddy','ibass_sk_history','ibass_pd_captions','ibass_fn2'];
+  'ibass_ac_buddy','ibass_sk_history','ibass_pd_captions','ibass_fn2','ibass_lg_harih'];
 const _lsSet = localStorage.setItem.bind(localStorage);
 const stateTimers = {};
 localStorage.setItem = function(k, v){
@@ -3011,9 +3013,9 @@ function pdRefHtml(data){
         ${(k.palet||[]).map(p=>`<span title="${esc(p.nama||p.hex||'')}" style="width:20px;height:20px;border-radius:50%;background:${esc(p.hex||'#888')};border:1px solid rgba(255,255,255,0.25);display:inline-block"></span><code style="font-size:0.56rem;color:var(--muted)">${esc(p.hex||'')}</code>`).join('')}
       </div>
       ${k.hook?`<div class="info-box" style="font-size:0.66rem;margin-bottom:0.5rem">Hook caption: "${esc(k.hook)}"</div>`:''}
-      <div style="font-size:0.58rem;color:var(--muted);margin-bottom:0.25rem">Cari contoh nyata konsep ini:</div>
-      <div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.4rem">
-        ${(k.keywords||[]).map(q=>`<a href="https://id.pinterest.com/search/pins/?q=${encodeURIComponent(q)}" target="_blank" rel="noopener" class="chip" style="text-decoration:none">${esc(q)} ↗</a>`).join('')}
+      <div style="font-size:0.58rem;color:var(--muted);margin-bottom:0.25rem">Lihat contoh nyata konsep ini (gambar tampil di bawah):</div>
+      <div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.4rem;align-items:center">
+        ${(k.keywords||[]).map(q=>`<button class="chip" onclick="pdRefCariGambar(this.dataset.q)" data-q="${esc(q)}">${esc(q)}</button><a href="https://id.pinterest.com/search/pins/?q=${encodeURIComponent(q)}" target="_blank" rel="noopener" style="font-size:0.6rem;color:var(--muted);text-decoration:none" title="Buka di Pinterest">↗</a>`).join('')}
       </div>
       ${(k.keywords&&k.keywords[0])?`<div style="display:flex;gap:0.3rem;flex-wrap:wrap">
         ${pdRefPlatforms(k.keywords[0]).map(p=>`<a href="${p.url}" target="_blank" rel="noopener" class="chip" style="text-decoration:none;border-color:rgba(155,126,240,0.35)">${p.label} ↗</a>`).join('')}
@@ -3034,7 +3036,32 @@ function pdRefHtml(data){
         <a href="https://dribbble.com/search/${encodeURIComponent('instagram-post-event')}" target="_blank" rel="noopener" class="chip" style="text-decoration:none">Dribbble: post event ↗</a>
       </div>
     </div>
-    <div style="font-size:0.6rem;color:var(--muted);margin-top:0.4rem">Klik chip mana pun untuk membuka pencarian referensi visual di platform itu.</div>`;
+    <div style="font-size:0.6rem;color:var(--muted);margin-top:0.4rem">Klik kata kunci untuk memuat contoh gambar di bawah. Chip platform membuka pencariannya di IG/TikTok/Behance/Dribbble.</div>
+    <div id="pdref-grid" style="margin-top:0.65rem"></div>`;
+}
+
+/* Muat contoh gambar dari internet (lewat server) — tiap gambar terhubung ke sumber aslinya */
+async function pdRefCariGambar(q){
+  const grid = document.getElementById('pdref-grid');
+  if(!grid) return;
+  grid.scrollIntoView({behavior:'smooth', block:'nearest'});
+  grid.innerHTML = `<div style="text-align:center;padding:0.75rem;font-size:0.7rem;color:var(--muted)"><span class="spinner"></span> Mencari contoh untuk "${esc(q)}"...</div>`;
+  try{
+    const js = await gasPost(GAS_URL, { action:'imgsearch', q });
+    const hasil = (js && js.hasil) || [];
+    if(!hasil.length) throw new Error('kosong');
+    grid.innerHTML = `
+      <div class="list-title">Contoh dari internet: "${esc(q)}"</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.5rem">
+        ${hasil.map(h=>`<a href="${esc(h.sumber)}" target="_blank" rel="noopener" style="display:block;background:var(--bg2s);border:1px solid var(--bdr2);border-radius:var(--r);overflow:hidden;text-decoration:none">
+          <img src="${esc(h.thumb||h.img)}" loading="lazy" alt="" style="width:100%;height:110px;object-fit:cover;display:block" onerror="this.closest('a').style.display='none'">
+          <div style="padding:0.3rem 0.4rem;font-size:0.56rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(h.judul||'Lihat sumber')}</div>
+        </a>`).join('')}
+      </div>
+      <div style="font-size:0.58rem;color:var(--muted);margin-top:0.35rem">Klik gambar untuk membuka postingan / halaman sumber aslinya.</div>`;
+  }catch(e){
+    grid.innerHTML = `<div class="info-box warning" style="font-size:0.66rem">Contoh gambar tidak termuat${(e.message||'').includes('dikenal')?' — server perlu deploy versi baru sekali lagi':''}. Coba kata kunci lain.</div>`;
+  }
 }
 
 /* Link pencarian lintas platform untuk satu kata kunci */
@@ -3080,6 +3107,9 @@ Balas HANYA JSON array valid, tanpa teks lain:
     localStorage.setItem('ibass_pd_ref', JSON.stringify(hasil));
     document.getElementById('pdref-result').innerHTML = pdRefHtml(hasil);
     showToast('3 konsep desain siap!','success');
+    // Langsung muat contoh gambar untuk konsep pertama
+    const q0 = konsep[0] && konsep[0].keywords && konsep[0].keywords[0];
+    if(q0) pdRefCariGambar(q0);
   }catch(e){
     showToast('Gagal: '+(e.message||'coba lagi'),'error');
   }finally{
@@ -4394,6 +4424,100 @@ function lgSaveBukti(idx){
   lgAfterBukti(idx);
 }
 
+/* ══ LOGISTIK: CHECKLIST HARI-H ══
+   Barang bawaan per sesi: Belum → Disiapkan → Dibawa → Kembali.
+   Supaya tidak ada yang ketinggalan berangkat & tidak ada yang hilang saat pulang. */
+const LG_HH_STATUS = ['Belum','Disiapkan','Dibawa','Kembali'];
+let lgHhSesi = 'TWN1';
+function lgHhData(){ try{ return JSON.parse(localStorage.getItem('ibass_lg_harih')||'{}'); }catch{ return {}; } }
+function lgHhSave(d){ localStorage.setItem('ibass_lg_harih', JSON.stringify(d)); }
+
+function renderLgHariH(){
+  const el = document.getElementById('lg-harih'); if(!el) return;
+  const d = lgHhData();
+  const items = d[lgHhSesi]||[];
+  const stWarna = { 'Belum':'var(--muted)', 'Disiapkan':'var(--blue2)', 'Dibawa':'var(--amber)', 'Kembali':'var(--green)' };
+  const counts = LG_HH_STATUS.map(s=>items.filter(x=>(x.st||'Belum')===s).length);
+
+  const rows = items.length ? items.map((x,i)=>`
+    <div style="display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0.6rem;margin-bottom:0.3rem;background:var(--bg2s);border:1px solid var(--bdr2);border-radius:var(--r)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:0.74rem;color:var(--text)">${esc(x.nama)}</div>
+        ${x.pic?`<div style="font-size:0.58rem;color:var(--muted)">PIC: ${esc(x.pic)}</div>`:''}
+      </div>
+      <span class="tf-status" style="cursor:pointer;color:${stWarna[x.st||'Belum']};border-color:currentColor" onclick="lgHhCycle(${i})">${x.st||'Belum'}</span>
+      <button class="tf-del-btn" onclick="lgHhDel(${i})">×</button>
+    </div>`).join('') : '<div class="tf-empty">Belum ada barang di checklist sesi ini.<br>Tambah manual atau tarik dari Pengadaan Barang.</div>';
+
+  el.innerHTML = `
+    <div class="sec-head">
+      <div class="sec-eye">Logistik · Hari-H</div>
+      <div class="sec-title">Checklist Hari-H</div>
+      <div class="sec-desc">Pastikan semua barang disiapkan, terbawa ke lokasi, dan kembali lagi — tidak ada yang ketinggalan atau hilang.</div>
+    </div>
+    <select class="filter-select" style="width:100%;margin-bottom:0.65rem" onchange="lgHhSesi=this.value;renderLgHariH()">
+      ${LG_SESI.map(s=>`<option${s===lgHhSesi?' selected':''}>${s}</option>`).join('')}
+    </select>
+    <div class="mini-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:0.65rem">
+      ${LG_HH_STATUS.map((s,i)=>`<div class="mini-stat"><div class="mini-val num" style="color:${stWarna[s]}">${counts[i]}</div><div class="mini-lbl">${s}</div></div>`).join('')}
+    </div>
+    ${rows}
+    <div class="inline-form" style="margin-top:0.6rem">
+      <input type="text" id="lg-hh-nama" placeholder="Nama barang — contoh: Sound system">
+      <input type="text" id="lg-hh-pic" placeholder="PIC (opsional)" style="max-width:130px">
+      <button class="btn btn-sm" onclick="lgHhAdd()">+ Tambah</button>
+    </div>
+    <div class="btn-row" style="margin-top:0.5rem">
+      <button class="btn btn-ghost btn-sm" onclick="lgHhImport()">Tarik dari Pengadaan Barang</button>
+      <button class="btn btn-ghost btn-sm" onclick="lgHhCopy()">Salin Checklist</button>
+    </div>`;
+}
+
+function lgHhAdd(){
+  const nama = document.getElementById('lg-hh-nama')?.value.trim();
+  if(!nama){ showToast('Isi nama barangnya dulu','warning'); return; }
+  const d = lgHhData();
+  (d[lgHhSesi] = d[lgHhSesi]||[]).push({ nama, pic:document.getElementById('lg-hh-pic')?.value.trim()||'', st:'Belum' });
+  lgHhSave(d); renderLgHariH();
+}
+function lgHhDel(i){
+  const d = lgHhData();
+  (d[lgHhSesi]||[]).splice(i,1);
+  lgHhSave(d); renderLgHariH();
+}
+function lgHhCycle(i){
+  const d = lgHhData();
+  const x = (d[lgHhSesi]||[])[i]; if(!x) return;
+  x.st = LG_HH_STATUS[(LG_HH_STATUS.indexOf(x.st||'Belum')+1)%LG_HH_STATUS.length];
+  lgHhSave(d); renderLgHariH();
+}
+function lgHhImport(){
+  const d = lgHhData();
+  const ada = new Set((d[lgHhSesi]||[]).map(x=>x.nama.toLowerCase()));
+  let n = 0;
+  lgLoad().filter(b=>b.sesi===lgHhSesi && !ada.has((b.nama||'').toLowerCase())).forEach(b=>{
+    (d[lgHhSesi] = d[lgHhSesi]||[]).push({ nama:b.nama, pic:'', st:'Belum' });
+    n++;
+  });
+  lgHhSave(d); renderLgHariH();
+  showToast(n ? n+' barang ditarik dari Pengadaan' : 'Tidak ada barang baru untuk sesi ini','success');
+}
+function lgHhCopy(){
+  const items = lgHhData()[lgHhSesi]||[];
+  if(!items.length){ showToast('Checklist masih kosong','warning'); return; }
+  let txt = '*CHECKLIST HARI-H LOGISTIK — '+lgHhSesi+' — I-BASS 2026*\n\n';
+  LG_HH_STATUS.forEach(s=>{
+    const grup = items.filter(x=>(x.st||'Belum')===s);
+    if(!grup.length) return;
+    txt += '*'+s+' ('+grup.length+'):*\n';
+    grup.forEach(x=>{ txt += '- '+x.nama+(x.pic?' — '+x.pic:'')+'\n'; });
+    txt += '\n';
+  });
+  navigator.clipboard.writeText(txt.trim())
+    .then(()=>showToast('Checklist tersalin — tempel di WhatsApp','success'))
+    .catch(()=>showToast('Gagal menyalin','error'));
+}
+
 function renderLogistikLaporan(){
   const el = document.getElementById('lg-laporan');
   if(!el) return;
@@ -4459,122 +4583,45 @@ const FN_RAB_DEFAULT = {
     ], Pubdok:[
       {id:'pr-p1',nama:'Print Poster',qty:2,harga:15000},
     ]},
+  /* Distribusi item proposal ke sesi pemakaiannya — jumlah semua sesi = Rp11.980.000 (sama dengan RAB Proposal) */
   OR:{ Sekretaris:[
-      {id:'or-s1',nama:'Desain poster open rekrut',qty:1,harga:0},
-      {id:'or-s2',nama:'Print banner/poster fisik A3',qty:5,harga:8000},
-    ], Logistik:[
-      {id:'or-l1',nama:'Kuota internet admin Google Form',qty:1,harga:0},
-    ], Acara:[
-      {id:'or-a1',nama:'Pembuatan Google Form (gratis)',qty:1,harga:0},
-    ], Pubdok:[
-      {id:'or-p1',nama:'Desain konten IG / story open rekrut',qty:3,harga:0},
+      {id:'or2-s1',nama:'Print proposal',qty:1,harga:26000},
+      {id:'or2-s2',nama:'Materai',qty:3,harga:13000},
+      {id:'or2-s3',nama:'Print surat surat',qty:3,harga:10000},
+    ], Logistik:[], Acara:[], Pubdok:[
+      {id:'or2-p1',nama:'Print Poster',qty:2,harga:15000},
     ]},
-  ITV:{ Sekretaris:[
-      {id:'itv-s1',nama:'Print absensi peserta',qty:4,harga:3000},
-      {id:'itv-s2',nama:'Print rundown acara interviewer',qty:10,harga:1500},
-      {id:'itv-s3',nama:'Staples + kertas HVS tambahan',qty:1,harga:15000},
-    ], Logistik:[
-      {id:'itv-l1',nama:'Air mineral gelas (1 dus)',qty:1,harga:22000},
-      {id:'itv-l2',nama:'Snack panitia (roti/biskuit)',qty:18,harga:5000},
+  ITV:{ Sekretaris:[], Logistik:[], Acara:[], Pubdok:[] },
+  TWN1:{ Sekretaris:[], Logistik:[
+      {id:'t1-l1',nama:'ID Card Panitia',qty:18,harga:26000},
+      {id:'t1-l2',nama:'Work Shirt Panitia Lengan Pendek',qty:9,harga:130000},
+      {id:'t1-l3',nama:'Work Shirt Panitia Lengan Panjang',qty:9,harga:135000},
+      {id:'t1-l4',nama:'Print Cue Card',qty:2,harga:8000},
+      {id:'t1-l5',nama:'Pin IBASS',qty:18,harga:18000},
+      {id:'t1-l6',nama:'ID Card Peserta',qty:50,harga:26000},
     ], Acara:[
-      {id:'itv-a1',nama:'Print kertas soal / pertanyaan wawancara',qty:20,harga:1500},
-    ], Pubdok:[
-      {id:'itv-p1',nama:'Dokumentasi foto interview (HP panitia)',qty:1,harga:0},
-    ]},
-  TWN1:{ Sekretaris:[
-      {id:'twn1-s1',nama:'Print absensi peserta + panitia',qty:4,harga:3000},
-      {id:'twn1-s2',nama:'Print rundown acara MC',qty:3,harga:2000},
-      {id:'twn1-s3',nama:'Materai (pakta / dokumen)',qty:2,harga:10000},
-    ], Logistik:[
-      {id:'twn1-l1',nama:'ID Card Panitia (laminasi + tali)',qty:18,harga:26000},
-      {id:'twn1-l2',nama:'Work Shirt / PDH Panitia',qty:18,harga:120000},
-      {id:'twn1-l3',nama:'Confetti / party popper pembuka',qty:3,harga:9000},
-      {id:'twn1-l4',nama:'Cue Card MC',qty:4,harga:3000},
-      {id:'twn1-l5',nama:'Air mineral gelas 2 dus',qty:2,harga:22000},
-      {id:'twn1-l6',nama:'Snack ringan peserta (50 orang)',qty:50,harga:6000},
-      {id:'twn1-l7',nama:'Makan bersama nasi kotak (peserta+panitia)',qty:68,harga:20000},
-      {id:'twn1-l8',nama:'Spidol + sticky notes (FGD)',qty:10,harga:5000},
-      {id:'twn1-l9',nama:'Kertas plano FGD',qty:5,harga:3000},
+      {id:'t1-a1',nama:'Print kertas Rundown',qty:2,harga:10000},
+      {id:'t1-a2',nama:'Laminating',qty:2,harga:6000},
+    ], Pubdok:[] },
+  TWN2:{ Sekretaris:[], Logistik:[
+      {id:'t2-l1',nama:'Work Shirt Lengan Pendek Peserta',qty:25,harga:130000},
+      {id:'t2-l2',nama:'Work Shirt Lengan Panjang Peserta',qty:25,harga:135000},
     ], Acara:[
-      {id:'twn1-a1',nama:'Print rundown acara (laminasi)',qty:4,harga:6000},
-      {id:'twn1-a2',nama:'Laminating rundown',qty:4,harga:5000},
-      {id:'twn1-a3',nama:'Hadiah games (winner prize)',qty:3,harga:25000},
-      {id:'twn1-a4',nama:'Print materi Study Case 8 department',qty:60,harga:1500},
-    ], Pubdok:[
-      {id:'twn1-p1',nama:'Print Poster TWN1 A3',qty:2,harga:10000},
-      {id:'twn1-p2',nama:'Dokumentasi foto + video (HP panitia)',qty:1,harga:0},
-    ]},
-  TWN2:{ Sekretaris:[
-      {id:'twn2-s1',nama:'Print absensi peserta + panitia',qty:4,harga:3000},
-      {id:'twn2-s2',nama:'Print rundown MC',qty:3,harga:2000},
-      {id:'twn2-s3',nama:'Pengumpulan tugas TWN1 (folder/map)',qty:50,harga:2500},
-    ], Logistik:[
-      {id:'twn2-l1',nama:'ID Card Peserta / Bizstar (laminasi + tali)',qty:50,harga:26000},
-      {id:'twn2-l2',nama:'Work Shirt / PDH Peserta',qty:50,harga:95000},
-      {id:'twn2-l3',nama:'Air mineral gelas 3 dus',qty:3,harga:22000},
-      {id:'twn2-l4',nama:'Snack peserta + panitia',qty:68,harga:6000},
-      {id:'twn2-l5',nama:'Reward Best Progress Report TWN1',qty:3,harga:30000},
+      {id:'t2-a1',nama:'Hadiah Peserta',qty:10,harga:12000},
+    ], Pubdok:[] },
+  TWN3:{ Sekretaris:[], Logistik:[
+      {id:'t3-l1',nama:'Confetti',qty:2,harga:10000},
+      {id:'t3-l2',nama:'Selempang The Best Bizstar',qty:8,harga:14000},
+      {id:'t3-l3',nama:'Certificate The Best Bizstar',qty:1,harga:6000},
+      {id:'t3-l4',nama:'Print Sertifikat Peserta',qty:50,harga:6000},
+      {id:'t3-l5',nama:'Hadiah Best Bizstar',qty:1,harga:45000},
+    ], Acara:[], Pubdok:[] },
+  PMT1:{ Sekretaris:[], Logistik:[
+      {id:'p1-l1',nama:'Sticky Notes',qty:1,harga:7000},
     ], Acara:[
-      {id:'twn2-a1',nama:'Print rundown + laminasi',qty:4,harga:6000},
-      {id:'twn2-a2',nama:'Hadiah games Townhall 2',qty:3,harga:25000},
-      {id:'twn2-a3',nama:'Print materi sharing session (alumni)',qty:60,harga:1500},
-    ], Pubdok:[
-      {id:'twn2-p1',nama:'Print Poster TWN2 A3',qty:2,harga:10000},
-      {id:'twn2-p2',nama:'Dokumentasi foto + video (HP panitia)',qty:1,harga:0},
-    ]},
-  TWN3:{ Sekretaris:[
-      {id:'twn3-s1',nama:'Print absensi + rundown closing',qty:4,harga:3000},
-      {id:'twn3-s2',nama:'Print sertifikat hard copy peserta',qty:50,harga:5206},
-    ], Logistik:[
-      {id:'twn3-l1',nama:'Selempang Best Bizstar + Runner Up',qty:8,harga:14000},
-      {id:'twn3-l2',nama:'Sertifikat panitia (cetak)',qty:18,harga:5206},
-      {id:'twn3-l3',nama:'Sertifikat peserta (cetak)',qty:50,harga:5206},
-      {id:'twn3-l4',nama:'Sticky Notes Nexora Wall of Impact',qty:3,harga:12000},
-      {id:'twn3-l5',nama:'Balon dekorasi closing',qty:5,harga:8000},
-      {id:'twn3-l6',nama:'Hadiah Best Bizstar (trofi/plakat)',qty:1,harga:120000},
-      {id:'twn3-l7',nama:'Hadiah Runner Up 1 & 2',qty:2,harga:75000},
-      {id:'twn3-l8',nama:'Confetti closing',qty:4,harga:9000},
-      {id:'twn3-l9',nama:'Air mineral gelas 3 dus',qty:3,harga:22000},
-      {id:'twn3-l10',nama:'Snack closing peserta + panitia',qty:68,harga:8000},
-    ], Acara:[
-      {id:'twn3-a1',nama:'Print rundown closing + laminasi MC',qty:4,harga:6000},
-      {id:'twn3-a2',nama:'Games closing (props sederhana)',qty:1,harga:30000},
-    ], Pubdok:[
-      {id:'twn3-p1',nama:'Print Poster Closing A3',qty:2,harga:10000},
-      {id:'twn3-p2',nama:'Dokumentasi foto + video (HP panitia)',qty:1,harga:0},
-    ]},
-  PMT1:{ Sekretaris:[
-      {id:'pmt1-s1',nama:'Print absensi peserta + panitia',qty:4,harga:3000},
-      {id:'pmt1-s2',nama:'Print rundown + TOR narasumber',qty:5,harga:2000},
-      {id:'pmt1-s3',nama:'Surat undangan narasumber (print)',qty:2,harga:3000},
-    ], Logistik:[
-      {id:'pmt1-l1',nama:'Air mineral botol narasumber + moderator',qty:4,harga:5000},
-      {id:'pmt1-l2',nama:'Air mineral gelas 2 dus',qty:2,harga:22000},
-      {id:'pmt1-l3',nama:'Snack ringan peserta',qty:50,harga:6000},
-      {id:'pmt1-l4',nama:'Dekorasi meja narasumber',qty:1,harga:50000},
-    ], Acara:[
-      {id:'pmt1-a1',nama:'Print rundown + laminasi MC/Moderator',qty:4,harga:6000},
-      {id:'pmt1-a2',nama:'Kertas HVS FGD + spidol',qty:5,harga:5000},
-      {id:'pmt1-a3',nama:'Hadiah peserta aktif tanya jawab',qty:3,harga:20000},
-    ], Pubdok:[
-      {id:'pmt1-p1',nama:'Dokumentasi foto + video (HP panitia)',qty:1,harga:0},
-    ]},
-  PMT2:{ Sekretaris:[
-      {id:'pmt2-s1',nama:'Print absensi peserta + panitia',qty:4,harga:3000},
-      {id:'pmt2-s2',nama:'Print rundown + TOR narasumber',qty:5,harga:2000},
-      {id:'pmt2-s3',nama:'Surat undangan narasumber (print)',qty:2,harga:3000},
-    ], Logistik:[
-      {id:'pmt2-l1',nama:'Air mineral botol narasumber + moderator',qty:4,harga:5000},
-      {id:'pmt2-l2',nama:'Air mineral gelas 2 dus',qty:2,harga:22000},
-      {id:'pmt2-l3',nama:'Snack ringan peserta',qty:50,harga:6000},
-      {id:'pmt2-l4',nama:'Dekorasi meja narasumber',qty:1,harga:50000},
-    ], Acara:[
-      {id:'pmt2-a1',nama:'Print rundown + laminasi MC/Moderator',qty:4,harga:6000},
-      {id:'pmt2-a2',nama:'Kertas + spidol Study Case & Mini Discussion',qty:5,harga:5000},
-      {id:'pmt2-a3',nama:'Hadiah peserta aktif tanya jawab',qty:3,harga:20000},
-    ], Pubdok:[
-      {id:'pmt2-p1',nama:'Dokumentasi foto + video (HP panitia)',qty:1,harga:0},
-    ]},
+      {id:'p1-a1',nama:'Plakat',qty:1,harga:95000},
+    ], Pubdok:[] },
+  PMT2:{ Sekretaris:[], Logistik:[], Acara:[], Pubdok:[] }
 };
 const FN_DIV_COLOR = {Sekretaris:'var(--blue2)',Logistik:'var(--amber)',Acara:'var(--finance)',Pubdok:'var(--purple,#a78bfa)'};
 

@@ -215,6 +215,26 @@ function doPost(e) {
       return jsonOk({ saved: body.key });
     }
 
+    // ── Cari contoh gambar referensi desain (untuk Pubdok) ──
+    if (action === 'imgsearch') {
+      const q = String(body.q || '').trim();
+      if (!q) return jsonErr('kata kunci kosong');
+      const html = UrlFetchApp.fetch(
+        'https://www.bing.com/images/search?q=' + encodeURIComponent(q) + '&form=HDRSC2&first=1',
+        { muteHttpExceptions: true, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } }
+      ).getContentText();
+      const out = [];
+      const re = /m="([^"]+)"/g;
+      let mm;
+      while ((mm = re.exec(html)) && out.length < 12) {
+        try {
+          const j = JSON.parse(mm[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&'));
+          if (j.murl && j.purl) out.push({ img: j.murl, thumb: j.turl || j.murl, sumber: j.purl, judul: j.t || '' });
+        } catch (err) {}
+      }
+      return jsonOk({ hasil: out });
+    }
+
     // ── Upload foto bukti pembayaran Logistik → Google Drive ──
     if (action === 'uploadbukti') {
       if (!body.data) return jsonErr('Tidak ada gambar');
