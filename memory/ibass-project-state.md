@@ -53,6 +53,22 @@ metadata:
   Per 07-11: Tri Utami Widyaningsih, Aqila Diana Sofi, Dyba, Tika (Acara), Tommy Rizkya.
 - `fnNormName`/`acPenNorm` buang tanda baca (kasus "Khotibul Umam Al 'Isyrafi").
 
+## Sesi 9 (2026-07-11 malam): GAS FULL LIVE + RAB proposal + LPJ
+- **GAS SUDAH DIOTORISASI & DEPLOY (semua endpoint hijau per 2026-07-11 malam):**
+  ai (proxy Gemini), uploadbukti (→Drive), savestate/loadstate (sync). JANGAN suruh
+  Boss re-deploy lagi kecuali kode .gs berubah.
+- Sesi RAB "PROP" (RAB Proposal Resmi, 22 item, total Rp11.980.000, flag ref:true —
+  di-skip fnCalcAll). Tombol +Item / × per divisi per sesi (`fnAddRabItem/fnDelRabItem/
+  fnItemsFor`; custom = entri `cu-*` di fnData, hapus default = flag hapus).
+- **LPJ**: `fnBuatLPJ()` (dokumen cetak putih + lampiran nota via Drive thumbnail) dan
+  `fnCopyLPJ()` (salin tabel text/html via ClipboardItem → paste di template HIMA Word/GDocs
+  jadi tabel). Tombol di Finance → Laporan.
+- Fix: [object Object] di daftar belum-bayar, kamera otomatis saat Sudah Beli tanpa bukti
+  (klik file input dalam gesture), toast wrap di HP (max-width 92vw).
+- Roster DAP per divisi (FN_ROSTER_SEED objek {n,d}, 18 panitia dari proposal) + tabel
+  Kas&DAP dikelompokkan per divisi + fnRosterStatus() matching longgar.
+- Referensi Pubdok diverifikasi end-to-end dengan AI asli (konsep + palet + link Pinterest).
+
 ## PENDING pagi Boss (2026-07-11):
 1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
    (UrlFetchApp + Drive) → Deploy New version. Tanpa ini: AI, foto bukti, sync state MATI
