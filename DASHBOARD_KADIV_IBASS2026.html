@@ -735,10 +735,11 @@ body {
   background:rgba(12,17,32,0.95); border:1px solid var(--bdr);
   backdrop-filter:blur(16px);
   color:var(--blue2); font-family:'Cinzel',serif; font-size:0.58rem;
-  letter-spacing:0.14em; text-transform:uppercase;
-  padding:0.7rem 1.5rem; z-index:9999;
+  letter-spacing:0.1em; text-transform:uppercase;
+  padding:0.7rem 1.25rem; z-index:9999;
   animation:toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
-  white-space:nowrap; border-radius:var(--r);
+  white-space:normal; line-height:1.6; text-align:center;
+  max-width:min(92vw, 480px); width:max-content; border-radius:var(--r);
   box-shadow:0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(82,168,224,0.08);
 }
 .toast.success { color:var(--green); border-color:rgba(54,201,122,0.3); box-shadow:0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(54,201,122,0.1); }
@@ -4077,7 +4078,7 @@ function renderLogistikBarang(){
           : `<span style="font-size:0.56rem;color:var(--amber);cursor:pointer" onclick="lgAddBukti(${i})">+ Tambah Bukti</span>`)
         + ` <span style="font-size:0.56rem;color:var(--blue2);cursor:pointer;display:inline-block;margin-top:2px;margin-left:6px" onclick="lgCopyFinance(${i})">Kabari Finance</span>`
       : '';
-    return `<tr>
+    return `<tr id="lg-row-${i}">
       <td style="max-width:160px;line-height:1.4">${item.nama||'—'}${item.catatan?`<div style="font-size:0.58rem;color:var(--muted);margin-top:1px">${item.catatan}</div>`:''}${buktiBits}</td>
       <td style="font-size:0.66rem;color:var(--muted)">${item.kategori||'—'}</td>
       <td style="font-size:0.66rem;text-align:center;white-space:nowrap">${item.qty||'—'} ${item.satuan||''}</td>
@@ -4270,8 +4271,10 @@ function lgSetStatus(idx, status){
   // Wajib ada nota/bukti pembelian sebelum bisa "Sudah Beli" — supaya Finance tahu harga aslinya
   if(status==='Sudah Beli' && !data[idx].bukti){
     lgPendingBeli = idx;
-    showToast('Lampirkan nota / bukti pembelian dulu — setelah itu otomatis tercatat', 'warning');
+    showToast('Lampirkan nota dulu — setelah foto tersimpan, otomatis tercatat', 'warning');
     if(!document.getElementById('lg-bukti-inline')) lgAddBukti(idx);
+    // Langsung buka kamera/galeri (masih dalam rangkaian klik user, jadi diizinkan browser)
+    document.querySelector('#lg-bukti-inline input[type="file"]')?.click();
     return;
   }
   data[idx].status = status;
@@ -4316,7 +4319,7 @@ function lgAddBukti(idx){
   if(!el) return;
   const existing = document.getElementById('lg-bukti-inline');
   if(existing){ existing.remove(); return; }
-  const row = el.querySelector(`[onclick="lgAddBukti(${idx})"]`)?.closest('tr');
+  const row = document.getElementById('lg-row-'+idx);
   if(!row) return;
   const div = document.createElement('tr');
   div.id = 'lg-bukti-inline';
@@ -4901,7 +4904,7 @@ function renderFnDAP(){
 
       ${divChips?`<div class="pill-row" style="margin-bottom:0.75rem">${divChips}</div>`:''}
 
-      ${belumList.length?`<div class="info-box" style="font-size:0.66rem;margin-bottom:0.75rem;border-left:2px solid var(--amber)"><strong style="color:var(--amber)">Belum bayar sama sekali (${belumList.length}):</strong> ${belumList.map(esc).join(', ')}</div>`:''}
+      ${belumList.length?`<div class="info-box" style="font-size:0.66rem;margin-bottom:0.75rem;border-left:2px solid var(--amber)"><strong style="color:var(--amber)">Belum bayar sama sekali (${belumList.length}):</strong> ${belumList.map(m=>esc(m.n)+(m.d&&m.d!=='—'?' ('+esc(m.d)+')':'')).join(', ')}</div>`:''}
 
       <div style="overflow-x:auto">
         <table class="tf-table">
