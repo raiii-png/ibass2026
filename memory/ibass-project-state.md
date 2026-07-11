@@ -69,6 +69,19 @@ metadata:
   Kas&DAP dikelompokkan per divisi + fnRosterStatus() matching longgar.
 - Referensi Pubdok diverifikasi end-to-end dengan AI asli (konsep + palet + link Pinterest).
 
+## Sesi 10 (2026-07-12): RAB = proposal, referensi bergambar, checklist Hari-H
+- **RAB per sesi DIGANTI TOTAL**: 22 item proposal didistribusi ke sesi pemakaian
+  (OR 125rb: admin+poster; TWN1 4.525rb: idcard+workshirt panitia+pin+cuecard+rundown;
+  TWN2 6.745rb: workshirt peserta+hadiah; TWN3 483rb: confetti+selempang+sertifikat+hadiah;
+  PMT1 102rb: sticky+plakat; ITV/PMT2 kosong). fnCalcAll = 11.980.000 = RAB Proposal.
+  Id lama or-*/tw* mati; id baru or2-*, t1-*, t2-*, t3-*, p1-*.
+- **Referensi Pubdok bergambar**: GAS `action:imgsearch` (scrape Bing Images via UrlFetchApp,
+  balik {img,thumb,sumber,judul}×12). Klien: `pdRefCariGambar(q)` render grid #pdref-grid,
+  klik gambar → sumber asli; keyword chip = tombol pencarian; auto-load setelah generate.
+  **BUTUH DEPLOY NEW VERSION GAS** (tanpa authorize ulang — scope sudah ada).
+- **Logistik tab "Hari-H"**: checklist barang per sesi, status Belum→Disiapkan→Dibawa→Kembali,
+  tarik otomatis dari Pengadaan (`lgHhImport`), salin WA. Storage `ibass_lg_harih` (ikut sync).
+
 ## PENDING pagi Boss (2026-07-11):
 1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
    (UrlFetchApp + Drive) → Deploy New version. Tanpa ini: AI, foto bukti, sync state MATI
