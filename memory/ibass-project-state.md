@@ -61,6 +61,24 @@ metadata:
    (revoke kunci bocor di riwayat git) — sisakan yang dipakai Script Property.
 3. Hapus repo `kadivibass2026/kadivibass2026.github.io` + organisasinya (Danger Zone) — batal dipakai.
 
+## Sesi 9 (2026-07-11 siang): roster panitia + wajib nota + referensi multi-platform
+- **Roster 18 panitia RESMI** (`FN_ROSTER_SEED`, objek `{n,d}`) dari Proposal I-BASS 2026 —
+  Kas & DAP menampilkan status per orang DIKELOMPOKKAN per divisi (Inti/Acara/Pubdok/Logistik)
+  + "Pembayar Lain". `fnRosterStatus()` mencocokkan pembayar↔roster (longgar, greedy exact dulu).
+  Kamus panggilan: Sofi=Aghni Alicia Sofi, Tami=Tri Utami Widyaningsih, Dyba=Nadya Badzlin,
+  Tika Acara=Thyka Agusthy Dwi Yumandha, Vina=Oktavina Rizky Alana, Tika Pubdok=Yulia Dwi
+  Kartika, Nichol=Nicholas Saputra, Rikep=Rizky Akmal Fadhillah, Tibul=Khotibul Umam Al Isyrafi,
+  Tommy=Tommy Rizkya, +Nur Hafiizh Puta Iskandar (Logistik). Format edit roster: "Nama, Divisi".
+- **Wajib nota**: `lgSetStatus` menolak "Sudah Beli" tanpa `bukti` → buka form bukti,
+  `lgAfterBukti(idx)` (dipanggil lgSaveBukti & lgUploadBukti) otomatis menuntaskan status.
+- **Referensi Pubdok multi-platform**: `pdRefPlatforms(q)` → IG/TikTok/Behance/Dribbble/IG-tag
+  per konsep + kartu "Jelajah Inspirasi Umum". RAB nama item sudah editable (sesi HP) —
+  `ibass_fn2` masuk STATE_KEYS.
+- Verifikasi via jsdom (browser tools terputus): `test_dashboard.js` di scratchpad — pola
+  berguna untuk test headless tanpa Chrome.
+- Proposal PDF: `C:/Users/mrraf/Downloads/PROPOSAL IBASS 2026 terbaru 1.pdf` (teks diekstrak
+  pakai pdf-parse; susunan panitia di halaman 8-10).
+
 ## Arsitektur
 - **Single-file HTML** (semua CSS + JS inline) — bukan framework, murni vanilla.
 - **localStorage** untuk semua data persisten (tidak ada backend database).
