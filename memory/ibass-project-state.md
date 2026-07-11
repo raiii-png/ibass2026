@@ -41,6 +41,18 @@ metadata:
 - Auto-sync script laptop Boss commit+push sendiri tiap jam (a4b3c0b dkk) — cek `git log` dulu
   sebelum commit manual, sering sudah ter-commit.
 
+## Sesi 9 (2026-07-11 siang): RAB editable + roster panitia asli
+- **Nama item RAB per sesi bisa diedit** — kolom Item jadi input teks (override `ovr.nama`
+  di `ibass_fn2`, `fnSetItem` handle field 'nama' string; kosong = balik ke default).
+  `ibass_fn2` masuk STATE_KEYS (ikut sync antar-perangkat).
+- **Roster 18 panitia asli** (`FN_ROSTER_SEED`, fallback `fnRoster()`) — nama lengkap dicocokkan
+  dari daftar workshirt Boss + mastersheet KPI (`KPI HIMA ADBIS 2026 .csv` di Downloads) +
+  nama pembayar form DAP. **BELUM KETEMU nama lengkap: "Dyba" dan "Tika (Acara)"** — masih
+  panggilan, Boss harus konfirmasi. (Tika Pubdok = Yulia Dwi Kartika, dari data pembayar form.)
+- **Daftar "Belum bayar sama sekali" tampil di kartu DAP** (`fnBelumBayarList`, info-box amber).
+  Per 07-11: Tri Utami Widyaningsih, Aqila Diana Sofi, Dyba, Tika (Acara), Tommy Rizkya.
+- `fnNormName`/`acPenNorm` buang tanda baca (kasus "Khotibul Umam Al 'Isyrafi").
+
 ## PENDING pagi Boss (2026-07-11):
 1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
    (UrlFetchApp + Drive) → Deploy New version. Tanpa ini: AI, foto bukti, sync state MATI
