@@ -5066,10 +5066,12 @@ function renderFnLaporan(){
       <div class="mini-stat"><div class="mini-val num" style="color:${grandRab-grandReal<0?'var(--red)':'var(--green)'}">${fmtRp(Math.abs(grandRab-grandReal))}</div><div class="mini-lbl">Sisa</div></div>
     </div>
     ${html}
-    <div class="btn-row" style="margin-top:0.75rem">
-      <button class="btn" onclick="fnCopyLaporan()" style="flex:1">Salin Laporan untuk WhatsApp</button>
-      <button class="btn btn-ghost" onclick="fnBuatLPJ()" style="flex:1">Buat LPJ (siap cetak)</button>
-    </div>`;
+    <div class="btn-row" style="margin-top:0.75rem;flex-wrap:wrap">
+      <button class="btn" onclick="fnCopyLaporan()" style="flex:1;min-width:150px">Salin Laporan untuk WhatsApp</button>
+      <button class="btn btn-ghost" onclick="fnBuatLPJ()" style="flex:1;min-width:150px">Buat LPJ (siap cetak)</button>
+      <button class="btn btn-ghost" onclick="fnCopyLPJ()" style="flex:1;min-width:150px">Salin LPJ ke Template HIMA</button>
+    </div>
+    <div style="font-size:0.6rem;color:var(--muted);margin-top:0.35rem">"Salin LPJ" menyalin tabel pemasukan + pengeluaran — tinggal paste di dokumen template HIMA (Word / Google Docs), langsung jadi tabel.</div>`;
 }
 
 /* ── Helpers ──────────────────────────── */
@@ -5411,6 +5413,67 @@ ${lampiranHtml}
 </div>
 </body></html>`);
   w.document.close();
+}
+
+/* Salin LPJ sebagai tabel kaya — paste di Word/GDocs template HIMA langsung jadi tabel */
+async function fnCopyLPJ(){
+  const kas = fnKasCalc();
+  const orang = fnDapPerOrang();
+  const fmtTgl = iso => iso ? new Date(iso).toLocaleDateString('id-ID',{day:'numeric',month:'numeric',year:'numeric'}) : '';
+  const rp = n => 'Rp '+(n||0).toLocaleString('id-ID');
+
+  const masuk = [];
+  if(kas.dapTotal > 0) masuk.push({ tgl:'—', ket:'Dana DAP Panitia ('+orang.length+' orang)', jml:kas.dapTotal });
+  fnIncome().forEach(m=>masuk.push({ tgl:m.tanggal||'—', ket:m.keterangan, jml:m.jumlah||0 }));
+
+  const keluar = [];
+  lgLoad().filter(d=>d.status==='Sudah Beli').forEach(d=>{
+    keluar.push({ tgl:fmtTgl(d.tglBeli)||'—', ket:d.nama+(d.qty?' ('+d.qty+' '+(d.satuan||'')+')':''), jml:d.total||0, nota:d.bukti||'' });
+  });
+  fnManualOut().forEach(m=>keluar.push({ tgl:m.tanggal||'—', ket:m.keterangan, jml:m.jumlah||0, nota:'' }));
+
+  const th = 'border:1px solid #000;padding:4px 8px;background:#f0f0f0;font-weight:bold;text-align:left';
+  const td = 'border:1px solid #000;padding:4px 8px;vertical-align:top';
+  const tdRp = td+';text-align:right;white-space:nowrap';
+  const tbl = rows => `<table border="1" cellspacing="0" cellpadding="4" style="border-collapse:collapse;width:100%;font-family:'Times New Roman',serif;font-size:12pt">${rows}</table>`;
+
+  const masukHtml = tbl(
+    `<tr><th style="${th}">No</th><th style="${th}">Tanggal</th><th style="${th}">Keterangan</th><th style="${th}">Jumlah</th></tr>`
+    + masuk.map((m,i)=>`<tr><td style="${td}">${i+1}</td><td style="${td}">${esc(m.tgl)}</td><td style="${td}">${esc(m.ket)}</td><td style="${tdRp}">${rp(m.jml)}</td></tr>`).join('')
+    + `<tr><td colspan="3" style="${td};font-weight:bold">TOTAL PEMASUKAN</td><td style="${tdRp};font-weight:bold">${rp(kas.masuk)}</td></tr>`);
+
+  const keluarHtml = tbl(
+    `<tr><th style="${th}">No</th><th style="${th}">Tanggal</th><th style="${th}">Keterangan</th><th style="${th}">Jumlah</th></tr>`
+    + keluar.map((m,i)=>`<tr><td style="${td}">${i+1}</td><td style="${td}">${esc(m.tgl)}</td><td style="${td}">${esc(m.ket)}${m.nota?` — <a href="${m.nota}">nota</a>`:''}</td><td style="${tdRp}">${rp(m.jml)}</td></tr>`).join('')
+    + `<tr><td colspan="3" style="${td};font-weight:bold">TOTAL PENGELUARAN</td><td style="${tdRp};font-weight:bold">${rp(kas.keluar)}</td></tr>`);
+
+  const htmlFull = `<div style="font-family:'Times New Roman',serif;font-size:12pt">
+    <p><b>A. PEMASUKAN</b></p>${masukHtml}
+    <p><b>B. PENGELUARAN</b></p>${keluarHtml}
+    <p><b>SALDO AKHIR KAS: ${rp(kas.saldo)}</b></p>
+    ${keluar.some(k=>k.nota)?`<p><b>Lampiran nota:</b></p><ol>${keluar.filter(k=>k.nota).map(k=>`<li>${esc(k.ket)} — <a href="${k.nota}">${k.nota}</a></li>`).join('')}</ol>`:''}
+  </div>`;
+
+  let txtPlain = 'A. PEMASUKAN\n';
+  masuk.forEach((m,i)=>{ txtPlain += (i+1)+'. '+m.tgl+' — '+m.ket+' — '+rp(m.jml)+'\n'; });
+  txtPlain += 'TOTAL PEMASUKAN: '+rp(kas.masuk)+'\n\nB. PENGELUARAN\n';
+  keluar.forEach((m,i)=>{ txtPlain += (i+1)+'. '+m.tgl+' — '+m.ket+' — '+rp(m.jml)+(m.nota?' — nota: '+m.nota:'')+'\n'; });
+  txtPlain += 'TOTAL PENGELUARAN: '+rp(kas.keluar)+'\n\nSALDO AKHIR KAS: '+rp(kas.saldo);
+
+  try{
+    if(navigator.clipboard.write && window.ClipboardItem){
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([htmlFull], {type:'text/html'}),
+        'text/plain': new Blob([txtPlain], {type:'text/plain'})
+      })]);
+    } else {
+      await navigator.clipboard.writeText(txtPlain);
+    }
+    showToast('LPJ tersalin — paste di template HIMA (Word / Google Docs), otomatis jadi tabel','success');
+  }catch(e){
+    try{ await navigator.clipboard.writeText(txtPlain); showToast('LPJ tersalin sebagai teks','success'); }
+    catch(_){ showToast('Gagal menyalin','error'); }
+  }
 }
 
 function fnCopyLaporan(){
