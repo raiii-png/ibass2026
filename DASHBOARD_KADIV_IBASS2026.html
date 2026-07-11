@@ -2201,6 +2201,7 @@ function renderPanduan(prefix){
     ${pgCard('Mencatat Barang',[
       'Tekan tombol tambah barang, isi nama barang, jumlah, harga satuan, dan sesi tujuannya. Total harga terhitung otomatis.',
       'Di kolom status ada tiga tombol: <strong>Belum Beli</strong>, <strong>Proses</strong>, <strong>Sudah Beli</strong> — tinggal tekan yang sesuai, yang aktif menyala.',
+      'Untuk menandai <strong>Sudah Beli</strong>, wajib lampirkan nota / bukti pembelian dulu (foto atau link) — supaya Finance tahu harga aslinya. Setelah bukti tersimpan, status otomatis tercatat.',
       'Saat barang berstatus <strong>Sudah Beli</strong>, harganya otomatis memotong saldo kas Finance — tidak perlu lapor manual.',
       'Setelah beli: tekan <strong>+ Tambah Bukti</strong> untuk melampirkan link foto nota / bukti transfer, lalu tekan <strong>Kabari Finance</strong> — info pembelian lengkap tersalin, tinggal kirim ke Kadiv Finance via WhatsApp.',
       'Gunakan tombol edit untuk mengubah data barang, dan tanda silang untuk menghapus.'
@@ -3009,14 +3010,42 @@ function pdRefHtml(data){
         ${(k.palet||[]).map(p=>`<span title="${esc(p.nama||p.hex||'')}" style="width:20px;height:20px;border-radius:50%;background:${esc(p.hex||'#888')};border:1px solid rgba(255,255,255,0.25);display:inline-block"></span><code style="font-size:0.56rem;color:var(--muted)">${esc(p.hex||'')}</code>`).join('')}
       </div>
       ${k.hook?`<div class="info-box" style="font-size:0.66rem;margin-bottom:0.5rem">Hook caption: "${esc(k.hook)}"</div>`:''}
-      <div style="display:flex;gap:0.3rem;flex-wrap:wrap">
+      <div style="font-size:0.58rem;color:var(--muted);margin-bottom:0.25rem">Cari contoh nyata konsep ini:</div>
+      <div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.4rem">
         ${(k.keywords||[]).map(q=>`<a href="https://id.pinterest.com/search/pins/?q=${encodeURIComponent(q)}" target="_blank" rel="noopener" class="chip" style="text-decoration:none">${esc(q)} ↗</a>`).join('')}
       </div>
+      ${(k.keywords&&k.keywords[0])?`<div style="display:flex;gap:0.3rem;flex-wrap:wrap">
+        ${pdRefPlatforms(k.keywords[0]).map(p=>`<a href="${p.url}" target="_blank" rel="noopener" class="chip" style="text-decoration:none;border-color:rgba(155,126,240,0.35)">${p.label} ↗</a>`).join('')}
+      </div>`:''}
     </div>`).join('');
   return `
     <div class="list-title">Konsep untuk: ${esc(data.topik||'')} <span style="color:var(--muted);font-weight:400">· ${esc(data.jenis||'')} · ${esc(data.mood||'')}</span></div>
     ${cards}
-    <div style="font-size:0.6rem;color:var(--muted);margin-top:0.4rem">Klik kata kunci untuk membuka pencarian referensi di Pinterest.</div>`;
+    <div class="card" style="margin-top:0.5rem">
+      <div class="card-label">Jelajah Inspirasi Umum</div>
+      <div class="card-desc" style="margin-bottom:0.4rem">Tempat berburu referensi desain feed organisasi/event kampus.</div>
+      <div style="display:flex;gap:0.3rem;flex-wrap:wrap">
+        <a href="https://id.pinterest.com/search/pins/?q=${encodeURIComponent('instagram feed design event kampus')}" target="_blank" rel="noopener" class="chip" style="text-decoration:none">Pinterest: feed event kampus ↗</a>
+        <a href="https://www.instagram.com/explore/tags/desainfeed/" target="_blank" rel="noopener" class="chip" style="text-decoration:none">IG #desainfeed ↗</a>
+        <a href="https://www.instagram.com/explore/tags/feedinstagramdesign/" target="_blank" rel="noopener" class="chip" style="text-decoration:none">IG #feedinstagramdesign ↗</a>
+        <a href="https://www.tiktok.com/search?q=${encodeURIComponent('desain feed instagram organisasi')}" target="_blank" rel="noopener" class="chip" style="text-decoration:none">TikTok: tips desain feed ↗</a>
+        <a href="https://www.behance.net/search/projects?search=${encodeURIComponent('instagram feed event')}" target="_blank" rel="noopener" class="chip" style="text-decoration:none">Behance: feed event ↗</a>
+        <a href="https://dribbble.com/search/${encodeURIComponent('instagram-post-event')}" target="_blank" rel="noopener" class="chip" style="text-decoration:none">Dribbble: post event ↗</a>
+      </div>
+    </div>
+    <div style="font-size:0.6rem;color:var(--muted);margin-top:0.4rem">Klik chip mana pun untuk membuka pencarian referensi visual di platform itu.</div>`;
+}
+
+/* Link pencarian lintas platform untuk satu kata kunci */
+function pdRefPlatforms(q){
+  const tag = String(q||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  return [
+    { label:'Instagram', url:'https://www.instagram.com/explore/search/keyword/?q='+encodeURIComponent(q) },
+    { label:'TikTok', url:'https://www.tiktok.com/search?q='+encodeURIComponent(q) },
+    { label:'Behance', url:'https://www.behance.net/search/projects?search='+encodeURIComponent(q) },
+    { label:'Dribbble', url:'https://dribbble.com/search/'+encodeURIComponent(q) },
+    { label:'IG #'+tag.slice(0,20), url:'https://www.instagram.com/explore/tags/'+tag.slice(0,30)+'/' }
+  ];
 }
 
 async function pdGenReferensi(){
@@ -4234,9 +4263,17 @@ function lgDelete(idx){
   renderLogistikBarang(); showToast('Dihapus', 'success');
 }
 
+let lgPendingBeli = null;
 function lgSetStatus(idx, status){
   const data = lgLoad();
   if(!data[idx] || (data[idx].status||'Belum Beli')===status) return;
+  // Wajib ada nota/bukti pembelian sebelum bisa "Sudah Beli" — supaya Finance tahu harga aslinya
+  if(status==='Sudah Beli' && !data[idx].bukti){
+    lgPendingBeli = idx;
+    showToast('Lampirkan nota / bukti pembelian dulu — setelah itu otomatis tercatat', 'warning');
+    if(!document.getElementById('lg-bukti-inline')) lgAddBukti(idx);
+    return;
+  }
   data[idx].status = status;
   if(status==='Sudah Beli' && !data[idx].tglBeli){
     data[idx].tglBeli = new Date().toISOString();
@@ -4244,8 +4281,15 @@ function lgSetStatus(idx, status){
   lgSave(data);
   renderLogistikBarang();
   if(status==='Sudah Beli'){
-    showToast('Tercatat! Sisa saldo kas: '+fmtRp(fnKasCalc().saldo)+' — lampirkan bukti lalu tekan "Kabari Finance"', 'success');
+    showToast('Tercatat! Sisa saldo kas: '+fmtRp(fnKasCalc().saldo), 'success');
   }
+}
+
+/* Setelah bukti tersimpan: kalau tadinya mau "Sudah Beli", langsung tuntaskan */
+function lgAfterBukti(idx){
+  if(lgPendingBeli !== idx) return;
+  lgPendingBeli = null;
+  lgSetStatus(idx, 'Sudah Beli');
 }
 
 function lgCopyFinance(idx){
@@ -4328,6 +4372,7 @@ async function lgUploadBukti(idx, input){
     lgSave(data);
     renderLogistikBarang();
     showToast('Foto bukti tersimpan — Finance otomatis bisa lihat','success');
+    lgAfterBukti(idx);
   }catch(e){
     if(st) st.style.display = 'none';
     showToast('Gagal unggah: '+(e.message||'coba lagi'),'error');
@@ -4343,6 +4388,7 @@ function lgSaveBukti(idx){
   lgSave(data);
   renderLogistikBarang();
   showToast('Bukti pembayaran tersimpan','success');
+  lgAfterBukti(idx);
 }
 
 function renderLogistikLaporan(){
@@ -4874,7 +4920,7 @@ function renderFnDAP(){
       <div style="margin-top:0.6rem">
         <button class="btn btn-ghost btn-sm" onclick="fnToggleRoster()">${fnRoster().length?'Daftar Panitia ('+fnRoster().length+' nama)':'+ Isi Daftar Nama Panitia'}</button>
         <div id="fn-roster-form" style="display:none;margin-top:0.5rem">
-          <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.35rem">Satu nama per baris. Dipakai untuk tahu siapa yang belum bayar sama sekali.</div>
+          <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.35rem">Satu orang per baris, format: <strong>Nama Lengkap, Divisi</strong>. Daftar sudah terisi dari proposal — edit kalau ada perubahan panitia.</div>
           <textarea id="fn-roster-input" style="width:100%;min-height:140px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.72rem;padding:0.5rem;border-radius:var(--r);outline:none;resize:vertical" placeholder="Nama Lengkap, Divisi&#10;contoh: Aghni Alicia Sofi, Inti">${fnRoster().map(m=>m.n+', '+m.d).join('\n')}</textarea>
           <button class="btn btn-sm" onclick="fnSaveRoster()" style="margin-top:0.4rem">Simpan Daftar</button>
         </div>
