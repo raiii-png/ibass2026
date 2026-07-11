@@ -4421,6 +4421,7 @@ function renderLogistikLaporan(){
    FINANCE ENGINE — RAB IBASS 2026
 ══════════════════════════════════════ */
 const FN_SESI_LIST = [
+  { id:'PROP', label:'RAB Proposal (Resmi)', dap:0, ref:true },
   { id:'OR',   label:'Open Rekrutmen',       dap:0 },
   { id:'ITV',  label:'Interview',            dap:270000 },
   { id:'TWN1', label:'Townhall 1',           dap:2430000 },
@@ -4430,6 +4431,34 @@ const FN_SESI_LIST = [
   { id:'PMT2', label:'Pematerian 2',         dap:180000 },
 ];
 const FN_RAB_DEFAULT = {
+  /* RAB resmi dari Proposal I-BASS 2026 — Administrasi masuk grup Sekretaris */
+  PROP:{ Sekretaris:[
+      {id:'pr-s1',nama:'Print proposal',qty:1,harga:26000},
+      {id:'pr-s2',nama:'Materai',qty:3,harga:13000},
+      {id:'pr-s3',nama:'Print surat surat',qty:3,harga:10000},
+    ], Logistik:[
+      {id:'pr-l1',nama:'ID Card Panitia',qty:18,harga:26000},
+      {id:'pr-l2',nama:'Work Shirt Panitia Lengan Pendek',qty:9,harga:130000},
+      {id:'pr-l3',nama:'Work Shirt Panitia Lengan Panjang',qty:9,harga:135000},
+      {id:'pr-l4',nama:'Confetti',qty:2,harga:10000},
+      {id:'pr-l5',nama:'Print Cue Card',qty:2,harga:8000},
+      {id:'pr-l6',nama:'Pin IBASS',qty:18,harga:18000},
+      {id:'pr-l7',nama:'ID Card Peserta',qty:50,harga:26000},
+      {id:'pr-l8',nama:'Work Shirt Lengan Pendek Peserta',qty:25,harga:130000},
+      {id:'pr-l9',nama:'Work Shirt Lengan Panjang Peserta',qty:25,harga:135000},
+      {id:'pr-l10',nama:'Selempang The Best Bizstar',qty:8,harga:14000},
+      {id:'pr-l11',nama:'Certificate The Best Bizstar',qty:1,harga:6000},
+      {id:'pr-l12',nama:'Sticky Notes',qty:1,harga:7000},
+      {id:'pr-l13',nama:'Print Sertifikat Peserta',qty:50,harga:6000},
+      {id:'pr-l14',nama:'Hadiah Best Bizstar',qty:1,harga:45000},
+    ], Acara:[
+      {id:'pr-a1',nama:'Print kertas Rundown',qty:2,harga:10000},
+      {id:'pr-a2',nama:'Laminating',qty:2,harga:6000},
+      {id:'pr-a3',nama:'Hadiah Peserta',qty:10,harga:12000},
+      {id:'pr-a4',nama:'Plakat',qty:1,harga:95000},
+    ], Pubdok:[
+      {id:'pr-p1',nama:'Print Poster',qty:2,harga:15000},
+    ]},
   OR:{ Sekretaris:[
       {id:'or-s1',nama:'Desain poster open rekrut',qty:1,harga:0},
       {id:'or-s2',nama:'Print banner/poster fisik A3',qty:5,harga:8000},
@@ -4554,12 +4583,42 @@ function fnSave(d){ localStorage.setItem('ibass_fn2', JSON.stringify(d)); }
 function fnDapData(){ try{ return JSON.parse(localStorage.getItem('ibass_fn_dap')||'{}'); }catch{ return {}; } }
 function fnDapSave(d){ localStorage.setItem('ibass_fn_dap', JSON.stringify(d)); }
 
+/* Item RAB satu divisi dalam satu sesi: item bawaan (yang tidak dihapus) + item tambahan kadiv */
+function fnItemsFor(sesiId, div){
+  const d = fnData();
+  const base = ((FN_RAB_DEFAULT[sesiId]||{})[div]||[])
+    .filter(it=>!((d[sesiId]||{})[it.id]||{}).hapus);
+  const custom = Object.entries(d[sesiId]||{})
+    .filter(([id,v])=>v && v.custom && v.divisi===div && !v.hapus)
+    .map(([id,v])=>({ id, nama:v.nama||'Item baru', qty:v.qty??1, harga:v.harga??0 }));
+  return base.concat(custom);
+}
+
+function fnAddRabItem(sesiId, div){
+  const d = fnData();
+  if(!d[sesiId]) d[sesiId] = {};
+  d[sesiId]['cu-'+Date.now()] = { custom:true, divisi:div, nama:'', qty:1, harga:0 };
+  fnSave(d);
+  renderFnPerSesi();
+  showToast('Item baru ditambahkan — klik namanya untuk mengisi','success');
+}
+
+function fnDelRabItem(sesiId, itemId){
+  const d = fnData();
+  if(!d[sesiId]) d[sesiId] = {};
+  if(!confirm('Hapus item ini dari RAB?')) return;
+  if(d[sesiId][itemId] && d[sesiId][itemId].custom){ delete d[sesiId][itemId]; }
+  else { if(!d[sesiId][itemId]) d[sesiId][itemId] = {}; d[sesiId][itemId].hapus = true; }
+  fnSave(d);
+  renderFnPerSesi();
+  showToast('Item dihapus','success');
+}
+
 function fnCalcSesi(sesiId){
   const d = fnData();
-  const divisi = FN_RAB_DEFAULT[sesiId] || {};
   let rabTotal=0, realTotal=0;
-  Object.keys(divisi).forEach(div=>{
-    divisi[div].forEach(item=>{
+  ['Sekretaris','Logistik','Acara','Pubdok'].forEach(div=>{
+    fnItemsFor(sesiId, div).forEach(item=>{
       const ovr = (d[sesiId]||{})[item.id]||{};
       const qty   = ovr.qty   ?? item.qty;
       const harga = ovr.harga ?? item.harga;
@@ -4575,6 +4634,7 @@ function fnCalcAll(){
   let rabTotal=0, realTotal=0, dapTotal=0;
   const dap = fnDapData();
   FN_SESI_LIST.forEach(s=>{
+    if(s.ref) return; // RAB Proposal = referensi, jangan digandakan ke total keseluruhan
     const c = fnCalcSesi(s.id);
     rabTotal  += c.rabTotal;
     realTotal += c.realTotal;
@@ -4699,8 +4759,8 @@ function renderFnPerSesi(){
   const sesiOpts = FN_SESI_LIST.map(x=>`<option value="${x.id}"${x.id===fnActiveSesi?' selected':''}>${x.label}</option>`).join('');
 
   let divSections = '';
-  Object.keys(divisi).forEach(div=>{
-    const items = divisi[div];
+  ['Sekretaris','Logistik','Acara','Pubdok'].forEach(div=>{
+    const items = fnItemsFor(s.id, div);
     const color = FN_DIV_COLOR[div]||'var(--text)';
     let rabDiv=0, realDiv=0;
     const rows = items.map(item=>{
@@ -4723,22 +4783,26 @@ function renderFnPerSesi(){
         <td style="font-size:0.65rem;color:var(--blue2);white-space:nowrap">${fmt(rab)}</td>
         <td><input type="number" value="${real}" min="0" placeholder="—" style="width:80px;background:var(--bg3);border:1px solid ${real!==''?'var(--amber)':'var(--bdr2)'};color:var(--amber);font-size:0.7rem;padding:0.2rem 0.3rem;outline:none" onchange="fnSetItem('${s.id}','${item.id}','real',this.value)" onfocus="this.style.borderColor='var(--amber)'" onblur="fnSetItem('${s.id}','${item.id}','real',this.value)"></td>
         <td style="font-size:0.65rem">${selHtml}</td>
+        <td><button class="tf-del-btn" title="Hapus item" onclick="fnDelRabItem('${s.id}','${item.id}')">×</button></td>
       </tr>`;
     }).join('');
 
     divSections += `<div style="margin-bottom:0.65rem">
-      <div style="font-size:0.65rem;font-weight:700;color:${color};padding:0.35rem 0;border-bottom:1px solid var(--bdr2);margin-bottom:0.4rem;display:flex;justify-content:space-between">
+      <div style="font-size:0.65rem;font-weight:700;color:${color};padding:0.35rem 0;border-bottom:1px solid var(--bdr2);margin-bottom:0.4rem;display:flex;justify-content:space-between;align-items:center">
         <span>${div.toUpperCase()}</span>
-        <span style="font-weight:400;color:var(--muted)">RAB: ${fmt(rabDiv)}</span>
+        <span style="display:flex;gap:0.6rem;align-items:center">
+          <span style="font-weight:400;color:var(--muted)">RAB: ${fmt(rabDiv)}</span>
+          <button class="btn btn-ghost btn-sm" style="padding:0.15rem 0.5rem;font-size:0.6rem" onclick="fnAddRabItem('${s.id}','${div}')">+ Item</button>
+        </span>
       </div>
-      <div style="overflow-x:auto">
+      ${items.length?`<div style="overflow-x:auto">
         <table class="tf-table" style="font-size:0.7rem">
           <thead><tr>
-            <th>Item</th><th>Qty</th><th>Harga Sat</th><th>RAB</th><th style="color:var(--amber)">Realisasi</th><th>Selisih</th>
+            <th>Item</th><th>Qty</th><th>Harga Sat</th><th>RAB</th><th style="color:var(--amber)">Realisasi</th><th>Selisih</th><th></th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
-      </div>
+      </div>`:`<div style="font-size:0.62rem;color:var(--muted);padding:0.3rem 0">Tidak ada item — tekan + Item untuk menambah.</div>`}
     </div>`;
   });
 
@@ -5002,7 +5066,10 @@ function renderFnLaporan(){
       <div class="mini-stat"><div class="mini-val num" style="color:${grandRab-grandReal<0?'var(--red)':'var(--green)'}">${fmtRp(Math.abs(grandRab-grandReal))}</div><div class="mini-lbl">Sisa</div></div>
     </div>
     ${html}
-    <button class="btn" onclick="fnCopyLaporan()" style="margin-top:0.75rem">Salin Laporan untuk WhatsApp</button>`;
+    <div class="btn-row" style="margin-top:0.75rem">
+      <button class="btn" onclick="fnCopyLaporan()" style="flex:1">Salin Laporan untuk WhatsApp</button>
+      <button class="btn btn-ghost" onclick="fnBuatLPJ()" style="flex:1">Buat LPJ (siap cetak)</button>
+    </div>`;
 }
 
 /* ── Helpers ──────────────────────────── */
@@ -5240,6 +5307,110 @@ function fnAddManual(){
 }
 function fnDelManual(id){
   fnManualOutSave(fnManualOut().filter(x=>x.id!==id)); renderFnDAP(); showToast('Dihapus','success');
+}
+
+/* ── LPJ: Laporan Pertanggungjawaban Keuangan siap cetak (format resmi + nota) ── */
+function fnDriveThumb(url){
+  const m = /[?&]id=([A-Za-z0-9_-]+)/.exec(url||'') || /\/d\/([A-Za-z0-9_-]+)/.exec(url||'');
+  return m ? 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w480' : '';
+}
+function fnBuatLPJ(){
+  const kas = fnKasCalc();
+  const tglOpt = {day:'numeric',month:'long',year:'numeric'};
+  const hariIni = new Date().toLocaleDateString('id-ID', tglOpt);
+  const fmtTgl = iso => iso ? new Date(iso).toLocaleDateString('id-ID',{day:'numeric',month:'numeric',year:'numeric'}) : '';
+
+  // A. Pemasukan: DAP per orang yang bayar + pemasukan lain
+  const orang = fnDapPerOrang();
+  let no = 1, masukRows = '';
+  if(kas.dapTotal > 0){
+    masukRows += `<tr><td>${no++}</td><td>—</td><td>Dana DAP Panitia (${orang.length} orang)</td><td class="rp">Rp ${kas.dapTotal.toLocaleString('id-ID')}</td></tr>`;
+  }
+  fnIncome().forEach(m=>{
+    masukRows += `<tr><td>${no++}</td><td>${m.tanggal||'—'}</td><td>${esc(m.keterangan)}</td><td class="rp">Rp ${(m.jumlah||0).toLocaleString('id-ID')}</td></tr>`;
+  });
+
+  // B. Pengeluaran: belanja Logistik (dengan nota) + pengeluaran manual
+  no = 1;
+  let keluarRows = '', lampiran = [];
+  lgLoad().filter(d=>d.status==='Sudah Beli').forEach(d=>{
+    const nota = d.bukti ? `<a href="${d.bukti}">nota</a>` : '<em>tanpa nota</em>';
+    keluarRows += `<tr><td>${no++}</td><td>${fmtTgl(d.tglBeli)||'—'}</td><td>${esc(d.nama)}${d.qty?' ('+d.qty+' '+esc(d.satuan||'')+')':''} — ${nota}</td><td class="rp">Rp ${(d.total||0).toLocaleString('id-ID')}</td></tr>`;
+    if(d.bukti) lampiran.push({ label:d.nama, url:d.bukti });
+  });
+  fnManualOut().forEach(m=>{
+    keluarRows += `<tr><td>${no++}</td><td>${m.tanggal||'—'}</td><td>${esc(m.keterangan)}</td><td class="rp">Rp ${(m.jumlah||0).toLocaleString('id-ID')}</td></tr>`;
+  });
+
+  const lampiranHtml = lampiran.length ? `
+    <h3>C. LAMPIRAN NOTA / BUKTI PEMBAYARAN</h3>
+    <div class="lampiran">
+      ${lampiran.map((l,i)=>{
+        const thumb = fnDriveThumb(l.url);
+        return `<div class="nota">
+          <div class="nota-no">Nota ${i+1} — ${esc(l.label)}</div>
+          ${thumb?`<img src="${thumb}" alt="Nota ${esc(l.label)}" onerror="this.style.display='none'">`:''}
+          <div class="nota-link"><a href="${l.url}">${l.url}</a></div>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+
+  const w = window.open('', '_blank');
+  if(!w){ showToast('Izinkan pop-up untuk membuat LPJ','warning'); return; }
+  w.document.write(`<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8">
+<title>LPJ Keuangan I-BASS 2026</title>
+<style>
+  body{ font-family:'Times New Roman',serif; color:#000; background:#fff; max-width:800px; margin:2rem auto; padding:0 1.5rem; font-size:12pt; line-height:1.5; }
+  h1{ font-size:14pt; text-align:center; margin:0; text-transform:uppercase; }
+  h2{ font-size:12pt; text-align:center; margin:0.2rem 0 1.5rem; font-weight:normal; }
+  h3{ font-size:12pt; margin:1.4rem 0 0.4rem; }
+  table{ width:100%; border-collapse:collapse; margin-bottom:0.5rem; }
+  th,td{ border:1px solid #000; padding:4px 8px; font-size:11pt; text-align:left; vertical-align:top; }
+  th{ background:#f0f0f0; }
+  td.rp{ text-align:right; white-space:nowrap; }
+  tr.total td{ font-weight:bold; }
+  .nota{ margin:0.8rem 0; page-break-inside:avoid; }
+  .nota-no{ font-weight:bold; margin-bottom:0.3rem; }
+  .nota img{ max-width:420px; max-height:560px; border:1px solid #999; display:block; }
+  .nota-link{ font-size:9pt; word-break:break-all; }
+  .ttd{ margin-top:3rem; display:flex; justify-content:space-between; text-align:center; }
+  .ttd div{ width:45%; }
+  .ttd .garis{ margin-top:4.5rem; border-top:1px solid #000; padding-top:2px; }
+  .no-print{ text-align:center; margin:1rem 0; }
+  .no-print button{ padding:0.5rem 1.5rem; font-size:11pt; cursor:pointer; }
+  @media print{ .no-print{ display:none; } body{ margin:0; } }
+</style></head><body>
+<div class="no-print"><button onclick="window.print()">Cetak / Simpan PDF</button></div>
+<h1>Laporan Pertanggungjawaban Keuangan</h1>
+<h2>Internship Business Administration Student Society (I-BASS) 2026<br>HIMA Administrasi Bisnis — Universitas Telkom<br>${hariIni}</h2>
+<p>Berikut ini kami sampaikan laporan pertanggungjawaban keuangan kegiatan I-BASS 2026 beserta dokumen-dokumen pendukungnya sebagai berikut:</p>
+
+<h3>A. PEMASUKAN</h3>
+<table>
+  <tr><th style="width:8%">No</th><th style="width:20%">Tanggal</th><th>Keterangan</th><th style="width:22%">Jumlah</th></tr>
+  ${masukRows||'<tr><td colspan="4"><em>Belum ada pemasukan tercatat</em></td></tr>'}
+  <tr class="total"><td colspan="3">TOTAL PEMASUKAN</td><td class="rp">Rp ${kas.masuk.toLocaleString('id-ID')}</td></tr>
+</table>
+
+<h3>B. PENGELUARAN</h3>
+<table>
+  <tr><th style="width:8%">No</th><th style="width:20%">Tanggal</th><th>Keterangan</th><th style="width:22%">Jumlah</th></tr>
+  ${keluarRows||'<tr><td colspan="4"><em>Belum ada pengeluaran tercatat</em></td></tr>'}
+  <tr class="total"><td colspan="3">TOTAL PENGELUARAN</td><td class="rp">Rp ${kas.keluar.toLocaleString('id-ID')}</td></tr>
+</table>
+
+<table>
+  <tr class="total"><td>SALDO AKHIR KAS</td><td class="rp" style="width:22%">Rp ${kas.saldo.toLocaleString('id-ID')}</td></tr>
+</table>
+
+${lampiranHtml}
+
+<div class="ttd">
+  <div>Bendahara,<div class="garis">Aghni Alicia Sofi</div></div>
+  <div>Ketua Pelaksana,<div class="garis">Fikri Haidar Sawego</div></div>
+</div>
+</body></html>`);
+  w.document.close();
 }
 
 function fnCopyLaporan(){
