@@ -82,6 +82,20 @@ metadata:
 - **Logistik tab "Hari-H"**: checklist barang per sesi, status Belum→Disiapkan→Dibawa→Kembali,
   tarik otomatis dari Pengadaan (`lgHhImport`), salin WA. Storage `ibass_lg_harih` (ikut sync).
 
+## Sesi 10b (2026-07-12 malam): fix total dobel + roster update + grafik
+- **Fix Total RAB 23,96jt → 11,98jt**: renderFnLaporan & fnCopyLaporan skip s.ref (sesi PROP
+  referensi tidak dihitung/ditampilkan dobel; fnCalcAll sudah skip dari sebelumnya).
+- **Nur Hafiizh Puta Iskandar KELUAR dari panitia** → roster 17 orang. FN_KELUAR (norm names)
+  difilter permanen di fnRoster() (roster tersimpan lama ikut bersih). fnNPanitia default =
+  panjang roster (17); nilai '18' lama dimigrasi otomatis.
+- **AC_BUDDY_SEED**: 8 buddy resmi per dept (Ayu/Secre, Nursyfa/Finance, Eghina/HRD,
+  Akram/Advocacy, Razwa/ExtAff, Tyara/MEIN, Marzya/Entre, Anggun/ACT) — default
+  acBuddyRoster; matching longgar tetap jalan walau nama diketik sebagian.
+- **GAS `updateGrafik(ss)`**: sheet GRAFIK berisi tabel status per divisi + chart kolom
+  bertumpuk + donat "Selesai per Divisi", dibangun ulang tiap action:sync (setelah
+  rebuildRekap), try/catch supaya tidak ganggu sync. BUTUH deploy New version
+  (bareng imgsearch — user belum deploy dua-duanya per 2026-07-12 malam).
+
 ## PENDING pagi Boss (2026-07-11):
 1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
    (UrlFetchApp + Drive) → Deploy New version. Tanpa ini: AI, foto bukti, sync state MATI
