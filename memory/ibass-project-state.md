@@ -111,6 +111,17 @@ metadata:
   belum bayar T1 (< Rp115.000) & lewat t1 → hari telat × denda; T2 juga kalau t2 diisi.
   Tampil merah di kolom status + ikut teks "Salin Belum Bayar". Input tanggal di kartu DAP.
 
+## Sesi 10d (2026-07-13): total RAB 12.075.000 + referensi format-aware
+- **Total RAB final = Rp12.075.000** (rekap resmi "III. Estimasi Anggaran" di proposal).
+  Proposal INKONSISTEN: tabel rincian Acara total 247rb tapi rekap 342rb — selisih 95rb
+  = 1 plakat. Solusi: Plakat qty 2 (satu per pematerian): PROP pr-a4 qty 2,
+  PMT2 dapat p2-a1 Plakat 95rb. Jangan "perbaiki" balik ke 11.980.000.
+- **Referensi Pubdok dirombak**: prompt bahasa natural anak desain (larangan kata AI:
+  "memukau", "menawan", dll + contoh gaya benar), konsep wajib sesuai format
+  (carousel = alur slide, story = vertikal 5 detik, reels = kebaca di thumbnail).
+  `pdRefFormatTerm(jenis)` → kata kunci gambar otomatis bawa format ("instagram carousel"
+  dll, tidak dobel kalau sudah ada), `pdRefPortrait` → grid story/reels tampil portrait 200px.
+
 ## PENDING pagi Boss (2026-07-11):
 1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
    (UrlFetchApp + Drive) → Deploy New version. Tanpa ini: AI, foto bukti, sync state MATI
