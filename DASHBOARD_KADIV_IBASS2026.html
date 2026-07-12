@@ -3086,18 +3086,23 @@ async function pdGenReferensi(){
   if(btn) btn.disabled = true;
   if(load) load.style.display = 'block';
   try{
-    const data = await aiCall({contents:[{parts:[{text:`Kamu art director berpengalaman untuk konten Instagram organisasi mahasiswa.
+    const fmtKey = pdRefFormatTerm(jenis);
+    const data = await aiCall({contents:[{parts:[{text:`Kamu desainer konten yang biasa pegang akun IG organisasi kampus. Kamu lagi kasih ide ke teman satu tim, bukan presentasi ke klien.
 
-Buat 3 konsep desain ${jenis} Instagram untuk topik: "${topik}".
-Konteks: akun IG resmi I-BASS 2026 (program HIMA Administrasi Bisnis, Universitas Telkom, tema besar "NEXUS" — kastil, bintang, magis, navy dan emas).
+Buat 3 konsep desain ${jenis} untuk topik: "${topik}".
+Konteks: akun IG resmi I-BASS 2026 (program HIMA Administrasi Bisnis, Universitas Telkom, tema besar "NEXUS" — kastil, bintang, langit malam, navy dan emas).
 Gaya yang diminta: ${mood}.
 
-Ketiga konsep harus BERBEDA arah satu sama lain (jangan tiga variasi dari ide yang sama).
-"keywords" = 3 frasa pencarian Pinterest dalam bahasa Inggris yang spesifik untuk menemukan referensi visual konsep itu (contoh: "navy gold event poster instagram", bukan kata umum seperti "design").
+Aturan penting:
+- Ketiga konsep harus beda arah satu sama lain, bukan tiga variasi ide yang sama.
+- Konsep HARUS sesuai formatnya: ${jenis==='Carousel (beberapa slide)'?'jelaskan alur slide-nya (slide 1 apa, slide 2-3 apa, slide terakhir apa)':jenis==='Story'?'ingat story itu vertikal, dilihat 5 detik, teks harus besar dan sedikit':jenis==='Cover Reels'?'cover reels itu kecil di grid — satu fokus visual + judul besar yang kebaca di thumbnail':'satu gambar feed — komposisinya harus kuat berdiri sendiri'}.
+- Tulis dengan bahasa sehari-hari anak desain. DILARANG pakai kata: "memukau", "menawan", "elegan nan", "estetik yang", "visual yang kuat", "menarik perhatian", "kesan mewah", "nuansa magis yang". Langsung sebut bendanya: apa yang ada di tengah, teksnya tulisan apa, warnanya apa.
+- Contoh gaya yang benar: "Kastil kecil di pojok bawah, langit gradasi navy ke hitam, teks 'TWN 1' gede di tengah pakai font serif emas. Bawahnya tanggal sama jam, udah gitu aja biar nggak rame."
+- "keywords" = 3 frasa pencarian dalam bahasa Inggris, dan MASING-MASING harus mengandung format kontennya ("${fmtKey}") supaya hasil pencariannya sesuai format. Contoh untuk carousel: "navy gold instagram carousel event", bukan cuma "navy gold design".
 
 Balas HANYA JSON array valid, tanpa teks lain:
 [
-  {"nama":"nama konsep singkat","konsep":"deskripsi visual 2-3 kalimat","layout":"susunan elemen singkat","tipografi":"saran font/gaya huruf","palet":[{"hex":"#0d1c3a","nama":"navy"},{"hex":"#e8bf6a","nama":"emas"}],"hook":"kalimat pembuka caption","keywords":["...","...","..."]}
+  {"nama":"nama konsep singkat","konsep":"deskripsi konkret 2-3 kalimat gaya ngobrol","layout":"susunan elemen singkat","tipografi":"saran font/gaya huruf","palet":[{"hex":"#0d1c3a","nama":"navy"},{"hex":"#e8bf6a","nama":"emas"}],"hook":"kalimat pembuka caption","keywords":["...","...","..."]}
 ]`}]}]});
     let text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim()||'[]';
     text = text.replace(/```json|```/g,'').trim();
@@ -4579,7 +4584,7 @@ const FN_RAB_DEFAULT = {
       {id:'pr-a1',nama:'Print kertas Rundown',qty:2,harga:10000},
       {id:'pr-a2',nama:'Laminating',qty:2,harga:6000},
       {id:'pr-a3',nama:'Hadiah Peserta',qty:10,harga:12000},
-      {id:'pr-a4',nama:'Plakat',qty:1,harga:95000},
+      {id:'pr-a4',nama:'Plakat (pemateri PMT 1 & 2)',qty:2,harga:95000},
     ], Pubdok:[
       {id:'pr-p1',nama:'Print Poster',qty:2,harga:15000},
     ]},
@@ -4621,7 +4626,9 @@ const FN_RAB_DEFAULT = {
     ], Acara:[
       {id:'p1-a1',nama:'Plakat',qty:1,harga:95000},
     ], Pubdok:[] },
-  PMT2:{ Sekretaris:[], Logistik:[], Acara:[], Pubdok:[] }
+  PMT2:{ Sekretaris:[], Logistik:[], Acara:[
+      {id:'p2-a1',nama:'Plakat',qty:1,harga:95000},
+    ], Pubdok:[] }
 };
 const FN_DIV_COLOR = {Sekretaris:'var(--blue2)',Logistik:'var(--amber)',Acara:'var(--finance)',Pubdok:'var(--purple,#a78bfa)'};
 
