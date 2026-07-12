@@ -122,6 +122,17 @@ metadata:
   `pdRefFormatTerm(jenis)` → kata kunci gambar otomatis bawa format ("instagram carousel"
   dll, tidak dobel kalau sudah ada), `pdRefPortrait` → grid story/reels tampil portrait 200px.
 
+## Sesi 10e (2026-07-13): referensi per platform + LPJ v2 standar
+- **Referensi contoh dari orang lain per platform**: `pdRefCariGambar(q, situs)` — chip
+  Semua/Instagram/TikTok/Pinterest di grid, filter via `site:instagram.com` dll di query
+  Bing. Kartu gambar menampilkan hostname sumber. State: pdRefQ/pdRefSitus.
+- **LPJ v2 (fnBuatLPJ) standar organisasi**: kop HIMA double-border, tabel info kegiatan,
+  I. Ringkasan, II. Pemasukan, III. Pengeluaran DIKELOMPOKKAN per kategori + subtotal +
+  kolom "Nota N" silang ke lampiran, IV. Anggaran vs Realisasi per divisi (dari fnItemsFor,
+  skip s.ref), V. Lampiran nota bernomor, kalimat penutup, "Bandung, tgl", 3 ttd
+  (Bendahara/Ketupel/Mengetahui). SELURUH dokumen contenteditable — bendahara bisa edit
+  langsung sebelum cetak.
+
 ## PENDING pagi Boss (2026-07-11):
 1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
    (UrlFetchApp + Drive) → Deploy New version. Tanpa ini: AI, foto bukti, sync state MATI
