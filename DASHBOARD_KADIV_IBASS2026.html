@@ -3051,32 +3051,52 @@ function pdRefFormatTerm(jenis){
 function pdRefPortrait(jenis){ return /story|reels/i.test(jenis||''); }
 
 /* Muat contoh gambar dari internet (lewat server) — tiap gambar terhubung ke sumber aslinya */
-async function pdRefCariGambar(q){
+let pdRefQ = '';        // kata kunci terakhir — untuk ganti-ganti platform
+let pdRefSitus = '';    // '' = seluruh internet, atau instagram.com / tiktok.com / pinterest.com
+async function pdRefCariGambar(q, situs){
   const grid = document.getElementById('pdref-grid');
   if(!grid) return;
+  pdRefQ = q;
+  if(situs !== undefined) pdRefSitus = situs;
   const jenis = (pdRefLoad()||{}).jenis || document.getElementById('pdref-jenis')?.value || '';
   const fmt = pdRefFormatTerm(jenis);
   // Pastikan kata kunci membawa format kontennya, biar contohnya sesuai bentuk
   const kataFmt = fmt.split(' ').pop();
-  const qFull = new RegExp(kataFmt,'i').test(q) ? q : q+' '+fmt;
+  let qFull = new RegExp(kataFmt,'i').test(q) ? q : q+' '+fmt;
+  if(pdRefSitus) qFull += ' site:'+pdRefSitus;
   const tinggi = pdRefPortrait(jenis) ? 200 : 110;
+  const situsList = [
+    { s:'', label:'Semua' },
+    { s:'instagram.com', label:'Instagram' },
+    { s:'tiktok.com', label:'TikTok' },
+    { s:'pinterest.com', label:'Pinterest' }
+  ];
+  const chips = situsList.map(x=>
+    `<button class="chip${pdRefSitus===x.s?' on':''}" onclick="pdRefCariGambar(pdRefQ,'${x.s}')">${x.label}</button>`).join('');
   grid.scrollIntoView({behavior:'smooth', block:'nearest'});
-  grid.innerHTML = `<div style="text-align:center;padding:0.75rem;font-size:0.7rem;color:var(--muted)"><span class="spinner"></span> Mencari contoh ${esc(fmt)} untuk "${esc(q)}"...</div>`;
+  grid.innerHTML = `<div style="text-align:center;padding:0.75rem;font-size:0.7rem;color:var(--muted)"><span class="spinner"></span> Mencari contoh ${esc(fmt)}${pdRefSitus?' di '+esc(pdRefSitus):''} untuk "${esc(q)}"...</div>`;
   try{
     const js = await gasPost(GAS_URL, { action:'imgsearch', q: qFull });
     const hasil = (js && js.hasil) || [];
     if(!hasil.length) throw new Error('kosong');
     grid.innerHTML = `
-      <div class="list-title">Contoh ${esc(fmt)}: "${esc(q)}"</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(${pdRefPortrait(jenis)?120:140}px,1fr));gap:0.5rem">
-        ${hasil.map(h=>`<a href="${esc(h.sumber)}" target="_blank" rel="noopener" style="display:block;background:var(--bg2s);border:1px solid var(--bdr2);border-radius:var(--r);overflow:hidden;text-decoration:none">
-          <img src="${esc(h.thumb||h.img)}" loading="lazy" alt="" style="width:100%;height:${tinggi}px;object-fit:cover;display:block" onerror="this.closest('a').style.display='none'">
-          <div style="padding:0.3rem 0.4rem;font-size:0.56rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(h.judul||'Lihat sumber')}</div>
-        </a>`).join('')}
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem">
+        <div class="list-title" style="margin:0">Contoh ${esc(fmt)} dari orang lain: "${esc(q)}"</div>
+        <div style="display:flex;gap:0.25rem;flex-wrap:wrap">${chips}</div>
       </div>
-      <div style="font-size:0.58rem;color:var(--muted);margin-top:0.35rem">Klik gambar untuk membuka postingan / halaman sumber aslinya.</div>`;
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(${pdRefPortrait(jenis)?120:140}px,1fr));gap:0.5rem">
+        ${hasil.map(h=>{
+          let host=''; try{ host = new URL(h.sumber).hostname.replace('www.',''); }catch(e){}
+          return `<a href="${esc(h.sumber)}" target="_blank" rel="noopener" style="display:block;background:var(--bg2s);border:1px solid var(--bdr2);border-radius:var(--r);overflow:hidden;text-decoration:none">
+          <img src="${esc(h.thumb||h.img)}" loading="lazy" alt="" style="width:100%;height:${tinggi}px;object-fit:cover;display:block" onerror="this.closest('a').style.display='none'">
+          <div style="padding:0.3rem 0.4rem;font-size:0.56rem;color:var(--blue2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(host||'sumber')} ↗</div>
+        </a>`;}).join('')}
+      </div>
+      <div style="font-size:0.58rem;color:var(--muted);margin-top:0.35rem">Klik gambar untuk membuka postingan aslinya. Pakai tombol platform di kanan atas untuk lihat contoh khusus dari Instagram / TikTok / Pinterest.</div>`;
   }catch(e){
-    grid.innerHTML = `<div class="info-box warning" style="font-size:0.66rem">Contoh gambar tidak termuat${(e.message||'').includes('dikenal')?' — server perlu deploy versi baru sekali lagi':''}. Coba kata kunci lain.</div>`;
+    grid.innerHTML = `
+      <div style="display:flex;gap:0.25rem;flex-wrap:wrap;margin-bottom:0.4rem">${chips}</div>
+      <div class="info-box warning" style="font-size:0.66rem">Contoh${pdRefSitus?' dari '+esc(pdRefSitus):''} tidak ketemu${(e.message||'').includes('dikenal')?' — server perlu deploy versi baru sekali lagi':''}. Coba platform lain atau kata kunci lain.</div>`;
   }
 }
 
