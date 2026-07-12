@@ -5246,11 +5246,12 @@ const FN_ROSTER_SEED = [
   { n:'Revina Dwi Ananda', d:'Pubdok' },
   { n:'Rizky Akmal Fadhillah', d:'Logistik' },
   { n:'Khotibul Umam Al Isyrafi', d:'Logistik' },
-  { n:'Tommy Rizkya', d:'Logistik' }
+  { n:'Tommy Rizkya', d:'Logistik' },
+  { n:'Nadzril Fauzan Lelan P', d:'Supervisor' }
 ];
 /* Panitia yang sudah keluar — dibuang juga dari roster tersimpan lama */
 const FN_KELUAR = ['nur hafiizh puta iskandar'];
-const FN_DIVISI_URUTAN = ['Inti','Acara','Pubdok','Logistik'];
+const FN_DIVISI_URUTAN = ['Inti','Acara','Pubdok','Logistik','Supervisor'];
 function fnRoster(){
   let r;
   try{
@@ -5260,6 +5261,14 @@ function fnRoster(){
   return list.filter(m => FN_KELUAR.indexOf(fnNormName(m.n)) < 0);
 }
 /* Cocokkan anggota roster dengan data pembayar (longgar dua arah) */
+/* Dua nama dianggap sama kalau minimal 2 kata sama — menangkap salah ketik
+   satu kata (mis. "Thykha Agusthy Dwi Yumandha" vs "Thyka Agusthy Dwi Yumandha") */
+function fnNamaMirip(a, b){
+  if(a===b || a.includes(b) || b.includes(a)) return true;
+  const ka = a.split(' ').filter(w=>w.length>2);
+  const kb = new Set(b.split(' ').filter(w=>w.length>2));
+  return ka.filter(w=>kb.has(w)).length >= 2;
+}
 function fnRosterStatus(){
   const orang = fnDapPerOrang();
   const dipakai = new Set();
@@ -5270,7 +5279,7 @@ function fnRosterStatus(){
       if(dipakai.has(i)) return;
       const p = fnNormName(o.nama);
       if(p===nn){ best = i; }
-      else if(best===null && (p.includes(nn)||nn.includes(p))){ best = i; }
+      else if(best===null && fnNamaMirip(p, nn)){ best = i; }
     });
     if(best!==null) dipakai.add(best);
     const bayar = best!==null ? orang[best] : null;
@@ -5948,20 +5957,25 @@ function acFmtTime(s){
 const AC_MILESTONES = ['Townhall 1','Pematerian 1','Townhall 2','Pematerian 2','Townhall 3'];
 /* Buddy resmi I-BASS 26 per departemen (dari Boss, 2026-07-12) */
 const AC_BUDDY_SEED = [
-  'Ayu Diah Pramesti (Secretary)',
-  'Nursyfa Alawiyah Thoyibah (Finance)',
-  'Eghina Salsabilla (HRD)',
-  'Muhammad Akram Ziyad (Advocacy)',
-  'Razwa Zahara Maulidiya (External Affairs)',
-  'Tyara Nadira Putri (MEIN)',
-  'Marzya Zyalzyabila (Entrepreneurship)',
-  'Anggun Puti Maharani (ACT)'
+  { d:'HRD',              n:'Eghina Salsabilla' },
+  { d:'MEIN',             n:'Tyara Nadira Putri' },
+  { d:'ACT',              n:'Anggun Puti Maharani' },
+  { d:'Finance',          n:'Nursyfa Alawiyah Thoyibah' },
+  { d:'Advocacy',         n:'Muhammad Akram Ziyad' },
+  { d:'Secretary',        n:'Ayu Diah Pramesti' },
+  { d:'External Affairs', n:'Razwa Zahara Maulidiya' },
+  { d:'Entrepreneurship', n:'Marzya Zyalzyabila' }
 ];
 function acBuddyRoster(){
-  try{
-    const r = JSON.parse(localStorage.getItem('ibass_ac_buddy')||'null');
-    return (r && r.length) ? r : AC_BUDDY_SEED.slice();
-  }catch{ return AC_BUDDY_SEED.slice(); }
+  let r;
+  try{ r = JSON.parse(localStorage.getItem('ibass_ac_buddy')||'null'); }catch{ r = null; }
+  if(!r || !r.length) return AC_BUDDY_SEED.slice();
+  // Format lama: array string "Nama (Dept)" atau "Nama" — ubah ke objek
+  return r.map(x=>{
+    if(typeof x !== 'string') return x;
+    const m = /^(.*?)\s*\(([^)]+)\)\s*$/.exec(x);
+    return m ? { n:m[1].trim(), d:m[2].trim() } : { n:x.trim(), d:'—' };
+  });
 }
 function acPenData(){ try{ return JSON.parse(localStorage.getItem('ibass_ac_pen')||'{"list":[],"synced":""}'); }catch{ return {list:[],synced:''}; } }
 
