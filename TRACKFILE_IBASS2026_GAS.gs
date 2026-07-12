@@ -305,6 +305,7 @@ function doPost(e) {
 
       // Update sheet REKAP
       rebuildRekap(ss);
+      updateGrafik(ss);
       return jsonOk({ message: 'Sync ' + items.length + ' item ke sheet ' + sheetName });
     }
 
@@ -652,6 +653,54 @@ function rebuildRekap(ss) {
   if (allRows.length > 0) {
     rekap.getRange(DATA_START_ROW, 1, allRows.length, HEADER_ROW.length).setValues(allRows);
   }
+}
+
+// ─── Grafik progress Track File per divisi (sheet GRAFIK) ────────
+function updateGrafik(ss) {
+  try {
+    let sh = ss.getSheetByName('GRAFIK');
+    if (!sh) sh = ss.insertSheet('GRAFIK');
+
+    const stats = [['Divisi', 'Selesai', 'Berlangsung', 'Belum', 'Terlambat']];
+    let totalAll = 0, selesaiAll = 0;
+    SHEET_DIVISI.forEach(name => {
+      const rows = readSheet(ss, name);
+      const selesai = rows.filter(r => r.status === 'Selesai').length;
+      totalAll += rows.length; selesaiAll += selesai;
+      stats.push([name, selesai,
+        rows.filter(r => r.status === 'Berlangsung').length,
+        rows.filter(r => r.status === 'Belum').length,
+        rows.filter(r => r.status === 'Terlambat').length]);
+    });
+
+    sh.clearContents();
+    sh.getRange(1, 1, stats.length, 5).setValues(stats);
+    sh.getRange(stats.length + 2, 1, 1, 2).setValues([[
+      'Progress keseluruhan',
+      totalAll ? Math.round(selesaiAll / totalAll * 100) + '% (' + selesaiAll + '/' + totalAll + ' selesai)' : 'belum ada data']]);
+    sh.getRange(1, 1, 1, 5).setFontWeight('bold');
+
+    // Bangun ulang grafiknya supaya selalu mengikuti data terbaru
+    sh.getCharts().forEach(c => sh.removeChart(c));
+    const batang = sh.newChart()
+      .setChartType(Charts.ChartType.COLUMN)
+      .addRange(sh.getRange(1, 1, stats.length, 5))
+      .setPosition(2, 7, 0, 0)
+      .setOption('title', 'Progress Track File per Divisi')
+      .setOption('isStacked', true)
+      .setOption('width', 560).setOption('height', 320)
+      .build();
+    sh.insertChart(batang);
+    const donat = sh.newChart()
+      .setChartType(Charts.ChartType.PIE)
+      .addRange(sh.getRange(1, 1, stats.length, 2))
+      .setPosition(20, 7, 0, 0)
+      .setOption('title', 'Kegiatan Selesai per Divisi')
+      .setOption('pieHole', 0.45)
+      .setOption('width', 560).setOption('height', 320)
+      .build();
+    sh.insertChart(donat);
+  } catch (err) { /* grafik gagal tidak boleh mengganggu sync data */ }
 }
 
 // ─── Setup awal: buat semua sheet ────────────────────────────────
