@@ -5484,98 +5484,179 @@ function fnDriveThumb(url){
 }
 function fnBuatLPJ(){
   const kas = fnKasCalc();
-  const tglOpt = {day:'numeric',month:'long',year:'numeric'};
-  const hariIni = new Date().toLocaleDateString('id-ID', tglOpt);
+  const rp = n => 'Rp ' + Math.round(n||0).toLocaleString('id-ID');
+  const hariIni = new Date().toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'});
   const fmtTgl = iso => iso ? new Date(iso).toLocaleDateString('id-ID',{day:'numeric',month:'numeric',year:'numeric'}) : '';
 
-  // A. Pemasukan: DAP per orang yang bayar + pemasukan lain
+  // II. Pemasukan: DAP + pemasukan lain
   const orang = fnDapPerOrang();
   let no = 1, masukRows = '';
   if(kas.dapTotal > 0){
-    masukRows += `<tr><td>${no++}</td><td>—</td><td>Dana DAP Panitia (${orang.length} orang)</td><td class="rp">Rp ${kas.dapTotal.toLocaleString('id-ID')}</td></tr>`;
+    masukRows += `<tr><td>${no++}</td><td>—</td><td>Dana DAP Panitia (${orang.length} orang × wajib ${rp(DAP_WAJIB)})</td><td class="rp">${rp(kas.dapTotal)}</td></tr>`;
   }
   fnIncome().forEach(m=>{
-    masukRows += `<tr><td>${no++}</td><td>${m.tanggal||'—'}</td><td>${esc(m.keterangan)}</td><td class="rp">Rp ${(m.jumlah||0).toLocaleString('id-ID')}</td></tr>`;
+    masukRows += `<tr><td>${no++}</td><td>${m.tanggal||'—'}</td><td>${esc(m.keterangan)}</td><td class="rp">${rp(m.jumlah)}</td></tr>`;
   });
 
-  // B. Pengeluaran: belanja Logistik (dengan nota) + pengeluaran manual
-  no = 1;
-  let keluarRows = '', lampiran = [];
+  // III. Pengeluaran dikelompokkan per kategori + nomor nota silang ke lampiran
+  const lampiran = [];
+  const notaNo = url => { lampiran.push(url); return lampiran.length; };
+  const grup = {};
   lgLoad().filter(d=>d.status==='Sudah Beli').forEach(d=>{
-    const nota = d.bukti ? `<a href="${d.bukti}">nota</a>` : '<em>tanpa nota</em>';
-    keluarRows += `<tr><td>${no++}</td><td>${fmtTgl(d.tglBeli)||'—'}</td><td>${esc(d.nama)}${d.qty?' ('+d.qty+' '+esc(d.satuan||'')+')':''} — ${nota}</td><td class="rp">Rp ${(d.total||0).toLocaleString('id-ID')}</td></tr>`;
-    if(d.bukti) lampiran.push({ label:d.nama, url:d.bukti });
+    const k = d.kategori || 'Lain-lain';
+    (grup[k] = grup[k]||[]).push({
+      tgl: fmtTgl(d.tglBeli)||'—',
+      ket: d.nama + (d.qty ? ' ('+d.qty+' '+(d.satuan||'')+')' : ''),
+      jml: d.total||0,
+      nota: d.bukti ? { n: notaNo({label:d.nama, url:d.bukti}), url:d.bukti } : null
+    });
   });
-  fnManualOut().forEach(m=>{
-    keluarRows += `<tr><td>${no++}</td><td>${m.tanggal||'—'}</td><td>${esc(m.keterangan)}</td><td class="rp">Rp ${(m.jumlah||0).toLocaleString('id-ID')}</td></tr>`;
+  const manualList = fnManualOut();
+  if(manualList.length){
+    grup['Pengeluaran Lain'] = manualList.map(m=>({ tgl:m.tanggal||'—', ket:m.keterangan, jml:m.jumlah||0, nota:null }));
+  }
+  no = 1;
+  let keluarRows = '';
+  Object.entries(grup).forEach(([kat, items])=>{
+    const sub = items.reduce((a,b)=>a+b.jml,0);
+    keluarRows += `<tr><td colspan="5" style="background:#e8e8e8;font-weight:bold">${esc(kat)}</td></tr>`;
+    items.forEach(it=>{
+      keluarRows += `<tr><td>${no++}</td><td>${esc(it.tgl)}</td><td>${esc(it.ket)}</td><td style="text-align:center">${it.nota?`<a href="${it.nota.url}">Nota ${it.nota.n}</a>`:'—'}</td><td class="rp">${rp(it.jml)}</td></tr>`;
+    });
+    keluarRows += `<tr><td colspan="4" style="text-align:right;font-style:italic">Subtotal ${esc(kat)}</td><td class="rp" style="font-style:italic">${rp(sub)}</td></tr>`;
+  });
+
+  // IV. Anggaran (RAB) vs Realisasi per divisi — dari tab RAB per Sesi
+  const divisi4 = ['Sekretaris','Logistik','Acara','Pubdok'];
+  const perDiv = {};
+  divisi4.forEach(dv=>{ perDiv[dv] = {rab:0, real:0}; });
+  const dFn = fnData();
+  FN_SESI_LIST.forEach(s=>{
+    if(s.ref) return;
+    divisi4.forEach(dv=>{
+      fnItemsFor(s.id, dv).forEach(item=>{
+        const ovr = (dFn[s.id]||{})[item.id]||{};
+        perDiv[dv].rab  += (ovr.qty ?? item.qty) * (ovr.harga ?? item.harga);
+        perDiv[dv].real += ovr.real ?? 0;
+      });
+    });
+  });
+  let rabRows = '';
+  let rabTot = 0, realTot = 0;
+  divisi4.forEach(dv=>{
+    const x = perDiv[dv]; rabTot += x.rab; realTot += x.real;
+    const sisa = x.rab - x.real;
+    rabRows += `<tr><td>${dv==='Sekretaris'?'Administrasi / Sekretaris':dv}</td><td class="rp">${rp(x.rab)}</td><td class="rp">${rp(x.real)}</td><td class="rp" style="${sisa<0?'color:#a00;':''}">${sisa<0?'− ':''}${rp(Math.abs(sisa))}</td></tr>`;
   });
 
   const lampiranHtml = lampiran.length ? `
-    <h3>C. LAMPIRAN NOTA / BUKTI PEMBAYARAN</h3>
+    <h3>V. LAMPIRAN NOTA / BUKTI PEMBAYARAN</h3>
+    <p style="font-size:10pt">Nomor nota di bawah sesuai kolom "Nota" pada tabel pengeluaran.</p>
     <div class="lampiran">
       ${lampiran.map((l,i)=>{
         const thumb = fnDriveThumb(l.url);
         return `<div class="nota">
           <div class="nota-no">Nota ${i+1} — ${esc(l.label)}</div>
-          ${thumb?`<img src="${thumb}" alt="Nota ${esc(l.label)}" onerror="this.style.display='none'">`:''}
+          ${thumb?`<img src="${thumb}" alt="Nota ${i+1}" onerror="this.style.display='none'">`:''}
           <div class="nota-link"><a href="${l.url}">${l.url}</a></div>
         </div>`;
       }).join('')}
     </div>` : '';
 
+  const statusKas = kas.saldo >= 0 ? 'Surplus / saldo tersisa' : 'Defisit';
   const w = window.open('', '_blank');
   if(!w){ showToast('Izinkan pop-up untuk membuat LPJ','warning'); return; }
   w.document.write(`<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8">
 <title>LPJ Keuangan I-BASS 2026</title>
 <style>
   body{ font-family:'Times New Roman',serif; color:#000; background:#fff; max-width:800px; margin:2rem auto; padding:0 1.5rem; font-size:12pt; line-height:1.5; }
-  h1{ font-size:14pt; text-align:center; margin:0; text-transform:uppercase; }
-  h2{ font-size:12pt; text-align:center; margin:0.2rem 0 1.5rem; font-weight:normal; }
+  .kop{ text-align:center; border-bottom:3px double #000; padding-bottom:0.5rem; margin-bottom:1rem; }
+  .kop .b1{ font-size:13pt; font-weight:bold; letter-spacing:0.05em; }
+  .kop .b2{ font-size:11pt; }
+  .kop .b3{ font-size:9pt; }
+  h1{ font-size:14pt; text-align:center; margin:0.6rem 0 0; text-transform:uppercase; text-decoration:underline; }
+  h2{ font-size:12pt; text-align:center; margin:0.2rem 0 1.2rem; font-weight:normal; }
   h3{ font-size:12pt; margin:1.4rem 0 0.4rem; }
   table{ width:100%; border-collapse:collapse; margin-bottom:0.5rem; }
   th,td{ border:1px solid #000; padding:4px 8px; font-size:11pt; text-align:left; vertical-align:top; }
   th{ background:#f0f0f0; }
   td.rp{ text-align:right; white-space:nowrap; }
   tr.total td{ font-weight:bold; }
+  table.info td{ border:none; padding:1px 4px; font-size:11pt; }
+  table.info td:first-child{ width:220px; }
   .nota{ margin:0.8rem 0; page-break-inside:avoid; }
   .nota-no{ font-weight:bold; margin-bottom:0.3rem; }
   .nota img{ max-width:420px; max-height:560px; border:1px solid #999; display:block; }
   .nota-link{ font-size:9pt; word-break:break-all; }
-  .ttd{ margin-top:3rem; display:flex; justify-content:space-between; text-align:center; }
-  .ttd div{ width:45%; }
+  .ttd{ margin-top:2.5rem; display:flex; justify-content:space-between; text-align:center; flex-wrap:wrap; gap:1rem; }
+  .ttd div{ width:30%; min-width:180px; }
   .ttd .garis{ margin-top:4.5rem; border-top:1px solid #000; padding-top:2px; }
   .no-print{ text-align:center; margin:1rem 0; }
   .no-print button{ padding:0.5rem 1.5rem; font-size:11pt; cursor:pointer; }
+  .no-print .hint{ font-size:9pt; color:#666; font-family:Arial,sans-serif; margin-top:0.3rem; }
   @media print{ .no-print{ display:none; } body{ margin:0; } }
 </style></head><body>
-<div class="no-print"><button onclick="window.print()">Cetak / Simpan PDF</button></div>
+<div class="no-print">
+  <button onclick="window.print()">Cetak / Simpan PDF</button>
+  <div class="hint">Semua teks di halaman ini bisa DIKLIK dan DIEDIT langsung sebelum dicetak — misal mengganti periode, menambah catatan, atau merapikan keterangan.</div>
+</div>
+<div contenteditable="true" spellcheck="false">
+<div class="kop">
+  <div class="b1">HIMPUNAN MAHASISWA ADMINISTRASI BISNIS</div>
+  <div class="b2">FAKULTAS EKONOMI DAN BISNIS — UNIVERSITAS TELKOM</div>
+  <div class="b3">Sekretariat: Bandung Technoplex, Jl. Telekomunikasi No. 1, Dayeuhkolot, Bandung</div>
+</div>
 <h1>Laporan Pertanggungjawaban Keuangan</h1>
-<h2>Internship Business Administration Student Society (I-BASS) 2026<br>HIMA Administrasi Bisnis — Universitas Telkom<br>${hariIni}</h2>
-<p>Berikut ini kami sampaikan laporan pertanggungjawaban keuangan kegiatan I-BASS 2026 beserta dokumen-dokumen pendukungnya sebagai berikut:</p>
+<h2>Internship Business Administration Student Society (I-BASS) 2026</h2>
 
-<h3>A. PEMASUKAN</h3>
+<table class="info">
+  <tr><td>Nama Kegiatan</td><td>: Internship Business Administration Student Society (I-BASS) 2026</td></tr>
+  <tr><td>Penyelenggara</td><td>: HIMA Administrasi Bisnis, Universitas Telkom</td></tr>
+  <tr><td>Ketua Pelaksana</td><td>: Fikri Haidar Sawego</td></tr>
+  <tr><td>Bendahara</td><td>: Aghni Alicia Sofi</td></tr>
+  <tr><td>Periode Laporan</td><td>: s.d. ${hariIni}</td></tr>
+  <tr><td>Sumber Dana</td><td>: Dana DAP panitia dan pemasukan lain</td></tr>
+</table>
+
+<h3>I. RINGKASAN KEUANGAN</h3>
 <table>
-  <tr><th style="width:8%">No</th><th style="width:20%">Tanggal</th><th>Keterangan</th><th style="width:22%">Jumlah</th></tr>
+  <tr><td>Total Pemasukan</td><td class="rp" style="width:25%">${rp(kas.masuk)}</td></tr>
+  <tr><td>Total Pengeluaran</td><td class="rp">${rp(kas.keluar)}</td></tr>
+  <tr class="total"><td>Saldo Akhir Kas (${statusKas})</td><td class="rp">${rp(kas.saldo)}</td></tr>
+</table>
+
+<h3>II. RINCIAN PEMASUKAN</h3>
+<table>
+  <tr><th style="width:7%">No</th><th style="width:18%">Tanggal</th><th>Keterangan</th><th style="width:20%">Jumlah</th></tr>
   ${masukRows||'<tr><td colspan="4"><em>Belum ada pemasukan tercatat</em></td></tr>'}
-  <tr class="total"><td colspan="3">TOTAL PEMASUKAN</td><td class="rp">Rp ${kas.masuk.toLocaleString('id-ID')}</td></tr>
+  <tr class="total"><td colspan="3">TOTAL PEMASUKAN</td><td class="rp">${rp(kas.masuk)}</td></tr>
 </table>
 
-<h3>B. PENGELUARAN</h3>
+<h3>III. RINCIAN PENGELUARAN</h3>
 <table>
-  <tr><th style="width:8%">No</th><th style="width:20%">Tanggal</th><th>Keterangan</th><th style="width:22%">Jumlah</th></tr>
-  ${keluarRows||'<tr><td colspan="4"><em>Belum ada pengeluaran tercatat</em></td></tr>'}
-  <tr class="total"><td colspan="3">TOTAL PENGELUARAN</td><td class="rp">Rp ${kas.keluar.toLocaleString('id-ID')}</td></tr>
+  <tr><th style="width:7%">No</th><th style="width:15%">Tanggal</th><th>Keterangan</th><th style="width:12%">Nota</th><th style="width:20%">Jumlah</th></tr>
+  ${keluarRows||'<tr><td colspan="5"><em>Belum ada pengeluaran tercatat</em></td></tr>'}
+  <tr class="total"><td colspan="4">TOTAL PENGELUARAN</td><td class="rp">${rp(kas.keluar)}</td></tr>
 </table>
 
+<h3>IV. ANGGARAN VS REALISASI PER DIVISI</h3>
 <table>
-  <tr class="total"><td>SALDO AKHIR KAS</td><td class="rp" style="width:22%">Rp ${kas.saldo.toLocaleString('id-ID')}</td></tr>
+  <tr><th>Divisi</th><th style="width:22%">Anggaran (RAB)</th><th style="width:22%">Realisasi</th><th style="width:22%">Sisa Anggaran</th></tr>
+  ${rabRows}
+  <tr class="total"><td>TOTAL</td><td class="rp">${rp(rabTot)}</td><td class="rp">${rp(realTot)}</td><td class="rp">${rp(rabTot-realTot)}</td></tr>
 </table>
+<p style="font-size:10pt;font-style:italic">Kolom Realisasi diambil dari isian "Realisasi" pada RAB per Sesi di dashboard — pastikan sudah terisi agar perbandingan akurat.</p>
 
 ${lampiranHtml}
 
+<p style="margin-top:1.5rem">Demikian laporan pertanggungjawaban keuangan ini kami susun dengan sebenar-benarnya sebagai bentuk transparansi pengelolaan dana kegiatan.</p>
+
+<p style="text-align:right;margin-top:1rem">Bandung, ${hariIni}</p>
 <div class="ttd">
   <div>Bendahara,<div class="garis">Aghni Alicia Sofi</div></div>
   <div>Ketua Pelaksana,<div class="garis">Fikri Haidar Sawego</div></div>
+  <div>Mengetahui,<div class="garis">&nbsp;</div></div>
+</div>
 </div>
 </body></html>`);
   w.document.close();
