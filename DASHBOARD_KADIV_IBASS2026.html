@@ -2317,7 +2317,7 @@ function esc(str){ const d=document.createElement('div'); d.textContent=String(s
    ulang saat dashboard dibuka — jadi isian kadiv muncul di semua perangkat. */
 const STATE_KEYS = ['ibass_lg_items','ibass_ac_data','ibass_ac_notes',
   'ibass_fn_income','ibass_fn_manual','ibass_fn_npanitia','ibass_fn_roster',
-  'ibass_ac_buddy','ibass_sk_history','ibass_pd_captions','ibass_fn2','ibass_lg_harih'];
+  'ibass_ac_buddy','ibass_sk_history','ibass_pd_captions','ibass_fn2','ibass_lg_harih','ibass_fn_dap_conf'];
 const _lsSet = localStorage.setItem.bind(localStorage);
 const stateTimers = {};
 localStorage.setItem = function(k, v){
@@ -4914,13 +4914,15 @@ function renderFnDAP(){
         : m.total>=DAP_WAJIB
           ? '<span class="tf-status selesai">Lunas</span>'
           : `<span class="tf-status berlangsung">Kurang ${fmtRp(DAP_WAJIB-m.total)}</span>`;
+      const denda = fnDendaFor(m);
+      const dendaHtml = denda ? `<div class="num" style="font-size:0.56rem;color:var(--red);margin-top:2px" title="${esc(denda.ket)}">denda ${fmtRp(denda.jumlah)}</div>` : '';
       const bukti = m.bayar && m.bayar.bukti.length
         ? `<a href="${m.bayar.bukti[m.bayar.bukti.length-1]}" target="_blank" rel="noopener" style="color:var(--blue2);font-size:0.64rem;text-decoration:none;white-space:nowrap">Bukti ↗</a>`
         : '<span style="color:var(--muted)">—</span>';
       return `<tr>
         <td style="line-height:1.35">${esc(m.n)}</td>
         <td class="num" style="color:${m.total?'var(--green)':'var(--muted)'};white-space:nowrap;text-align:right">${m.total?fmtRp(m.total):'—'}</td>
-        <td>${st}</td>
+        <td>${st}${dendaHtml}</td>
         <td style="text-align:center">${bukti}</td>
       </tr>`;
     }).join('');
@@ -5030,6 +5032,19 @@ function renderFnDAP(){
           style="width:56px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.72rem;padding:0.25rem 0.4rem;outline:none;border-radius:var(--r);text-align:center">
         <span>× ${fmtRp(DAP_WAJIB)}</span>
       </div>
+
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;font-size:0.66rem;color:var(--muted);flex-wrap:wrap">
+        <span>Deadline Termin 1:</span>
+        <input type="date" value="${fnDapConf().t1}" onchange="fnDapConfSet('t1',this.value)"
+          style="background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.68rem;padding:0.25rem 0.4rem;outline:none;border-radius:var(--r)">
+        <span>Termin 2:</span>
+        <input type="date" value="${fnDapConf().t2}" onchange="fnDapConfSet('t2',this.value)"
+          style="background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.68rem;padding:0.25rem 0.4rem;outline:none;border-radius:var(--r)">
+        <span>Denda/hari:</span>
+        <input type="number" value="${fnDapConf().denda}" min="0" step="500" onchange="fnDapConfSet('denda',this.value)"
+          style="width:76px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.72rem;padding:0.25rem 0.4rem;outline:none;border-radius:var(--r);text-align:center">
+      </div>
+      <div style="font-size:0.58rem;color:var(--muted);margin-top:0.3rem">Denda berjalan otomatis untuk yang telat: tampil merah di kolom status. Deadline Termin 2 kosong = belum ada denda Termin 2.</div>
 
       <div style="margin-top:0.6rem">
         <button class="btn btn-ghost btn-sm" onclick="fnToggleRoster()">${fnRoster().length?'Daftar Panitia ('+fnRoster().length+' nama)':'+ Isi Daftar Nama Panitia'}</button>
@@ -5261,6 +5276,49 @@ function fnRoster(){
   return list.filter(m => FN_KELUAR.indexOf(fnNormName(m.n)) < 0);
 }
 /* Cocokkan anggota roster dengan data pembayar (longgar dua arah) */
+/* ── Deadline & denda pembayaran DAP ──
+   Termin 1 wajib Rp115.000; lewat deadline kena denda per hari.
+   Deadline Termin 2 opsional — diisi Finance kalau sudah ditentukan. */
+const DAP_T1 = 115000;
+function fnDapConf(){
+  let c = {};
+  try{ c = JSON.parse(localStorage.getItem('ibass_fn_dap_conf')||'{}')||{}; }catch{}
+  return {
+    t1: c.t1 !== undefined ? c.t1 : '2026-07-13',
+    t2: c.t2 || '',
+    denda: c.denda !== undefined ? (parseInt(c.denda,10)||0) : 2000
+  };
+}
+function fnDapConfSet(field, val){
+  const c = fnDapConf();
+  c[field] = field==='denda' ? (parseInt(val,10)||0) : val;
+  localStorage.setItem('ibass_fn_dap_conf', JSON.stringify(c));
+  renderFnDAP();
+}
+function fnHariTelat(tgl){
+  if(!tgl) return 0;
+  const akhir = new Date(tgl+'T23:59:59').getTime();
+  const diff = Date.now() - akhir;
+  return diff > 0 ? Math.ceil(diff/86400000) : 0;
+}
+/* Denda berjalan untuk anggota yang belum melunasi terminnya */
+function fnDendaFor(m){
+  if(m.total >= DAP_WAJIB) return null;
+  const conf = fnDapConf();
+  if(!conf.denda) return null;
+  let hari = 0; const bagian = [];
+  if(m.total < DAP_T1){
+    const h = fnHariTelat(conf.t1);
+    if(h > 0){ hari += h; bagian.push('Termin 1 telat '+h+' hari'); }
+  }
+  if(conf.t2){
+    const h2 = fnHariTelat(conf.t2);
+    if(h2 > 0){ hari += h2; bagian.push('Termin 2 telat '+h2+' hari'); }
+  }
+  if(!hari) return null;
+  return { hari, jumlah: hari*conf.denda, ket: bagian.join(', ') };
+}
+
 /* Dua nama dianggap sama kalau minimal 2 kata sama — menangkap salah ketik
    satu kata (mis. "Thykha Agusthy Dwi Yumandha" vs "Thyka Agusthy Dwi Yumandha") */
 function fnNamaMirip(a, b){
@@ -5326,7 +5384,8 @@ function fnCopyBelumBayar(){
       const st = !m.bayar ? 'BELUM BAYAR'
         : m.total>=DAP_WAJIB ? 'Lunas'
         : 'kurang '+fmtRp(DAP_WAJIB-m.total);
-      txt += '- '+m.n+' — '+st+'\n';
+      const denda = fnDendaFor(m);
+      txt += '- '+m.n+' — '+st+(denda?' + denda '+fmtRp(denda.jumlah)+' ('+denda.ket+')':'')+'\n';
     });
   });
   const belum = anggota.filter(m=>!m.bayar).length;
@@ -6001,9 +6060,13 @@ function acToggleBuddyForm(){
 }
 function acSaveBuddyRoster(){
   const raw = document.getElementById('acpen-roster-input')?.value || '';
-  const names = raw.split('\n').map(s=>s.trim()).filter(Boolean);
-  localStorage.setItem('ibass_ac_buddy', JSON.stringify(names));
-  showToast(names.length ? names.length+' nama buddy tersimpan' : 'Daftar buddy dikosongkan','success');
+  const list = raw.split('\n').map(s=>s.trim()).filter(Boolean).map(line=>{
+    const i = line.lastIndexOf(',');
+    if(i > 0) return { n:line.slice(0,i).trim(), d:line.slice(i+1).trim()||'—' };
+    return { n:line, d:'—' };
+  });
+  localStorage.setItem('ibass_ac_buddy', JSON.stringify(list));
+  showToast(list.length ? list.length+' buddy tersimpan' : 'Daftar buddy dikosongkan','success');
   renderAcPenilaian();
 }
 
@@ -6017,21 +6080,37 @@ function renderAcPenilaian(){
     ? 'Terakhir dimuat: '+new Date(pen.synced).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
     : 'Belum pernah dimuat — tekan tombol di atas';
 
-  const sections = AC_MILESTONES.map(ms=>{
-    const isi = pen.list.filter(p=>acPenNorm(p.milestone)===acPenNorm(ms));
-    const penilaiSet = [...new Set(isi.map(p=>acPenNorm(p.penilai)))];
-    const sudah = [...new Set(isi.map(p=>String(p.penilai||'').trim()))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'id'));
-    const belum = roster.filter(n=>{
-      const nn = acPenNorm(n);
-      return !penilaiSet.some(p=>p===nn || p.includes(nn) || nn.includes(p));
+  /* Buddy sudah isi milestone tertentu? — cocokkan nama penilai ATAU departemennya */
+  const buddyIsi = (b, ms) => pen.list.some(p=>{
+    if(acPenNorm(p.milestone)!==acPenNorm(ms)) return false;
+    const pn = acPenNorm(p.penilai), bn = acPenNorm(b.n);
+    if(pn && (pn===bn || pn.includes(bn) || bn.includes(pn))) return true;
+    return acPenNorm(p.dept_penilai)===acPenNorm(b.d) && acPenNorm(b.d)!=='';
+  });
+
+  /* Kartu per departemen: buddy + status milestone + calon bizstar yang sudah dinilai */
+  const sections = roster.map(b=>{
+    const punya = pen.list.filter(p=>{
+      const pn = acPenNorm(p.penilai), bn = acPenNorm(b.n);
+      return (pn && (pn===bn || pn.includes(bn) || bn.includes(pn))) ||
+        (acPenNorm(p.dept_penilai)===acPenNorm(b.d) && acPenNorm(b.d)!=='');
     });
+    const bizstar = [...new Set(punya.map(p=>String(p.nama_bizstar||'').trim()))].filter(Boolean).sort((a,b2)=>a.localeCompare(b2,'id'));
+    const msChips = AC_MILESTONES.map(ms=>{
+      const sudah = buddyIsi(b, ms);
+      return `<span style="font-size:0.56rem;padding:0.15rem 0.45rem;border-radius:999px;border:1px solid ${sudah?'rgba(54,201,122,0.4)':'var(--bdr2)'};color:${sudah?'var(--green)':'var(--muted)'};white-space:nowrap">${sudah?'✓ ':''}${ms.replace('Townhall','TWN').replace('Pematerian','PMT')}</span>`;
+    }).join(' ');
     return `<div class="card accent-acara" style="margin-bottom:0.5rem">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.4rem">
-        <div class="card-label" style="margin:0">${ms}</div>
-        <div style="font-size:0.62rem;color:var(--muted)">${isi.length} penilaian · ${sudah.length} penilai${roster.length?` · <span style="color:${belum.length?'var(--amber)':'var(--green)'}">${belum.length} belum isi</span>`:''}</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:0.3rem">
+        <div class="card-label" style="margin:0">${esc(b.d)}</div>
+        <div style="font-size:0.6rem;color:var(--muted)">${punya.length} penilaian masuk</div>
       </div>
-      ${sudah.length?`<div style="margin-top:0.4rem;font-size:0.64rem;color:var(--text2)">Sudah isi: ${sudah.map(esc).join(', ')}</div>`:'<div style="margin-top:0.4rem;font-size:0.64rem;color:var(--muted)">Belum ada yang mengisi.</div>'}
-      ${roster.length&&belum.length?`<div style="margin-top:0.3rem;font-size:0.64rem;color:var(--amber)">Belum isi: ${belum.map(esc).join(', ')}</div>`:''}
+      <div style="font-size:0.78rem;color:var(--text);margin:0.25rem 0 0.4rem">Buddy: <strong>${esc(b.n)}</strong></div>
+      <div style="display:flex;gap:0.25rem;flex-wrap:wrap;margin-bottom:0.45rem">${msChips}</div>
+      <div style="font-size:0.62rem;color:${bizstar.length?'var(--text2)':'var(--muted)'}">
+        ${bizstar.length ? 'Calon Bizstar dinilai ('+bizstar.length+'): '+bizstar.map(esc).join(', ')
+          : 'Belum ada calon Bizstar yang dinilai — nama akan muncul otomatis begitu buddy mengisi penilaian.'}
+      </div>
     </div>`;
   }).join('');
 
@@ -6061,8 +6140,8 @@ function renderAcPenilaian(){
     <div style="margin-top:0.6rem">
       <button class="btn btn-ghost btn-sm" onclick="acToggleBuddyForm()">${roster.length?'Daftar Buddy ('+roster.length+' nama)':'+ Isi Daftar Nama Buddy'}</button>
       <div id="acpen-roster-form" style="display:none;margin-top:0.5rem">
-        <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.35rem">Satu nama per baris — sama seperti nama yang mereka pakai saat mengisi web Penilaian.</div>
-        <textarea id="acpen-roster-input" style="width:100%;min-height:120px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.72rem;padding:0.5rem;border-radius:var(--r);outline:none;resize:vertical" placeholder="Nama buddy 1&#10;Nama buddy 2&#10;...">${acBuddyRoster().join('\n')}</textarea>
+        <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.35rem">Satu buddy per baris, format: <strong>Nama Lengkap, Departemen</strong>. Daftar sudah terisi — edit kalau ada perubahan.</div>
+        <textarea id="acpen-roster-input" style="width:100%;min-height:120px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);font-size:0.72rem;padding:0.5rem;border-radius:var(--r);outline:none;resize:vertical" placeholder="Ayu Diah Pramesti, Secretary&#10;...">${acBuddyRoster().map(b=>b.n+', '+b.d).join('\n')}</textarea>
         <button class="btn btn-sm" onclick="acSaveBuddyRoster()" style="margin-top:0.4rem">Simpan Daftar</button>
       </div>
     </div>`;
@@ -6074,12 +6153,16 @@ function acPenCopyBelum(){
   if(!roster.length){ showToast('Isi dulu Daftar Nama Buddy di bawah','warning'); return; }
   let txt = '*MONITORING PENILAIAN BIZSTAR — I-BASS 2026*\n\n';
   AC_MILESTONES.forEach(ms=>{
-    const penilaiSet = [...new Set(pen.list.filter(p=>acPenNorm(p.milestone)===acPenNorm(ms)).map(p=>acPenNorm(p.penilai)))];
-    const belum = roster.filter(n=>{
-      const nn = acPenNorm(n);
-      return !penilaiSet.some(p=>p===nn || p.includes(nn) || nn.includes(p));
+    const isi = pen.list.filter(p=>acPenNorm(p.milestone)===acPenNorm(ms));
+    const belum = roster.filter(b=>{
+      const bn = acPenNorm(b.n);
+      return !isi.some(p=>{
+        const pn = acPenNorm(p.penilai);
+        return (pn && (pn===bn || pn.includes(bn) || bn.includes(pn))) ||
+          (acPenNorm(p.dept_penilai)===acPenNorm(b.d) && acPenNorm(b.d)!=='');
+      });
     });
-    txt += '*'+ms+'*'+(belum.length?' — belum isi ('+belum.length+'):\n'+belum.map(n=>'- '+n).join('\n'):' — semua sudah isi')+'\n\n';
+    txt += '*'+ms+'*'+(belum.length?' — belum isi ('+belum.length+'):\n'+belum.map(b=>'- '+b.n+' ('+b.d+')').join('\n'):' — semua sudah isi')+'\n\n';
   });
   navigator.clipboard.writeText(txt.trim())
     .then(()=>showToast('Daftar tersalin — tempel di WhatsApp','success'))
