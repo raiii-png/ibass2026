@@ -5168,7 +5168,12 @@ function fnIncome(){ try{ return JSON.parse(localStorage.getItem('ibass_fn_incom
 function fnIncomeSave(d){ localStorage.setItem('ibass_fn_income', JSON.stringify(d)); }
 function fnManualOut(){ try{ return JSON.parse(localStorage.getItem('ibass_fn_manual')||'[]'); }catch{ return []; } }
 function fnManualOutSave(d){ localStorage.setItem('ibass_fn_manual', JSON.stringify(d)); }
-function fnNPanitia(){ return parseInt(localStorage.getItem('ibass_fn_npanitia')||'18',10)||18; }
+function fnNPanitia(){
+  let simpan = parseInt(localStorage.getItem('ibass_fn_npanitia')||'',10);
+  // 18 = nilai lama sebelum satu panitia keluar — ikuti jumlah roster terbaru
+  if(simpan === 18 && fnRoster().length === 17){ localStorage.removeItem('ibass_fn_npanitia'); simpan = 0; }
+  return simpan || fnRoster().length || 17;
+}
 function fnSetNPanitia(v){
   localStorage.setItem('ibass_fn_npanitia', String(Math.max(parseInt(v,10)||1,1)));
   renderFnDAP();
