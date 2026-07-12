@@ -3040,21 +3040,37 @@ function pdRefHtml(data){
     <div id="pdref-grid" style="margin-top:0.65rem"></div>`;
 }
 
+/* Kata kunci format per jenis konten — supaya contoh gambarnya sesuai bentuk aslinya */
+function pdRefFormatTerm(jenis){
+  if(/carousel/i.test(jenis)) return 'instagram carousel';
+  if(/story/i.test(jenis)) return 'instagram story';
+  if(/reels/i.test(jenis)) return 'instagram reels cover';
+  return 'instagram post';
+}
+/* Jenis vertikal (story/reels) ditampilkan portrait supaya gambarannya pas */
+function pdRefPortrait(jenis){ return /story|reels/i.test(jenis||''); }
+
 /* Muat contoh gambar dari internet (lewat server) — tiap gambar terhubung ke sumber aslinya */
 async function pdRefCariGambar(q){
   const grid = document.getElementById('pdref-grid');
   if(!grid) return;
+  const jenis = (pdRefLoad()||{}).jenis || document.getElementById('pdref-jenis')?.value || '';
+  const fmt = pdRefFormatTerm(jenis);
+  // Pastikan kata kunci membawa format kontennya, biar contohnya sesuai bentuk
+  const kataFmt = fmt.split(' ').pop();
+  const qFull = new RegExp(kataFmt,'i').test(q) ? q : q+' '+fmt;
+  const tinggi = pdRefPortrait(jenis) ? 200 : 110;
   grid.scrollIntoView({behavior:'smooth', block:'nearest'});
-  grid.innerHTML = `<div style="text-align:center;padding:0.75rem;font-size:0.7rem;color:var(--muted)"><span class="spinner"></span> Mencari contoh untuk "${esc(q)}"...</div>`;
+  grid.innerHTML = `<div style="text-align:center;padding:0.75rem;font-size:0.7rem;color:var(--muted)"><span class="spinner"></span> Mencari contoh ${esc(fmt)} untuk "${esc(q)}"...</div>`;
   try{
-    const js = await gasPost(GAS_URL, { action:'imgsearch', q });
+    const js = await gasPost(GAS_URL, { action:'imgsearch', q: qFull });
     const hasil = (js && js.hasil) || [];
     if(!hasil.length) throw new Error('kosong');
     grid.innerHTML = `
-      <div class="list-title">Contoh dari internet: "${esc(q)}"</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.5rem">
+      <div class="list-title">Contoh ${esc(fmt)}: "${esc(q)}"</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(${pdRefPortrait(jenis)?120:140}px,1fr));gap:0.5rem">
         ${hasil.map(h=>`<a href="${esc(h.sumber)}" target="_blank" rel="noopener" style="display:block;background:var(--bg2s);border:1px solid var(--bdr2);border-radius:var(--r);overflow:hidden;text-decoration:none">
-          <img src="${esc(h.thumb||h.img)}" loading="lazy" alt="" style="width:100%;height:110px;object-fit:cover;display:block" onerror="this.closest('a').style.display='none'">
+          <img src="${esc(h.thumb||h.img)}" loading="lazy" alt="" style="width:100%;height:${tinggi}px;object-fit:cover;display:block" onerror="this.closest('a').style.display='none'">
           <div style="padding:0.3rem 0.4rem;font-size:0.56rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(h.judul||'Lihat sumber')}</div>
         </a>`).join('')}
       </div>
