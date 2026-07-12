@@ -96,6 +96,21 @@ metadata:
   rebuildRekap), try/catch supaya tidak ganggu sync. BUTUH deploy New version
   (bareng imgsearch — user belum deploy dua-duanya per 2026-07-12 malam).
 
+## Sesi 10c (2026-07-12 malam): Nadzril, typo-matching, penilaian per dept, denda DAP
+- **Nadzril Fauzan Lelan P (Supervisor Internal) MASUK roster DAP** divisi 'Supervisor'
+  (dia bayar lunas via form, sebelumnya nyasar ke "Pembayar Lain"). Roster = 18
+  (17 panitia + supervisor). FN_DIVISI_URUTAN + 'Supervisor'.
+- **fnNamaMirip()**: matching nama toleran typo — ≥2 kata sama = cocok
+  (kasus nyata: form "Thykha" vs roster "Thyka"). Dipakai fnRosterStatus.
+- **Penilaian Acara dirombak per departemen**: AC_BUDDY_SEED objek {d,n} 8 dept;
+  kartu per dept = nama buddy + chip status 5 milestone (✓ hijau) + daftar calon
+  Bizstar yang sudah dinilai (diambil dari data penilaian masuk, otomatis).
+  acBuddyRoster backward-compat string; textarea format "Nama, Departemen".
+- **Deadline + denda DAP**: fnDapConf (`ibass_fn_dap_conf`, ikut STATE_KEYS) —
+  t1 default '2026-07-13', t2 kosong (diisi nanti), denda 2000/hari. fnDendaFor(m):
+  belum bayar T1 (< Rp115.000) & lewat t1 → hari telat × denda; T2 juga kalau t2 diisi.
+  Tampil merah di kolom status + ikut teks "Salin Belum Bayar". Input tanggal di kartu DAP.
+
 ## PENDING pagi Boss (2026-07-11):
 1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
    (UrlFetchApp + Drive) → Deploy New version. Tanpa ini: AI, foto bukti, sync state MATI
