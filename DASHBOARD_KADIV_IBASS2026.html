@@ -2321,7 +2321,7 @@ function esc(str){ const d=document.createElement('div'); d.textContent=String(s
 const STATE_KEYS = ['ibass_lg_items','ibass_ac_data','ibass_ac_notes',
   'ibass_fn_income','ibass_fn_manual','ibass_fn_npanitia','ibass_fn_roster',
   'ibass_ac_buddy','ibass_sk_history','ibass_pd_captions','ibass_fn2','ibass_lg_harih','ibass_fn_dap_conf',
-  'ibass_pd_moodboard'];
+  'ibass_pd_moodboard','ibass_fn_rab_resmi'];
 const _lsSet = localStorage.setItem.bind(localStorage);
 const stateTimers = {};
 localStorage.setItem = function(k, v){
@@ -4803,6 +4803,21 @@ const FN_DIV_COLOR = {Sekretaris:'var(--blue2)',Logistik:'var(--amber)',Acara:'v
 
 function fnData(){ try{ return JSON.parse(localStorage.getItem('ibass_fn2')||'{}'); }catch{ return {}; } }
 function fnSave(d){ localStorage.setItem('ibass_fn2', JSON.stringify(d)); }
+/* RAB Resmi (angka final yang disetujui) — patokan; rincian item bisa disesuaikan finance */
+function fnRabResmi(){
+  const v = parseInt(localStorage.getItem('ibass_fn_rab_resmi')||'',10);
+  return Number.isFinite(v) ? v : 10877000;
+}
+function fnSetRabResmi(val){
+  localStorage.setItem('ibass_fn_rab_resmi', String(parseInt(String(val).replace(/[^\d]/g,''),10)||0));
+  renderFnRingkasan();
+}
+function fnEditRabResmi(){
+  const v = prompt('RAB Resmi (angka final yang disetujui), dalam Rupiah:', fnRabResmi());
+  if(v===null) return;
+  fnSetRabResmi(v);
+  showToast('RAB resmi diperbarui','success');
+}
 function fnDapData(){ try{ return JSON.parse(localStorage.getItem('ibass_fn_dap')||'{}'); }catch{ return {}; } }
 function fnDapSave(d){ localStorage.setItem('ibass_fn_dap', JSON.stringify(d)); }
 
@@ -4894,8 +4909,10 @@ function renderFnRingkasan(){
   const el = document.getElementById('fn-rab'); if(!el) return;
   const tot = fnCalcAll();
   const kas = fnKasCalc();
-  const pct = tot.rabTotal>0 ? Math.round(tot.realTotal/tot.rabTotal*100) : 0;
-  const sisa = tot.rabTotal - tot.realTotal;
+  const rabResmi = fnRabResmi();
+  const pct = rabResmi>0 ? Math.round(tot.realTotal/rabResmi*100) : 0;
+  const sisa = rabResmi - tot.realTotal;
+  const selisihItem = rabResmi - tot.rabTotal; // + = rincian kurang, − = rincian lebih
 
   const sesiCards = FN_SESI_LIST.map(s=>{
     const c = fnCalcSesi(s.id);
@@ -4949,15 +4966,22 @@ function renderFnRingkasan(){
     </div>
     <div class="stat-row">
       <div class="stat-card">
-        <div class="stat-val num" style="color:var(--blue2)">${fmtRp(tot.rabTotal)}</div>
-        <div class="stat-lbl">Total RAB</div>
-        <div class="stat-sub">Rencana anggaran dari proposal</div>
+        <div class="stat-val num" style="color:var(--gold2)">${fmtRp(rabResmi)}</div>
+        <div class="stat-lbl">RAB Resmi (Final)</div>
+        <div class="stat-sub">Anggaran disetujui — <span style="color:var(--blue2);cursor:pointer" onclick="fnEditRabResmi()">ubah</span></div>
       </div>
       <div class="stat-card ${sisa<0?'red':''}">
         <div class="stat-val num" style="color:${sisa<0?'var(--red)':'var(--text)'}">${fmtRp(Math.abs(sisa))}</div>
         <div class="stat-lbl">${sisa<0?'Melebihi RAB':'Sisa RAB'}</div>
-        <div class="stat-sub">Realisasi ${pct}% dari rencana</div>
+        <div class="stat-sub">Realisasi ${pct}% dari RAB resmi</div>
       </div>
+    </div>
+
+    <div class="card" style="margin-bottom:0.8rem;font-size:0.66rem">
+      <div class="kv-row"><div class="kv-key">RAB Resmi (final)</div><div class="kv-val num" style="color:var(--gold2)">${fmtRp(rabResmi)}</div></div>
+      <div class="kv-row"><div class="kv-key">Jumlah rincian item saat ini</div><div class="kv-val num" style="color:var(--blue2)">${fmtRp(tot.rabTotal)}</div></div>
+      <div class="kv-row" style="border-top:1px solid var(--bdr2);padding-top:0.4rem"><div class="kv-key" style="color:${selisihItem===0?'var(--green)':'var(--amber)'}">${selisihItem===0?'Rincian sudah pas' : selisihItem>0 ? 'Rincian masih kurang' : 'Rincian melebihi RAB resmi'}</div><div class="kv-val num" style="color:${selisihItem===0?'var(--green)':'var(--amber)'}">${selisihItem===0?'✓':(selisihItem>0?'+ ':'− ')+fmtRp(Math.abs(selisihItem))}</div></div>
+      ${selisihItem!==0?`<div style="font-size:0.6rem;color:var(--muted);margin-top:0.35rem">Harga tiap item bisa disesuaikan di tab <strong>RAB per Sesi</strong> sampai jumlah rinciannya pas dengan RAB resmi.</div>`:''}
     </div>
 
     <div class="card" style="margin-bottom:0.8rem">
@@ -5307,9 +5331,9 @@ function renderFnLaporan(){
     </div>
 
     <div class="mini-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0.75rem">
-      <div class="mini-stat"><div class="mini-val num" style="color:var(--blue2)">${fmtRp(grandRab)}</div><div class="mini-lbl">Total RAB</div></div>
+      <div class="mini-stat"><div class="mini-val num" style="color:var(--gold2)">${fmtRp(fnRabResmi())}</div><div class="mini-lbl">RAB Resmi</div></div>
       <div class="mini-stat"><div class="mini-val num" style="color:var(--amber)">${fmtRp(grandReal)}</div><div class="mini-lbl">Total Realisasi</div></div>
-      <div class="mini-stat"><div class="mini-val num" style="color:${grandRab-grandReal<0?'var(--red)':'var(--green)'}">${fmtRp(Math.abs(grandRab-grandReal))}</div><div class="mini-lbl">Sisa</div></div>
+      <div class="mini-stat"><div class="mini-val num" style="color:${fnRabResmi()-grandReal<0?'var(--red)':'var(--green)'}">${fmtRp(Math.abs(fnRabResmi()-grandReal))}</div><div class="mini-lbl">Sisa</div></div>
     </div>
     ${html}
     <div class="btn-row" style="margin-top:0.75rem;flex-wrap:wrap">
