@@ -2317,7 +2317,8 @@ function esc(str){ const d=document.createElement('div'); d.textContent=String(s
    ulang saat dashboard dibuka — jadi isian kadiv muncul di semua perangkat. */
 const STATE_KEYS = ['ibass_lg_items','ibass_ac_data','ibass_ac_notes',
   'ibass_fn_income','ibass_fn_manual','ibass_fn_npanitia','ibass_fn_roster',
-  'ibass_ac_buddy','ibass_sk_history','ibass_pd_captions','ibass_fn2','ibass_lg_harih','ibass_fn_dap_conf'];
+  'ibass_ac_buddy','ibass_sk_history','ibass_pd_captions','ibass_fn2','ibass_lg_harih','ibass_fn_dap_conf',
+  'ibass_pd_moodboard'];
 const _lsSet = localStorage.setItem.bind(localStorage);
 const stateTimers = {};
 localStorage.setItem = function(k, v){
@@ -3001,18 +3002,35 @@ function renderPdReferensi(){
     <div id="pdref-result">${saved?pdRefHtml(saved):''}</div>`;
 }
 
+/* Ukuran kanvas per jenis konten — spesifikasi pasti buat desainer */
+function pdRefUkuran(jenis){
+  if(/carousel/i.test(jenis)) return '1080 × 1350 px per slide (rasio 4:5)';
+  if(/story/i.test(jenis)) return '1080 × 1920 px (rasio 9:16)';
+  if(/reels/i.test(jenis)) return '1080 × 1920 px, area aman judul di tengah (thumbnail grid kepotong jadi 1:1)';
+  return '1080 × 1350 px (rasio 4:5) atau 1080 × 1080 px (1:1)';
+}
+
 function pdRefHtml(data){
   const cards = (data.konsep||[]).map((k,i)=>`
     <div class="card accent-pubdok" style="margin-bottom:0.5rem">
-      <div class="card-label">Konsep ${i+1} — ${esc(k.nama||'')}</div>
-      <div style="font-size:0.72rem;color:var(--text);line-height:1.55;margin-bottom:0.5rem">${esc(k.konsep||'')}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap">
+        <div class="card-label" style="margin:0">Konsep ${i+1} — ${esc(k.nama||'')}</div>
+        <button class="btn btn-ghost btn-sm" style="padding:0.2rem 0.6rem;font-size:0.58rem" onclick="pdCopyBrief(${i})">Salin Brief Desainer</button>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text);line-height:1.55;margin:0.4rem 0 0.5rem">${esc(k.konsep||'')}</div>
+      <div class="kv-row"><div class="kv-key">Ukuran</div><div class="kv-val" style="text-align:right;max-width:60%">${esc(pdRefUkuran(data.jenis))}</div></div>
       <div class="kv-row"><div class="kv-key">Layout</div><div class="kv-val" style="text-align:right;max-width:60%">${esc(k.layout||'')}</div></div>
       <div class="kv-row"><div class="kv-key">Tipografi</div><div class="kv-val" style="text-align:right;max-width:60%">${esc(k.tipografi||'')}</div></div>
       <div style="display:flex;align-items:center;gap:0.4rem;margin:0.5rem 0">
         <span style="font-size:0.6rem;color:var(--muted)">Palet:</span>
         ${(k.palet||[]).map(p=>`<span title="${esc(p.nama||p.hex||'')}" style="width:20px;height:20px;border-radius:50%;background:${esc(p.hex||'#888')};border:1px solid rgba(255,255,255,0.25);display:inline-block"></span><code style="font-size:0.56rem;color:var(--muted)">${esc(p.hex||'')}</code>`).join('')}
       </div>
-      ${k.hook?`<div class="info-box" style="font-size:0.66rem;margin-bottom:0.5rem">Hook caption: "${esc(k.hook)}"</div>`:''}
+      ${(k.slides&&k.slides.length)?`<div style="margin-bottom:0.5rem">
+        <div style="font-size:0.6rem;color:var(--gold2);margin-bottom:0.25rem;font-family:'Cinzel',serif;letter-spacing:0.1em;text-transform:uppercase">Isi per slide</div>
+        ${k.slides.map((sl,si)=>`<div style="display:flex;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid var(--bdr3);font-size:0.68rem;line-height:1.5"><span style="color:var(--pubdok);font-weight:600;flex-shrink:0">${si+1}</span><span style="color:var(--text2)">${esc(sl)}</span></div>`).join('')}
+      </div>`:''}
+      ${k.hook?`<div class="info-box" style="font-size:0.66rem;margin-bottom:0.35rem">Hook caption: "${esc(k.hook)}"</div>`:''}
+      ${k.cta?`<div class="info-box" style="font-size:0.66rem;margin-bottom:0.5rem">CTA penutup: "${esc(k.cta)}"</div>`:''}
       <div style="font-size:0.58rem;color:var(--muted);margin-bottom:0.25rem">Lihat contoh nyata konsep ini (gambar tampil di bawah):</div>
       <div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.4rem;align-items:center">
         ${(k.keywords||[]).map(q=>`<button class="chip" onclick="pdRefCariGambar(this.dataset.q)" data-q="${esc(q)}">${esc(q)}</button><a href="https://id.pinterest.com/search/pins/?q=${encodeURIComponent(q)}" target="_blank" rel="noopener" style="font-size:0.6rem;color:var(--muted);text-decoration:none" title="Buka di Pinterest">↗</a>`).join('')}
@@ -3037,7 +3055,74 @@ function pdRefHtml(data){
       </div>
     </div>
     <div style="font-size:0.6rem;color:var(--muted);margin-top:0.4rem">Klik kata kunci untuk memuat contoh gambar di bawah. Chip platform membuka pencariannya di IG/TikTok/Behance/Dribbble.</div>
-    <div id="pdref-grid" style="margin-top:0.65rem"></div>`;
+    <div id="pdref-grid" style="margin-top:0.65rem"></div>
+    <div id="pdref-moodboard" style="margin-top:0.65rem">${pdMoodboardHtml()}</div>`;
+}
+
+/* Brief siap kirim ke anggota desainer — format WhatsApp */
+function pdCopyBrief(i){
+  const data = pdRefLoad(); if(!data || !data.konsep || !data.konsep[i]) return;
+  const k = data.konsep[i];
+  let txt = '*BRIEF DESAIN — I-BASS 2026*\n';
+  txt += 'Konten: '+data.jenis+'\n';
+  txt += 'Topik: '+data.topik+'\n';
+  txt += 'Ukuran: '+pdRefUkuran(data.jenis)+'\n\n';
+  txt += '*Konsep: '+(k.nama||'')+'*\n'+(k.konsep||'')+'\n\n';
+  if(k.layout) txt += 'Layout: '+k.layout+'\n';
+  if(k.tipografi) txt += 'Font: '+k.tipografi+'\n';
+  if(k.palet&&k.palet.length) txt += 'Warna: '+k.palet.map(p=>(p.nama||'')+' '+(p.hex||'')).join(', ')+'\n';
+  if(k.slides&&k.slides.length){
+    txt += '\n*Isi per slide:*\n';
+    k.slides.forEach((sl,si)=>{ txt += (si+1)+'. '+sl+'\n'; });
+  }
+  if(k.hook) txt += '\nHook caption: "'+k.hook+'"\n';
+  if(k.cta) txt += 'CTA penutup: "'+k.cta+'"\n';
+  const mb = pdMoodboard().filter(m=>m.topik===data.topik);
+  if(mb.length){
+    txt += '\n*Referensi visual:*\n';
+    mb.slice(0,5).forEach(m=>{ txt += '- '+m.sumber+'\n'; });
+  }
+  navigator.clipboard.writeText(txt.trim())
+    .then(()=>showToast('Brief tersalin — kirim ke desainer lewat WhatsApp','success'))
+    .catch(()=>showToast('Gagal menyalin','error'));
+}
+
+/* Moodboard: koleksi gambar referensi yang disimpan kadiv — tidak hilang, ikut sync */
+function pdMoodboard(){ try{ return JSON.parse(localStorage.getItem('ibass_pd_moodboard')||'[]'); }catch{ return []; } }
+function pdMoodboardSimpan(btn){
+  const d = btn.dataset;
+  const list = pdMoodboard();
+  if(list.some(m=>m.sumber===d.sumber)){ showToast('Sudah ada di moodboard','warning'); return; }
+  list.unshift({ img:d.img, sumber:d.sumber, topik:(pdRefLoad()||{}).topik||'', waktu:new Date().toISOString() });
+  localStorage.setItem('ibass_pd_moodboard', JSON.stringify(list.slice(0,60)));
+  const wrap = document.getElementById('pdref-moodboard');
+  if(wrap) wrap.innerHTML = pdMoodboardHtml();
+  showToast('Masuk moodboard','success');
+}
+function pdMoodboardHapus(idx){
+  const list = pdMoodboard();
+  list.splice(idx,1);
+  localStorage.setItem('ibass_pd_moodboard', JSON.stringify(list));
+  const wrap = document.getElementById('pdref-moodboard');
+  if(wrap) wrap.innerHTML = pdMoodboardHtml();
+}
+function pdMoodboardHtml(){
+  const list = pdMoodboard();
+  if(!list.length) return '';
+  return `
+    <div class="card accent-pubdok">
+      <div class="card-label">Moodboard Tersimpan (${list.length})</div>
+      <div class="card-desc" style="margin-bottom:0.4rem">Referensi yang kamu simpan — kepakai lagi kapan pun, ikut masuk ke brief desainer.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:0.45rem">
+        ${list.map((m,i)=>`<div style="position:relative;background:var(--bg2s);border:1px solid var(--bdr2);border-radius:var(--r);overflow:hidden">
+          <a href="${esc(m.sumber)}" target="_blank" rel="noopener" style="display:block">
+            <img src="${esc(m.img)}" loading="lazy" alt="" style="width:100%;height:96px;object-fit:cover;display:block" onerror="this.style.opacity='0.2'">
+          </a>
+          <button class="tf-del-btn" style="position:absolute;top:2px;right:2px;background:rgba(10,20,40,0.8)" onclick="pdMoodboardHapus(${i})">×</button>
+          ${m.topik?`<div style="padding:0.2rem 0.35rem;font-size:0.52rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.topik)}</div>`:''}
+        </div>`).join('')}
+      </div>
+    </div>`;
 }
 
 /* Kata kunci format per jenis konten — supaya contoh gambarnya sesuai bentuk aslinya */
@@ -3087,10 +3172,13 @@ async function pdRefCariGambar(q, situs){
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(${pdRefPortrait(jenis)?120:140}px,1fr));gap:0.5rem">
         ${hasil.map(h=>{
           let host=''; try{ host = new URL(h.sumber).hostname.replace('www.',''); }catch(e){}
-          return `<a href="${esc(h.sumber)}" target="_blank" rel="noopener" style="display:block;background:var(--bg2s);border:1px solid var(--bdr2);border-radius:var(--r);overflow:hidden;text-decoration:none">
-          <img src="${esc(h.thumb||h.img)}" loading="lazy" alt="" style="width:100%;height:${tinggi}px;object-fit:cover;display:block" onerror="this.closest('a').style.display='none'">
-          <div style="padding:0.3rem 0.4rem;font-size:0.56rem;color:var(--blue2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(host||'sumber')} ↗</div>
-        </a>`;}).join('')}
+          return `<div style="position:relative;background:var(--bg2s);border:1px solid var(--bdr2);border-radius:var(--r);overflow:hidden">
+          <a href="${esc(h.sumber)}" target="_blank" rel="noopener" style="display:block;text-decoration:none">
+            <img src="${esc(h.thumb||h.img)}" loading="lazy" alt="" style="width:100%;height:${tinggi}px;object-fit:cover;display:block" onerror="this.closest('div').style.display='none'">
+            <div style="padding:0.3rem 0.4rem;font-size:0.56rem;color:var(--blue2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(host||'sumber')} ↗</div>
+          </a>
+          <button title="Simpan ke moodboard" data-img="${esc(h.thumb||h.img)}" data-sumber="${esc(h.sumber)}" onclick="pdMoodboardSimpan(this)" style="position:absolute;top:4px;right:4px;background:rgba(10,20,40,0.85);border:1px solid var(--bdr);color:var(--gold2);font-size:0.62rem;padding:0.15rem 0.45rem;border-radius:var(--r-sm);cursor:pointer">+ Simpan</button>
+        </div>`;}).join('')}
       </div>
       <div style="font-size:0.58rem;color:var(--muted);margin-top:0.35rem">Klik gambar untuk membuka postingan aslinya. Pakai tombol platform di kanan atas untuk lihat contoh khusus dari Instagram / TikTok / Pinterest.</div>`;
   }catch(e){
@@ -3136,9 +3224,12 @@ Aturan penting:
 - Contoh gaya yang benar: "Kastil kecil di pojok bawah, langit gradasi navy ke hitam, teks 'TWN 1' gede di tengah pakai font serif emas. Bawahnya tanggal sama jam, udah gitu aja biar nggak rame."
 - "keywords" = 3 frasa pencarian dalam bahasa Inggris, dan MASING-MASING harus mengandung format kontennya ("${fmtKey}") supaya hasil pencariannya sesuai format. Contoh untuk carousel: "navy gold instagram carousel event", bukan cuma "navy gold design".
 
+- "slides": ${jenis==='Carousel (beberapa slide)'?'WAJIB — isi tiap slide urut (4-6 slide). Slide 1 = hook yang bikin berhenti scroll, slide terakhir = ajakan/CTA. Tulis konkret: teksnya tulisan apa, gambarnya apa.':'kosongkan saja: []'}
+- "cta": ajakan singkat di akhir konten (mis. "cek linktree buat daftar", "tag temen lo yang harus ikut").
+
 Balas HANYA JSON array valid, tanpa teks lain:
 [
-  {"nama":"nama konsep singkat","konsep":"deskripsi konkret 2-3 kalimat gaya ngobrol","layout":"susunan elemen singkat","tipografi":"saran font/gaya huruf","palet":[{"hex":"#0d1c3a","nama":"navy"},{"hex":"#e8bf6a","nama":"emas"}],"hook":"kalimat pembuka caption","keywords":["...","...","..."]}
+  {"nama":"nama konsep singkat","konsep":"deskripsi konkret 2-3 kalimat gaya ngobrol","layout":"susunan elemen singkat","tipografi":"saran font/gaya huruf","palet":[{"hex":"#0d1c3a","nama":"navy"},{"hex":"#e8bf6a","nama":"emas"}],"hook":"kalimat pembuka caption","cta":"ajakan penutup","slides":["...","..."],"keywords":["...","...","..."]}
 ]`}]}]});
     let text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim()||'[]';
     text = text.replace(/```json|```/g,'').trim();
