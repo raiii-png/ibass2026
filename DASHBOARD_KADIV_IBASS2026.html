@@ -5090,6 +5090,9 @@ function renderFnDAP(){
         : m.total>=DAP_WAJIB
           ? '<span class="tf-status selesai">Lunas</span>'
           : `<span class="tf-status berlangsung">Kurang ${fmtRp(DAP_WAJIB-m.total)}</span>`;
+      const t1 = m.bayar && m.bayar.t1, t2 = m.bayar && m.bayar.t2;
+      const tChip = (label, ok) => `<span style="font-size:0.54rem;padding:0.08rem 0.35rem;border-radius:3px;border:1px solid ${ok?'rgba(54,201,122,0.4)':'var(--bdr2)'};color:${ok?'var(--green)':'var(--muted)'};white-space:nowrap">${label} ${ok?'✓':'—'}</span>`;
+      const terminHtml = `<div style="display:flex;gap:0.25rem;margin-top:3px">${tChip('T1',t1)}${tChip('T2',t2)}</div>`;
       const denda = fnDendaFor(m);
       const dendaHtml = denda ? `<div class="num" style="font-size:0.56rem;color:var(--red);margin-top:2px" title="${esc(denda.ket)}">denda ${fmtRp(denda.jumlah)}</div>` : '';
       const bukti = m.bayar && m.bayar.bukti.length
@@ -5098,7 +5101,7 @@ function renderFnDAP(){
       return `<tr>
         <td style="line-height:1.35">${esc(m.n)}</td>
         <td class="num" style="color:${m.total?'var(--green)':'var(--muted)'};white-space:nowrap;text-align:right">${m.total?fmtRp(m.total):'—'}</td>
-        <td>${st}${dendaHtml}</td>
+        <td>${st}${terminHtml}${dendaHtml}</td>
         <td style="text-align:center">${bukti}</td>
       </tr>`;
     }).join('');
@@ -5387,8 +5390,13 @@ function fnDapPerOrang(){
   const map = {};
   fnDapPay().list.forEach(p=>{
     const key = (p.nama||p.email||'?').trim().toLowerCase();
-    if(!map[key]) map[key] = { nama:(p.nama||p.email||'Tanpa Nama').trim(), divisi:p.divisi||'—', total:0, bukti:[], waktu:p.waktu||'' };
+    if(!map[key]) map[key] = { nama:(p.nama||p.email||'Tanpa Nama').trim(), divisi:p.divisi||'—', total:0, bukti:[], waktu:p.waktu||'', t1:false, t2:false };
     map[key].total += p.nominal||0;
+    // Termin mana yang dibayar — dari teks pilihan form, cadangannya dari nominal
+    const t = String(p.termin||'').toLowerCase();
+    if(/lunas|1\s*&\s*2/.test(t) || p.nominal >= 215000){ map[key].t1 = true; map[key].t2 = true; }
+    else if(/termin\s*2/.test(t) || p.nominal === 100000){ map[key].t2 = true; }
+    else if(/termin\s*1/.test(t) || p.nominal === 115000){ map[key].t1 = true; }
     if(p.bukti) map[key].bukti.push(p.bukti);
     if((p.waktu||'') > map[key].waktu) map[key].waktu = p.waktu;
     if(p.divisi) map[key].divisi = p.divisi;
@@ -5461,7 +5469,7 @@ function fnDapConf(){
   try{ c = JSON.parse(localStorage.getItem('ibass_fn_dap_conf')||'{}')||{}; }catch{}
   return {
     t1: c.t1 !== undefined ? c.t1 : '2026-07-13',
-    t2: c.t2 || '',
+    t2: c.t2 !== undefined ? c.t2 : '2026-08-09',
     denda: c.denda !== undefined ? (parseInt(c.denda,10)||0) : 2000
   };
 }
@@ -5477,17 +5485,20 @@ function fnHariTelat(tgl){
   const diff = Date.now() - akhir;
   return diff > 0 ? Math.ceil(diff/86400000) : 0;
 }
-/* Denda berjalan untuk anggota yang belum melunasi terminnya */
+/* Denda berjalan untuk anggota yang belum melunasi terminnya —
+   dihitung per termin yang benar-benar belum dibayar */
 function fnDendaFor(m){
   if(m.total >= DAP_WAJIB) return null;
   const conf = fnDapConf();
   if(!conf.denda) return null;
+  const t1Paid = m.bayar ? !!m.bayar.t1 : false;
+  const t2Paid = m.bayar ? !!m.bayar.t2 : false;
   let hari = 0; const bagian = [];
-  if(m.total < DAP_T1){
+  if(!t1Paid && conf.t1){
     const h = fnHariTelat(conf.t1);
     if(h > 0){ hari += h; bagian.push('Termin 1 telat '+h+' hari'); }
   }
-  if(conf.t2){
+  if(!t2Paid && conf.t2){
     const h2 = fnHariTelat(conf.t2);
     if(h2 > 0){ hari += h2; bagian.push('Termin 2 telat '+h2+' hari'); }
   }
