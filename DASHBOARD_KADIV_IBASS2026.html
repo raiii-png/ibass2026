@@ -2070,6 +2070,9 @@ function switchTab(prefix, id, el){
 const tfLastAutoLoad = {};
 async function tfAutoLoad(div){
   if(!tfGetUrl()) return;
+  // Ada isian lokal yang belum berhasil naik ke Sheet? Jangan pernah ditimpa —
+  // justru coba kirim ulang dulu.
+  if(localStorage.getItem('ibass_tf_dirty_'+div)){ tfAutoSync(div); return; }
   const now = Date.now();
   if(tfLastAutoLoad[div] && now - tfLastAutoLoad[div] < 60000) return;
   tfLastAutoLoad[div] = now;
@@ -3672,15 +3675,53 @@ function tfGetUrl(){
 const tfAutoTimers = {};
 function tfAutoSync(div){
   if(!tfGetUrl()) return;
+  // Tandai "belum tersinkron" — selama tanda ini ada, auto-load TIDAK BOLEH menimpa isian lokal
+  localStorage.setItem('ibass_tf_dirty_'+div, '1');
   clearTimeout(tfAutoTimers[div]);
   tfAutoTimers[div]=setTimeout(async ()=>{
     try{
-      await gasPost(tfGetUrl(), { action:'sync', divisi: TF_DIV_LABEL[div]||div, data: tfExportRows(div) });
-      localStorage.setItem('ibass_tf_sync_'+div, new Date().toLocaleString('id-ID'));
+      const js = await gasPost(tfGetUrl(), { action:'sync', divisi: TF_DIV_LABEL[div]||div, data: tfExportRows(div) });
+      if(js && js.ok !== false){
+        localStorage.removeItem('ibass_tf_dirty_'+div);
+        localStorage.setItem('ibass_tf_sync_'+div, new Date().toLocaleString('id-ID'));
+        const el=document.getElementById('tf-sync-info-'+div);
+        if(el) el.textContent='Tersimpan ke Sheet · '+tfLastSync(div);
+      }
+    }catch(e){
+      // Gagal kirim → tanda tetap ada, dicoba lagi di perubahan berikutnya / tombol Simpan
       const el=document.getElementById('tf-sync-info-'+div);
-      if(el) el.textContent='Tersimpan ke Sheet · '+tfLastSync(div);
-    }catch(e){}
+      if(el) el.textContent='Belum tersimpan ke Sheet — akan dicoba lagi';
+    }
   },2000);
+}
+
+/* Pulihkan track file dari cadangan otomatis di server (versi sebelum penimpaan terakhir) */
+async function tfPulihkanCadangan(div){
+  const url = tfGetUrl();
+  if(!url){ showToast('Belum terhubung ke Sheet','warning'); return; }
+  const btn = document.getElementById('tf-cad-btn-'+div);
+  if(btn){ btn.disabled = true; btn.textContent = '...'; }
+  try{
+    const divLabel = TF_DIV_LABEL[div]||div;
+    const res = await fetch(url+'?action=cadangan&divisi='+encodeURIComponent(divLabel));
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.error||'gagal');
+    if(!json.data || !json.data.length){ showToast('Belum ada cadangan untuk divisi ini','warning'); return; }
+    const waktu = json.waktu ? new Date(json.waktu).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    if(!confirm('Pulihkan '+json.data.length+' kegiatan dari cadangan'+(waktu?' ('+waktu+')':'')+'?\nIsi Track File sekarang akan diganti dengan versi cadangan.')) return;
+    const items = json.data.map(r=>{
+      const m = /^\[([^\]]+)\]\s*/.exec(r.kegiatan||'');
+      return m ? {...r, sesi:m[1], kegiatan:String(r.kegiatan||'').slice(m[0].length)} : r;
+    });
+    tfSave(div, items);
+    renderTrackFileTab(div);
+    tfAutoSync(div); // kirim hasil pemulihan balik ke sheet utama
+    showToast(items.length+' kegiatan dipulihkan dari cadangan','success');
+  }catch(e){
+    showToast('Gagal memulihkan — '+((e.message||'').includes('dikenal')?'server perlu deploy versi baru':'coba lagi'),'error');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = 'Pulihkan Cadangan'; }
+  }
 }
 
 /* Bentuk data untuk sheet: sesi digabung ke kegiatan sebagai prefix [SESI] */
@@ -3817,7 +3858,8 @@ function renderTrackFileTab(div){
     <div style="margin-bottom:0.5rem;display:flex;gap:0.4rem;flex-wrap:wrap">
       <button class="btn btn-ghost btn-sm" onclick="tfToggleForm('${div}')" style="width:auto">+ Tambah Kegiatan</button>
       ${tfGetUrl()?`<button id="tf-sync-btn-${div}" class="btn btn-ghost btn-sm" onclick="tfSyncToSheets('${div}')" style="width:auto">→ Simpan ke Sheets</button>
-      <button id="tf-load-btn-${div}" class="btn btn-ghost btn-sm" onclick="tfLoadFromSheets('${div}')" style="width:auto">↺ Muat dari Sheets</button>`:''}
+      <button id="tf-load-btn-${div}" class="btn btn-ghost btn-sm" onclick="tfLoadFromSheets('${div}')" style="width:auto">↺ Muat dari Sheets</button>
+      <button id="tf-cad-btn-${div}" class="btn btn-ghost btn-sm" onclick="tfPulihkanCadangan('${div}')" style="width:auto" title="Ambil kembali versi sebelum penimpaan terakhir">Pulihkan Cadangan</button>`:''}
     </div>
 
     <!-- Status koneksi Sheet -->

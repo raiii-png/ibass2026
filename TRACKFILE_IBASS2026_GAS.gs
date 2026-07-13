@@ -102,6 +102,21 @@ function doGet(e) {
       return jsonOk({ url: sh ? ss.getUrl() + '#gid=' + sh.getSheetId() : '', updates: ups });
     }
 
+    if (action === 'cadangan') {
+      // Baca cadangan track file satu divisi (untuk tombol Pulihkan di dashboard)
+      const divisi = e.parameter.divisi || '';
+      const cad = ss.getSheetByName('CADANGAN_' + divisi);
+      if (!cad || cad.getLastRow() < 3) return jsonOk({ data: [], waktu: '' });
+      const waktu = String(cad.getRange(1, 2).getValue() || '');
+      const vals = cad.getRange(3, 1, cad.getLastRow() - 2, HEADER_ROW.length).getValues();
+      const data = vals.filter(r => r[2]).map(r => ({
+        no: r[0], divisi: r[1], kegiatan: r[2], priority: r[3], pic: r[4],
+        mulai: fmtDate(r[5]), deadline: fmtDate(r[6]), status: r[7] || 'Belum',
+        catatan: r[8], file: r[9]
+      }));
+      return jsonOk({ data, waktu });
+    }
+
     if (action === 'loadstate') {
       // Baca state dashboard untuk sync antar-perangkat
       const wanted = String(e.parameter.keys || '').split(',').filter(Boolean);
@@ -280,9 +295,25 @@ function doPost(e) {
       if (!sheet) sheet = createDivisiSheet(ss, sheetName);
       ensurePlainLayout(sheet);
 
-      // Hapus data lama
+      // Cadangkan versi lama dulu (sheet tersembunyi CADANGAN_<divisi>) —
+      // kalau data hilang, bisa dipulihkan dari dashboard
       const lastRow = sheet.getLastRow();
       if (lastRow >= DATA_START_ROW) {
+        try {
+          const lama = sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, HEADER_ROW.length).getValues()
+            .filter(r => r[2] && r[2] !== 'Kegiatan & Detail');
+          if (lama.length) {
+            let cad = ss.getSheetByName('CADANGAN_' + sheetName);
+            if (!cad) {
+              cad = ss.insertSheet('CADANGAN_' + sheetName);
+              try { cad.hideSheet(); } catch (e2) {}
+            }
+            cad.clearContents();
+            cad.getRange(1, 1, 1, 2).setValues([['Cadangan otomatis sebelum sync terakhir', new Date()]]);
+            cad.getRange(2, 1, 1, HEADER_ROW.length).setValues([HEADER_ROW]);
+            cad.getRange(3, 1, lama.length, HEADER_ROW.length).setValues(lama);
+          }
+        } catch (eBk) { /* cadangan gagal tidak boleh menggagalkan sync */ }
         sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, HEADER_ROW.length).clearContent();
       }
 
