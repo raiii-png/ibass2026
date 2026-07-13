@@ -133,6 +133,23 @@ metadata:
   (Bendahara/Ketupel/Mengetahui). SELURUH dokumen contenteditable — bendahara bisa edit
   langsung sebelum cetak.
 
+## Sesi 10f (2026-07-13): referensi = alat kerja kadiv + pengaman Track File
+- **Referensi Pubdok jadi alat kerja** (kacamata kadiv: jobdesc-nya nge-brief anggota desainer):
+  prompt tambah "slides" (wajib utk carousel, isi per slide konkret) + "cta"; `pdRefUkuran(jenis)`
+  (spek px pasti); kartu konsep render slide breakdown + ukuran; tombol **"Salin Brief Desainer"**
+  (`pdCopyBrief(i)` — brief WA lengkap + link moodboard); **Moodboard** (`pdMoodboardSimpan/Hapus/Html`,
+  storage `ibass_pd_moodboard` ikut STATE_KEYS, tombol "+ Simpan" di tiap gambar grid, maks 60).
+- **Pengaman Track File** (keluhan Boss: list hilang saat refresh):
+  1. Flag `ibass_tf_dirty_<div>` — diset saat ada perubahan, dihapus HANYA setelah sync
+     terkonfirmasi ok. `tfAutoLoad` SKIP + kirim ulang kalau flag ada → isian lokal tidak
+     pernah ditimpa server basi. Status bar tampil "Belum tersimpan ke Sheet".
+  2. GAS sync: sebelum menimpa, salin data lama ke sheet hidden `CADANGAN_<divisi>`
+     (baris 1 = stempel waktu, baris 2 header, baris 3+ data).
+  3. Endpoint `?action=cadangan&divisi=X` + tombol **"Pulihkan Cadangan"** di tab Track File
+     (`tfPulihkanCadangan` — confirm → tfSave → sync balik).
+- STATE_KEYS sekarang juga punya `ibass_fn_dap_conf` (deadline+denda DAP, dibuat sesi HP).
+- **GAS masih menunggu SATU deploy New version** (imgsearch + grafik + cadangan sekaligus).
+
 ## PENDING pagi Boss (2026-07-11):
 1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
    (UrlFetchApp + Drive) → Deploy New version. Tanpa ini: AI, foto bukti, sync state MATI
