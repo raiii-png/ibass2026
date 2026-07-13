@@ -162,6 +162,15 @@ metadata:
 - `fnCopyBelumBayar`: header batas per termin + denda, status per orang "T1 sudah · T2 BELUM",
   rekap "X lunas · Y belum T1 · Z belum T2".
 
+## Sesi 10h (2026-07-13): RAB Resmi (final)
+- Boss kasih total RAB FINAL **Rp10.877.000** (rincian item belum pasti — finance sesuaikan nanti).
+  JANGAN karang harga item. Dibuat field `fnRabResmi()` (`ibass_fn_rab_resmi`, default 10877000,
+  editable via fnEditRabResmi prompt, ikut STATE_KEYS/sync).
+- Ringkasan & Laporan headline sekarang pakai RAB Resmi (bukan jumlah item). Ringkasan tampilkan
+  kartu selisih: RAB resmi vs jumlah rincian item saat ini + petunjuk "sesuaikan di RAB per Sesi".
+- Item proposal (jumlah 12.075.000 / atau 11.980.000 sebelum plakat×2) tetap sbg titik awal;
+  finance edit qty/harga/hapus/tambah sampai jumlah rincian = RAB resmi.
+
 ## PENDING pagi Boss (2026-07-11):
 1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
    (UrlFetchApp + Drive) → Deploy New version. Tanpa ini: AI, foto bukti, sync state MATI
