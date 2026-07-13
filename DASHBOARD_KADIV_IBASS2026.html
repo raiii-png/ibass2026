@@ -5073,6 +5073,8 @@ function renderFnDAP(){
 
   /* Status per anggota, dikelompokkan per divisi (roster resmi dari proposal) */
   const rstat = fnRosterStatus();
+  const belumT1 = rstat.anggota.filter(m=>!(m.bayar&&m.bayar.t1));
+  const belumT2 = rstat.anggota.filter(m=>!(m.bayar&&m.bayar.t2));
   const divUrut = FN_DIVISI_URUTAN.concat(
     [...new Set(rstat.anggota.map(m=>m.d))].filter(d=>FN_DIVISI_URUTAN.indexOf(d)<0));
   let rows = '';
@@ -5196,7 +5198,9 @@ function renderFnDAP(){
 
       ${divChips?`<div class="pill-row" style="margin-bottom:0.75rem">${divChips}</div>`:''}
 
-      ${belumList.length?`<div class="info-box" style="font-size:0.66rem;margin-bottom:0.75rem;border-left:2px solid var(--amber)"><strong style="color:var(--amber)">Belum bayar sama sekali (${belumList.length}):</strong> ${belumList.map(m=>esc(m.n)+(m.d&&m.d!=='—'?' ('+esc(m.d)+')':'')).join(', ')}</div>`:''}
+      ${belumList.length?`<div class="info-box" style="font-size:0.66rem;margin-bottom:0.5rem;border-left:2px solid var(--red)"><strong style="color:var(--red)">Belum bayar sama sekali (${belumList.length}):</strong> ${belumList.map(m=>esc(m.n)+(m.d&&m.d!=='—'?' ('+esc(m.d)+')':'')).join(', ')}</div>`:''}
+      ${belumT1.length?`<div class="info-box" style="font-size:0.66rem;margin-bottom:0.5rem;border-left:2px solid var(--amber)"><strong style="color:var(--amber)">Belum bayar Termin 1 — ${fmtRp(DAP_T1)} (${belumT1.length}):</strong> ${belumT1.map(m=>esc(m.n)).join(', ')}</div>`:''}
+      ${belumT2.length?`<div class="info-box" style="font-size:0.66rem;margin-bottom:0.75rem;border-left:2px solid var(--amber)"><strong style="color:var(--amber)">Belum bayar Termin 2 — ${fmtRp(DAP_WAJIB-DAP_T1)} (${belumT2.length}):</strong> ${belumT2.map(m=>esc(m.n)).join(', ')} <span style="color:var(--muted)">· batas ${fnDapConf().t2?new Date(fnDapConf().t2+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long'}):'—'}</span></div>`:''}
 
       <div style="overflow-x:auto">
         <table class="tf-table">
@@ -5561,24 +5565,29 @@ function fnBelumBayarList(){
 
 function fnCopyBelumBayar(){
   const { anggota } = fnRosterStatus();
+  const conf = fnDapConf();
+  const fmtBatas = t => t ? new Date(t+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '—';
   let txt = '*STATUS PEMBAYARAN DAP — I-BASS 2026*\n';
-  txt += 'Wajib per orang: '+fmtRp(DAP_WAJIB)+'\n';
+  txt += 'Termin 1: '+fmtRp(DAP_T1)+' (batas '+fmtBatas(conf.t1)+')\n';
+  txt += 'Termin 2: '+fmtRp(DAP_WAJIB-DAP_T1)+' (batas '+fmtBatas(conf.t2)+')\n';
+  if(conf.denda) txt += 'Denda keterlambatan: '+fmtRp(conf.denda)+'/hari\n';
   FN_DIVISI_URUTAN.concat([...new Set(anggota.map(m=>m.d))].filter(d=>FN_DIVISI_URUTAN.indexOf(d)<0)).forEach(div=>{
     const grup = anggota.filter(m=>m.d===div);
     if(!grup.length) return;
     txt += '\n*'+div+'*\n';
     grup.forEach(m=>{
-      const st = !m.bayar ? 'BELUM BAYAR'
-        : m.total>=DAP_WAJIB ? 'Lunas'
-        : 'kurang '+fmtRp(DAP_WAJIB-m.total);
+      const t1 = m.bayar && m.bayar.t1, t2 = m.bayar && m.bayar.t2;
+      const st = t1&&t2 ? 'Lunas'
+        : !t1&&!t2 ? 'BELUM BAYAR SAMA SEKALI'
+        : 'T1 '+(t1?'sudah':'BELUM')+' · T2 '+(t2?'sudah':'BELUM');
       const denda = fnDendaFor(m);
       txt += '- '+m.n+' — '+st+(denda?' + denda '+fmtRp(denda.jumlah)+' ('+denda.ket+')':'')+'\n';
     });
   });
-  const belum = anggota.filter(m=>!m.bayar).length;
-  const kurang = anggota.filter(m=>m.bayar&&m.total<DAP_WAJIB).length;
-  const lunas = anggota.filter(m=>m.total>=DAP_WAJIB).length;
-  txt += '\nRekap: '+lunas+' lunas · '+kurang+' belum lunas · '+belum+' belum bayar';
+  const lunas = anggota.filter(m=>m.bayar&&m.bayar.t1&&m.bayar.t2).length;
+  const bT1 = anggota.filter(m=>!(m.bayar&&m.bayar.t1)).length;
+  const bT2 = anggota.filter(m=>!(m.bayar&&m.bayar.t2)).length;
+  txt += '\nRekap: '+lunas+' lunas · '+bT1+' belum T1 · '+bT2+' belum T2';
   navigator.clipboard.writeText(txt)
     .then(()=>showToast('Status DAP tersalin — tempel di WhatsApp','success'))
     .catch(()=>showToast('Gagal menyalin','error'));
