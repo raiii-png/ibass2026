@@ -150,6 +150,18 @@ metadata:
 - STATE_KEYS sekarang juga punya `ibass_fn_dap_conf` (deadline+denda DAP, dibuat sesi HP).
 - **GAS masih menunggu SATU deploy New version** (imgsearch + grafik + cadangan sekaligus).
 
+## Sesi 10g (2026-07-13): DAP Termin 2
+- Broadcast Finance: T1 Rp115rb (batas 13 Jul), T2 Rp100rb (13 Jul–9 Agu), denda Rp2.000/hari.
+  Link form di broadcast (forms.gle/N6pQJgS6...) = form LAMA yang sama (dicek: resolve ke
+  /d/e/1FAIpQLSddFMUpw7... identik dengan forms.gle/EjrAUNzfu62...) — TIDAK perlu ganti DAP_FORM_ID.
+- `fnDapPerOrang` sekarang parse flag `t1`/`t2` per orang (dari teks termin, fallback nominal
+  115rb/100rb/215rb). Kas & DAP: chip T1 ✓/— dan T2 ✓/— per baris, info box "Belum bayar
+  Termin 1 (N)" dan "Belum bayar Termin 2 (N) · batas 9 Agustus".
+- `fnDapConf().t2` default '2026-08-09'. `fnDendaFor` dihitung per termin yang BELUM dibayar
+  (pakai flag, bukan total — orang yang bayar T2 duluan tidak kena denda T2).
+- `fnCopyBelumBayar`: header batas per termin + denda, status per orang "T1 sudah · T2 BELUM",
+  rekap "X lunas · Y belum T1 · Z belum T2".
+
 ## PENDING pagi Boss (2026-07-11):
 1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
    (UrlFetchApp + Drive) → Deploy New version. Tanpa ini: AI, foto bukti, sync state MATI
