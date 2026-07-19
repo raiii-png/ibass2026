@@ -5,6 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 5b58bde3-339d-4414-b122-b7aaba92099c
+  modified: 2026-07-19T11:12:36.693Z
 ---
 
 # Proyek I-BASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
@@ -170,6 +171,17 @@ metadata:
   kartu selisih: RAB resmi vs jumlah rincian item saat ini + petunjuk "sesuaikan di RAB per Sesi".
 - Item proposal (jumlah 12.075.000 / atau 11.980.000 sebelum plakat×2) tetap sbg titik awal;
   finance edit qty/harga/hapus/tambah sampai jumlah rincian = RAB resmi.
+
+## Sesi 10i (2026-07-13): tombol menu di Google Sheet
+- Grafik dulu HANYA dibangun saat action:sync — kalau Boss hapus/edit baris manual di sheet,
+  grafik tetap pakai angka lama. Solusi: menu kustom lewat `onOpen()`.
+- Menu "Laporan I-BASS" sekarang punya: Perbarui Laporan | **Perbarui Grafik**
+  (`menuPerbaruiGrafik` = rebuildRekap + updateGrafik + alert jumlah kegiatan/selesai) |
+  **Reset Data Track File** (`menuResetTrackFile` = konfirmasi YES/NO → clearContent baris
+  DATA_START_ROW ke bawah di 5 sheet divisi + REKAP → updateGrafik).
+- Menu muncul setelah kode disimpan di editor + spreadsheet di-reload (onOpen simple trigger,
+  tidak butuh deploy web app). Reset hanya membersihkan SHEET — dashboard kadiv yang masih
+  menyimpan daftar lama harus tekan "Muat dari Sheets" (tfLoadFromSheets menimpa lokal).
 
 ## PENDING pagi Boss (2026-07-11):
 1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
