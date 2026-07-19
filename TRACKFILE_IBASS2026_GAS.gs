@@ -474,7 +474,54 @@ const LAP_W = 7; // lebar kolom laporan
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Laporan I-BASS')
     .addItem('Perbarui Laporan', 'menuGenerateLaporan')
+    .addSeparator()
+    .addItem('Perbarui Grafik', 'menuPerbaruiGrafik')
+    .addItem('Reset Data Track File', 'menuResetTrackFile')
     .addToUi();
+}
+
+// Hitung ulang REKAP + grafik dari isi sheet saat ini —
+// dipakai setelah baris diedit/dihapus manual di spreadsheet.
+function menuPerbaruiGrafik() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  rebuildRekap(ss);
+  updateGrafik(ss);
+  let total = 0, selesai = 0;
+  SHEET_DIVISI.forEach(function (name) {
+    const rows = readSheet(ss, name);
+    total += rows.length;
+    selesai += rows.filter(function (r) { return r.status === 'Selesai'; }).length;
+  });
+  ui.alert('Grafik diperbarui.\n\n' + total + ' kegiatan terdata, ' + selesai + ' selesai.' +
+    '\nLihat sheet "GRAFIK".');
+}
+
+// Kosongkan seluruh data kegiatan (mis. sisa data uji coba), lalu bangun ulang grafik.
+function menuResetTrackFile() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const jawab = ui.alert('Reset Data Track File',
+    'Semua baris kegiatan di sheet divisi dan REKAP akan dikosongkan. ' +
+    'Grafik ikut dihitung ulang.\n\nLanjutkan?',
+    ui.ButtonSet.YES_NO);
+  if (jawab !== ui.Button.YES) return;
+
+  let terhapus = 0;
+  SHEET_DIVISI.concat(['REKAP']).forEach(function (name) {
+    const sh = ss.getSheetByName(name);
+    if (!sh) return;
+    const lastRow = sh.getLastRow();
+    if (lastRow >= DATA_START_ROW) {
+      const n = lastRow - DATA_START_ROW + 1;
+      sh.getRange(DATA_START_ROW, 1, n, HEADER_ROW.length).clearContent();
+      if (name !== 'REKAP') terhapus += n;
+    }
+  });
+  updateGrafik(ss);
+  ui.alert('Reset selesai — ' + terhapus + ' baris dikosongkan, grafik sudah diperbarui.\n\n' +
+    'Catatan: kalau di dashboard kadiv masih terlihat daftar lama, tekan tombol ' +
+    '"Muat dari Sheets" di tab Track File supaya ikut kosong.');
 }
 
 function menuGenerateLaporan() {
