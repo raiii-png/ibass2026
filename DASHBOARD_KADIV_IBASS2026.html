@@ -3921,8 +3921,15 @@ function renderTrackFileTab(div){
             <input type="text" id="tf-catatan-${div}" placeholder="Keterangan tambahan (opsional)">
           </div>
           <div class="field" style="margin:0">
-            <label>Link File</label>
-            <input type="text" id="tf-file-${div}" placeholder="Link Drive/Docs (opsional)">
+            <label>File Lampiran</label>
+            <div style="display:flex;gap:0.35rem;align-items:center">
+              <label class="btn btn-ghost btn-sm" style="white-space:nowrap;cursor:pointer;margin:0">
+                Unggah File
+                <input type="file" style="display:none" accept=".doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.pdf,image/*" onchange="tfUploadFile('${div}', this)">
+              </label>
+              <input type="text" id="tf-file-${div}" placeholder="atau paste link (opsional)" style="flex:1;min-width:0">
+            </div>
+            <div id="tf-file-status-${div}" style="display:none;font-size:0.6rem;color:var(--muted);margin-top:0.25rem"><span class="spinner"></span> Mengunggah...</div>
           </div>
         </div>
         <div class="btn-row" style="margin-top:0.75rem">
@@ -3936,6 +3943,36 @@ function renderTrackFileTab(div){
 function tfToggleForm(div){
   const f = document.getElementById('tf-form-'+div);
   if(f) f.style.display = f.style.display==='none' ? 'block' : 'none';
+}
+
+/* Unggah berkas (Word/Sheet/PDF/gambar) ke Drive lewat server — hasilnya mengisi kolom link */
+function tfUploadFile(div, input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  input.value = '';
+  if(file.size > 8*1024*1024){
+    showToast('File terlalu besar (maks 8 MB) — untuk file besar, unggah ke Drive lalu paste link-nya','warning');
+    return;
+  }
+  const st = document.getElementById('tf-file-status-'+div);
+  if(st){ st.style.display = 'block'; st.innerHTML = '<span class="spinner"></span> Mengunggah '+esc(file.name)+'...'; }
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try{
+      const b64 = String(reader.result).split(',')[1];
+      const js = await gasPost(GAS_URL, { action:'uploadfile', data:b64, mime:file.type||'application/octet-stream', nama:file.name });
+      if(!js || !js.url) throw new Error(js && js.error ? js.error : 'file tidak terunggah — coba lagi');
+      const linkEl = document.getElementById('tf-file-'+div);
+      if(linkEl) linkEl.value = js.url;
+      if(st){ st.style.display = 'block'; st.innerHTML = 'Terunggah: '+esc(file.name)+' ✓'; }
+      showToast('File terunggah — link otomatis terisi','success');
+    }catch(e){
+      if(st) st.style.display = 'none';
+      showToast('Gagal unggah: '+(e.message||'coba lagi'),'error');
+    }
+  };
+  reader.onerror = () => { if(st) st.style.display='none'; showToast('Gagal membaca file','error'); };
+  reader.readAsDataURL(file);
 }
 
 function tfAddItem(div){

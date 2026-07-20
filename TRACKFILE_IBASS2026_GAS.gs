@@ -265,6 +265,20 @@ function doPost(e) {
       return jsonOk({ url: file.getUrl() });
     }
 
+    // ── Upload berkas Track File (Word/Sheet/PDF/gambar dll) → Google Drive ──
+    if (action === 'uploadfile') {
+      if (!body.data) return jsonErr('Tidak ada berkas');
+      const blob = Utilities.newBlob(
+        Utilities.base64Decode(body.data),
+        body.mime || 'application/octet-stream',
+        body.nama || ('berkas-' + Date.now()));
+      const it2 = DriveApp.getFoldersByName('Berkas Track File I-BASS 2026');
+      const folder2 = it2.hasNext() ? it2.next() : DriveApp.createFolder('Berkas Track File I-BASS 2026');
+      const file2 = folder2.createFile(blob);
+      file2.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      return jsonOk({ url: file2.getUrl(), nama: file2.getName() });
+    }
+
     // ── Tiket upload file AI (video Pubdok): server buat sesi upload,
     //    file mengalir langsung browser → Google tanpa lewat sini ──
     if (action === 'aifileinit') {
