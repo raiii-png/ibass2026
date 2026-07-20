@@ -4,7 +4,7 @@
     {
       "name": "dashboard",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["C:/Users/mrraf/AppData/Local/Temp/claude/C--Users-mrraf-Downloads-ibass2026/2d8cfa65-87c1-4024-91a3-8c8884848e6b/scratchpad/static_server.js"],
+      "runtimeArgs": ["C:/Users/mrraf/AppData/Local/Temp/claude/C--Users-mrraf-Downloads-ibass2026/3e5bbe96-3ea5-495f-ac2c-20f5f3e1641c/scratchpad/static_server.js"],
       "port": 8321
     }
   ]
