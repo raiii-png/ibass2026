@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 5b58bde3-339d-4414-b122-b7aaba92099c
-  modified: 2026-07-19T11:12:36.693Z
+  modified: 2026-07-20T18:23:59.955Z
 ---
 
 # Proyek I-BASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
@@ -182,6 +182,27 @@ metadata:
 - Menu muncul setelah kode disimpan di editor + spreadsheet di-reload (onOpen simple trigger,
   tidak butuh deploy web app). Reset hanya membersihkan SHEET — dashboard kadiv yang masih
   menyimpan daftar lama harus tekan "Muat dari Sheets" (tfLoadFromSheets menimpa lokal).
+
+## Sesi 11 (2026-07-21): index.html pulih + upload file Track File + penilaian se-tema
+- **KRITIS TERJADI LAGI: Antigravity menimpa index.html dengan dashboard (19 Jul)** —
+  link penilaian "hilang". Dipulihkan dari `penilaian.html` (kopi identik, GAS URL+token benar).
+  ATURAN: `index.html` = Penilaian, `DASHBOARD_KADIV_IBASS2026.html` = dashboard,
+  `penilaian.html` = cadangan (jaga tetap identik dengan index). Kalau penilaian hilang lagi,
+  cek dulu title index.html.
+- Link resmi: penilaian `raiii-png.github.io/ibass2026/`, dashboard
+  `raiii-png.github.io/ibass2026/DASHBOARD_KADIV_IBASS2026.html`, repo `github.com/raiii-png/ibass2026`.
+- **Track File upload file**: GAS `action:uploadfile` (mime bebas, folder Drive "Berkas Track
+  File I-BASS 2026", anyone-with-link) + dashboard `tfUploadFile(div, input)` (maks 8MB,
+  FileReader base64) — tombol "Unggah File" di form, kolom link tetap sebagai opsi.
+  **GAS BUTUH DEPLOY New version** untuk uploadfile (+ menu grafik/reset sesi 10i sekalian).
+- **Penilaian se-tema dashboard**: token :root → navy cerah (#0d1c3a dst) + --gold/--gold2,
+  radius 6px, canvas galaxy gradasi terang (#22406f→#0b1c3c), fog rgba(13,28,58), layer
+  "ROYAL GRANDEUR" di akhir <style> (eyebrow emas, kartu lift, tombol kilau emas, fokus emas,
+  s10 46px/s5 56px + mobile lebih besar, biz-dot done emas, prog-fill emas, vignette, fadeUp).
+  `penilaian.html` disamakan dengan index.html setelah edit.
+- Screenshot Browser pane MACET di halaman penilaian (canvas partikel intro) — verifikasi
+  pakai computed style / elemen uji via javascript_tool, bukan screenshot.
+- static_server.js dibuat ulang di scratchpad sesi 3e5bbe96 (launch.json diarahkan ke sana).
 
 ## PENDING pagi Boss (2026-07-11):
 1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
