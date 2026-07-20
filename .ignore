@@ -1,0 +1,4 @@
+# Dilewati oleh pencarian Claude Code (Grep/Glob pakai ripgrep).
+node_modules/
+netlify_site/
+archive/
