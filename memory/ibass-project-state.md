@@ -5,10 +5,21 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 5b58bde3-339d-4414-b122-b7aaba92099c
-  modified: 2026-07-20T18:23:59.955Z
+  modified: 2026-07-21T07:15:05.921Z
 ---
 
 # Proyek I-BASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
+
+## STRUKTUR FILE & LINK (per 2026-07-21) — BACA DULU
+- **Penilaian Bizstar** = `index.html` (root) → `raiii-png.github.io/ibass2026/`.
+  Cadangan identik: `penilaian.html` (restore ke index.html kalau ketimpa).
+- **Dashboard Kadiv** = `kadiv/index.html` → `raiii-png.github.io/ibass2026/kadiv/`.
+  **INI FILE DASHBOARD YANG DIEDIT** (sesi 11 dipindah dari DASHBOARD_KADIV_IBASS2026.html
+  supaya link tak tertukar penilaian). `DASHBOARD_KADIV_IBASS2026.html` sekarang HANYA
+  redirect stub ke `./kadiv/` — jangan taruh dashboard di sana lagi.
+- Antigravity pernah menimpa index.html dengan dashboard 2×. Kalau title index.html bukan
+  "Penilaian Bizstar" → ketimpa, restore dari penilaian.html.
+- static_server.js (scratchpad sesi 3e5bbe96) sudah handle directory index → preview `/kadiv/` jalan.
 
 ## KEAMANAN KUNCI AI (per 2026-07-11) — PENTING
 - **Kunci Gemini TIDAK ADA lagi di HTML/repo.** Semua panggilan AI lewat proxy GAS:
@@ -203,6 +214,15 @@ metadata:
 - Screenshot Browser pane MACET di halaman penilaian (canvas partikel intro) — verifikasi
   pakai computed style / elemen uji via javascript_tool, bukan screenshot.
 - static_server.js dibuat ulang di scratchpad sesi 3e5bbe96 (launch.json diarahkan ke sana).
+
+## Sesi 11b (2026-07-21): link kadiv + latar penilaian tak hitam
+- **Dashboard dipindah `DASHBOARD_KADIV_IBASS2026.html` → `kadiv/index.html`** (git mv). Link
+  bersih `raiii-png.github.io/ibass2026/kadiv/`. Path lama = redirect stub (meta refresh +
+  location.replace ke ./kadiv/). CLAUDE.md/README/_redirects/static_server diupdate.
+- **Fix latar penilaian hitam saat "masuk"**: penilaian punya DUA fungsi galaxy — intro (sudah
+  dicerahkan sesi 11) DAN `draw()` latar berjalan (baris ~2533) yang MASIH `#010306` near-black.
+  draw() diganti gradasi navy `#22406f→#152c54→#0b1c3c` (sama dashboard). penilaian.html disamakan.
+- localStorage penilaian & dashboard TETAP (origin sama github.io), pindah folder tak hapus data.
 
 ## PENDING pagi Boss (2026-07-11):
 1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
