@@ -6,8 +6,10 @@ Perangkat web untuk kegiatan I-BASS 2026. Semua halaman berupa single-file HTML 
 
 | Halaman | File | Alamat |
 |---|---|---|
-| Dashboard Kadiv (5 divisi) | `DASHBOARD_KADIV_IBASS2026.html` | `ibass2026.netlify.app` · `raiii-png.github.io/ibass2026/DASHBOARD_KADIV_IBASS2026.html` |
-| Penilaian Bizstar | `index.html` | `raiii-png.github.io/ibass2026` · `ibass2026.netlify.app/penilaian` |
+| Penilaian Bizstar | `index.html` | `raiii-png.github.io/ibass2026/` |
+| Dashboard Kadiv (5 divisi) | `kadiv/index.html` | `raiii-png.github.io/ibass2026/kadiv/` |
+
+> Catatan: `DASHBOARD_KADIV_IBASS2026.html` kini hanya halaman pengalih ke `kadiv/` (menjaga link lama tetap hidup).
 
 ## Fitur Dashboard Kadiv
 
