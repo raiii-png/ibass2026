@@ -5,10 +5,24 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 5b58bde3-339d-4414-b122-b7aaba92099c
-  modified: 2026-08-05T10:12:12.511Z
+  modified: 2026-08-05T14:24:22.316Z
 ---
 
 # Proyek I-BASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
+
+## FITUR HT (per 2026-08-05)
+- Boss tanya HT offline (Wi-Fi Direct/Bluetooth ala Bridgefy) — **browser TIDAK bisa akses
+  antena itu**, hanya app native. Boss setuju versi online.
+- Dibangun: **HT pesan suara** (bukan real-time). Tab "HT" di 5 divisi (`{sk,pd,lg,ac,fn}-ht`),
+  `renderHT(prefix)`. Tekan-tahan tombol `.ht-ptt` → MediaRecorder 16kbps maks 12 dtk
+  (~30KB base64, batas sel sheet 50k) → `gasPost action:htsend` → HP lain polling 3 dtk
+  `?action=htpoll&channel=&sejak=<id>` → suara orang lain **auto-play**. Ada pesan teks cepat,
+  riwayat 40 pesan lokal (`ibass_ht_log`), nama panitia di `ibass_ht_nama`.
+- Saluran: nama divisi + 'SEMUA' (SEMUA selalu ikut terkirim ke semua saluran).
+- GAS: sheet `HT` tersembunyi (id, waktu, channel, nama, tipe, isi), auto-buang >150 baris.
+- Jeda nyata 3–6 dtk. Kalau Boss mau <1 dtk: WebRTC P2P (server cuma signaling) — belum
+  dibangun, risiko gagal nyambung di jaringan seluler (butuh TURN).
+- **BUTUH DEPLOY New version** supaya htsend/htpoll hidup (dites 08-05: masih "Action tidak dikenal").
 
 ## PENAMAAN: "IBASS" TANPA STRIP (per 2026-08-04)
 - Boss minta nama di UI kedua web = **IBASS 2026** (bukan "I-BASS"). Sudah diganti 44 tempat
