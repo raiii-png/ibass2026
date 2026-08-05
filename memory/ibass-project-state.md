@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 5b58bde3-339d-4414-b122-b7aaba92099c
-  modified: 2026-08-05T14:24:22.316Z
+  modified: 2026-08-05T18:48:00.594Z
 ---
 
 # Proyek I-BASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
@@ -23,6 +23,28 @@ metadata:
 - Jeda nyata 3–6 dtk. Kalau Boss mau <1 dtk: WebRTC P2P (server cuma signaling) — belum
   dibangun, risiko gagal nyambung di jaringan seluler (butuh TURN).
 - **BUTUH DEPLOY New version** supaya htsend/htpoll hidup (dites 08-05: masih "Action tidak dikenal").
+
+## FITUR HT (per 2026-08-06) — radio suara panitia
+- **Halaman terpisah `kadiv/ht/index.html`** → `raiii-png.github.io/ibass2026/kadiv/ht/?ch=Divisi`.
+  Sengaja dipisah: staff cuma dapat HT, tidak melihat data dashboard. Tab "HT" di 5 divisi
+  dashboard (`renderHT/htLink/htSalin`, konstanta HT_DIV_NAMA) untuk buka + salin link.
+- **Suara langsung antar-HP (WebRTC mesh)**, server GAS hanya mempertemukan. Bukan pesan suara.
+  STUN Google+Cloudflare, TANPA TURN → di jaringan seluler tertentu bisa gagal nyambung
+  (kalau sering gagal, tambahkan TURN berbayar). Pemulai = nama yang lebih kecil (nama<lawan).
+- **GAS `action:'ht'`** = satu panggilan untuk 3 hal: setor sinyal + absen + ambil sinyal masuk.
+  Sheet `HT` (id,waktu,room,dari,ke,kind,data) + `HT_ON` (room,nama,terakhir,status).
+  `htNextId()` pakai LockService+ScriptProperties `ht_counter` (id selalu naik, anti-terlewat).
+  Pesan room `__SEMUA__` = panggilan darurat menembus semua saluran. Presensi kedaluwarsa 20 dtk.
+  Balasan: {pesan, terakhir, online (saluran sama), semua (semua saluran)}.
+- Fitur pembeda dari HT fisik: **riwayat percakapan terekam otomatis & bisa diputar ulang**
+  (MediaRecorder per peer, mulai saat ada suara, berhenti setelah sunyi 1,2 dtk; maks 25,
+  blob URL di-revoke), **pesan teks cepat** untuk tempat berisik, **salin catatan percakapan**,
+  panggil orang tertentu (`to`=nama, data='pribadi'), status Siap/Di Lokasi/Sibuk.
+- Diverifikasi: WebRTC dua peer tersambung + audio dua arah; rekam-putar ulang; teks masuk+getar;
+  salin catatan; 5 tab HT di dashboard; nol error console. Server: **butuh deploy New version**
+  (action 'ht' belum ada di deployment saat fitur ini dibuat).
+- Screenshot Browser pane sering gagal ("pane not displayed") — verifikasi pakai javascript_tool
+  (DOM + computed style), bukan screenshot.
 
 ## PENAMAAN: "IBASS" TANPA STRIP (per 2026-08-04)
 - Boss minta nama di UI kedua web = **IBASS 2026** (bukan "I-BASS"). Sudah diganti 44 tempat
@@ -361,9 +383,8 @@ metadata:
   deploy sekali isi `netlify_site/_redirects` (proxy 200! ke GitHub Pages) via MCP Netlify
   (siteId `9982f851-f4e6-4ad4-ba42-c20b66eed2e8`) — setelah itu Netlify jadi cermin
   otomatis GitHub selamanya tanpa build. `netlify.toml` publish=netlify_site sudah di repo.
-- **Sementara Boss pakai link GitHub Pages** (selalu auto-update tiap push, terverifikasi
-  serve versi terbaru): `raiii-png.github.io/ibass2026/DASHBOARD_KADIV_IBASS2026.html`.
-  Script auto-sync di laptop Boss ikut push ke GitHub otomatis.
+- **Hosting sepenuhnya GitHub Pages** (Netlify DILEPAS 2026-08-06 atas permintaan Boss: file
+  netlify.toml/_redirects/netlify_site/.netlify dihapus dari repo). Auto-sync laptop push tiap jam.
 - localStorage per origin: data Track File yang diketik di netlify.app tidak muncul di
   github.io — pakai tombol "Muat dari Sheets" untuk menarik data dari sheet.
 
