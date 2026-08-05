@@ -245,32 +245,39 @@ function doPost(e) {
         const mulaiId = htNextId(kirim.length);
         const waktu = new Date().toISOString();
         const rows = kirim.map(function (m, i) {
-          return [mulaiId + i + 1, waktu, room, me,
+          // m.room dipakai untuk panggilan darurat ('__SEMUA__') yang menembus semua saluran
+          return [mulaiId + i + 1, waktu, String(m.room || room), me,
             String(m.to || ''), String(m.kind || ''), String(m.data || '')];
         });
         sh.getRange(sh.getLastRow() + 1, 1, rows.length, 7).setValues(rows);
       }
 
       // 2) presensi: perbarui jejak saya, lalu kumpulkan siapa saja yang masih aktif
+      //    online  = orang di saluran yang sama (untuk sambungan suara)
+      //    semuaOn = semua orang di semua saluran (untuk panggilan lintas divisi)
       const ph = htPresenceSheet(ss);
       const sekarang = Date.now();
-      const online = [];
+      const online = [], semuaOn = [];
+      const status = String(body.status || 'Siap');
       let barisSaya = 0;
       if (ph.getLastRow() > 1) {
-        const pr = ph.getRange(2, 1, ph.getLastRow() - 1, 3).getValues();
+        const pr = ph.getRange(2, 1, ph.getLastRow() - 1, 4).getValues();
         for (let i = 0; i < pr.length; i++) {
-          if (String(pr[i][0]) === room && String(pr[i][1]) === me) barisSaya = i + 2;
-          if (String(pr[i][0]) !== room) continue;
+          const rRoom = String(pr[i][0]), rNama = String(pr[i][1]);
+          if (rRoom === room && rNama === me) barisSaya = i + 2;
           if (sekarang - Number(pr[i][2] || 0) > 20000) continue; // lewat 20 dtk = dianggap keluar
-          if (String(pr[i][1]) !== me) online.push(String(pr[i][1]));
+          if (rNama === me) continue;
+          const org = { nama: rNama, status: String(pr[i][3] || 'Siap'), room: rRoom };
+          semuaOn.push(org);
+          if (rRoom === room) online.push(org);
         }
       }
       if (body.keluar) {
         if (barisSaya) ph.getRange(barisSaya, 3).setValue(0);
       } else if (barisSaya) {
-        ph.getRange(barisSaya, 3).setValue(sekarang);
+        ph.getRange(barisSaya, 3, 1, 2).setValues([[sekarang, status]]);
       } else {
-        ph.appendRow([room, me, sekarang]);
+        ph.appendRow([room, me, sekarang, status]);
       }
 
       // 3) ambil sinyal yang ditujukan ke saya (atau siaran ke semua)
@@ -284,18 +291,21 @@ function doPost(e) {
           const id = Number(r[0]) || 0;
           if (id > terakhir) terakhir = id;
           if (id <= sejak) return;
-          if (String(r[2]) !== room) return;
+          const rRoom = String(r[2]);
+          // saluran sendiri, atau panggilan darurat yang menembus semua saluran
+          if (rRoom !== room && rRoom !== '__SEMUA__') return;
           if (String(r[3]) === me) return;                     // jangan pantulkan sinyal sendiri
           const to = String(r[4] || '');
           if (to && to !== me) return;                          // bukan untuk saya
-          pesan.push({ id: id, dari: String(r[3]), kind: String(r[5]), data: String(r[6] || '') });
+          pesan.push({ id: id, dari: String(r[3]), kind: String(r[5]),
+            data: String(r[6] || ''), room: rRoom });
         });
       }
 
       // 4) bersihkan sinyal lama supaya sheet tetap ringan
       if (lastRow > 400) sh.deleteRows(2, lastRow - 200);
 
-      return jsonOk({ pesan: pesan, terakhir: terakhir, online: online });
+      return jsonOk({ pesan: pesan, terakhir: terakhir, online: online, semua: semuaOn });
     }
 
     // ── Cari contoh gambar referensi desain (untuk Pubdok) ──
@@ -775,12 +785,12 @@ function htSheet(ss) {
   return sh;
 }
 
-// Siapa saja yang sedang membuka HT (room, nama, jejak waktu terakhir)
+// Siapa saja yang sedang membuka HT (room, nama, jejak waktu terakhir, status)
 function htPresenceSheet(ss) {
   let sh = ss.getSheetByName(HT_SHEET + '_ON');
   if (!sh) {
     sh = ss.insertSheet(HT_SHEET + '_ON');
-    sh.getRange(1, 1, 1, 3).setValues([['room', 'nama', 'terakhir']]);
+    sh.getRange(1, 1, 1, 4).setValues([['room', 'nama', 'terakhir', 'status']]);
     try { sh.hideSheet(); } catch (e) {}
   }
   return sh;
