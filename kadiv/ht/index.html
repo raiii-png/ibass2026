@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d1c3a">
+<title>HT IBASS 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1c3a; --bg2:#122448; --bg3:#182e58; --bg4:#1f3866;
+  --blue:#52a8e0; --blue2:#86cff5; --gold:#c8922a; --gold2:#e8bf6a;
+  --text:#eaf4ff; --text2:#b4d0ec; --muted:#7e9cc0;
+  --bdr:rgba(120,190,240,0.28); --bdr2:rgba(120,190,240,0.14);
+  --green:#36c97a; --amber:#f0a820; --red:#e05260; --r:8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);color:var(--text);font-family:'Raleway',sans-serif;font-weight:300;
+  min-height:100vh;min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(160deg,#22406f 0%,#152c54 45%,#0b1c3c 100%);
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 25%,transparent 55%,rgba(8,18,40,0.55) 100%);
+}
+.wrap{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:1rem 1rem 2rem;
+  min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+
+/* ── kop ── */
+.top{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;
+  padding:0.5rem 0 0.9rem;border-bottom:1px solid var(--bdr2);margin-bottom:1rem}
+.brand{font-family:'Cinzel',serif;font-size:0.95rem;letter-spacing:0.14em;color:var(--text)}
+.brand small{display:block;font-family:'Raleway',sans-serif;font-size:0.56rem;
+  letter-spacing:0.24em;color:var(--gold2);text-transform:uppercase;margin-top:2px;font-weight:500}
+.status{font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);
+  display:flex;align-items:center;gap:0.4rem;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.dot.on{background:var(--green);box-shadow:0 0 8px rgba(54,201,122,0.7)}
+.dot.warn{background:var(--amber)}
+
+/* ── kartu ── */
+.card{background:var(--bg2);border:1px solid var(--bdr2);border-radius:var(--r);
+  padding:1rem 1.1rem;margin-bottom:0.8rem}
+.lbl{font-family:'Cinzel',serif;font-size:0.56rem;letter-spacing:0.22em;color:var(--gold2);
+  text-transform:uppercase;margin-bottom:0.55rem;position:relative;padding-bottom:0.35rem}
+.lbl::after{content:'';position:absolute;left:0;bottom:0;width:32px;height:1px;
+  background:linear-gradient(90deg,var(--gold2),transparent)}
+label.f{display:block;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:0.3rem}
+input,select{width:100%;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);
+  font-family:'Raleway',sans-serif;font-size:0.9rem;padding:0.7rem 0.8rem;border-radius:var(--r);
+  outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus{border-color:rgba(232,191,106,0.55);box-shadow:0 0 0 2px rgba(232,191,106,0.12)}
+.field{margin-bottom:0.7rem}
+
+/* ── tombol ── */
+.btn{width:100%;background:transparent;border:1px solid var(--bdr);color:var(--text);
+  font-family:'Cinzel',serif;font-size:0.66rem;letter-spacing:0.18em;text-transform:uppercase;
+  padding:0.85rem 1rem;border-radius:var(--r);cursor:pointer;position:relative;overflow:hidden;
+  transition:border-color .2s,background .2s;min-height:48px}
+.btn:hover{border-color:rgba(232,191,106,0.6)}
+.btn:active{background:var(--bg3)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.gold{border-color:rgba(232,191,106,0.5);color:var(--gold2)}
+.btn.danger{border-color:rgba(224,82,96,0.45);color:var(--red)}
+.btn-row{display:flex;gap:0.5rem}
+.btn-row .btn{flex:1}
+
+/* ── daftar orang ── */
+.people{display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:0.2rem}
+.chip{display:flex;align-items:center;gap:0.4rem;background:var(--bg3);border:1px solid var(--bdr2);
+  border-radius:999px;padding:0.35rem 0.75rem 0.35rem 0.4rem;font-size:0.72rem;color:var(--text2)}
+.chip .av{width:22px;height:22px;border-radius:50%;background:var(--bg4);border:1px solid var(--bdr2);
+  display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:var(--gold2);
+  font-family:'Cinzel',serif;flex-shrink:0;transition:box-shadow .15s,border-color .15s}
+.chip.talk .av{border-color:var(--green);box-shadow:0 0 0 2px rgba(54,201,122,0.35)}
+.chip.talk{color:var(--text)}
+.chip .st{font-size:0.54rem;color:var(--muted);letter-spacing:0.08em}
+.kosong{font-size:0.72rem;color:var(--muted);padding:0.3rem 0;line-height:1.6}
+
+/* ── tombol bicara besar ── */
+.ptt-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0.9rem;padding:1.2rem 0 0.4rem}
+.ptt{width:190px;height:190px;border-radius:50%;border:2px solid var(--bdr);
+  background:radial-gradient(circle at 50% 35%,var(--bg4),var(--bg2) 72%);
+  color:var(--text2);font-family:'Cinzel',serif;font-size:0.78rem;letter-spacing:0.16em;
+  text-transform:uppercase;cursor:pointer;user-select:none;-webkit-user-select:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;
+  transition:transform .12s,border-color .18s,box-shadow .18s;touch-action:none}
+.ptt .ic{font-size:2.4rem;line-height:1}
+.ptt:disabled{opacity:.35}
+.ptt.live{border-color:var(--green);color:var(--green);transform:scale(0.965);
+  box-shadow:0 0 0 8px rgba(54,201,122,0.12),0 0 34px rgba(54,201,122,0.35)}
+.ptt-hint{font-size:0.62rem;color:var(--muted);letter-spacing:0.1em;text-align:center;line-height:1.7}
+.mode{display:flex;gap:0.4rem;justify-content:center;flex-wrap:wrap}
+.mode button{background:var(--bg3);border:1px solid var(--bdr2);color:var(--text2);
+  font-size:0.62rem;letter-spacing:0.1em;padding:0.45rem 0.85rem;border-radius:999px;cursor:pointer}
+.mode button.on{border-color:rgba(232,191,106,0.55);color:var(--gold2);background:var(--bg4)}
+
+/* ── panggilan masuk ── */
+.ring{position:fixed;inset:0;z-index:900;display:none;align-items:center;justify-content:center;
+  padding:1.5rem;background:rgba(8,16,34,0.86);backdrop-filter:blur(10px)}
+.ring.open{display:flex}
+.ring-box{background:var(--bg2);border:1px solid rgba(232,191,106,0.4);border-radius:14px;
+  padding:2rem 1.5rem;text-align:center;max-width:330px;width:100%;
+  animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(232,191,106,0.28)}50%{box-shadow:0 0 0 16px rgba(232,191,106,0)}}
+.ring-who{font-family:'Cinzel',serif;font-size:1.15rem;color:var(--gold2);margin:0.6rem 0 0.2rem}
+.ring-sub{font-size:0.72rem;color:var(--muted);margin-bottom:1.4rem}
+.ring-ic{font-size:2.6rem}
+
+/* ── catatan bawah ── */
+.note{font-size:0.62rem;color:var(--muted);line-height:1.75;margin-top:0.5rem}
+.toast{position:fixed;left:50%;bottom:1.4rem;transform:translateX(-50%);z-index:950;
+  background:rgba(12,17,32,0.95);border:1px solid var(--bdr);color:var(--blue2);
+  font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;
+  padding:0.7rem 1.2rem;border-radius:var(--r);max-width:90vw;text-align:center;
+  opacity:0;pointer-events:none;transition:opacity .25s}
+.toast.show{opacity:1}
+.hide{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand">HT IBASS 2026<small id="chLabel">Radio Panitia</small></div>
+    <div class="status"><span class="dot" id="dot"></span><span id="statusTxt">Belum masuk</span></div>
+  </div>
+
+  <!-- MASUK -->
+  <div id="joinView">
+    <div class="card">
+      <div class="lbl">Masuk Saluran</div>
+      <div class="field">
+        <label class="f">Nama kamu</label>
+        <input type="text" id="nama" placeholder="Contoh: Tommy" autocomplete="off" maxlength="24">
+      </div>
+      <div class="field">
+        <label class="f">Saluran</label>
+        <select id="room">
+          <option>Semua Panitia</option>
+          <option>Sekretaris</option>
+          <option>Pubdok</option>
+          <option>Logistik</option>
+          <option>Acara</option>
+          <option>Finance</option>
+        </select>
+      </div>
+      <button class="btn gold" id="joinBtn">Masuk HT →</button>
+      <div class="note">Saat masuk, browser akan meminta izin mikrofon — pilih <strong>Izinkan</strong>.
+      Mikrofon tetap mati sampai kamu menekan tombol bicara.</div>
+    </div>
+  </div>
+
+  <!-- RUANG HT -->
+  <div id="htView" class="hide">
+    <div class="card">
+      <div class="lbl">Di Saluran Ini</div>
+      <div class="people" id="people"></div>
+      <div class="kosong hide" id="sendiri">Belum ada orang lain di saluran ini.<br>Bagikan link HT ke staff, lalu tekan <strong>Panggil</strong> untuk memanggil mereka.</div>
+    </div>
+
+    <div class="ptt-area">
+      <button class="ptt" id="ptt" disabled>
+        <span class="ic">◉</span>
+        <span id="pttLbl">Tekan &amp; Tahan</span>
+      </button>
+      <div class="ptt-hint" id="pttHint">Tahan tombol untuk bicara, lepas untuk mendengar</div>
+      <div class="mode">
+        <button id="btnOpen">Mic Terbuka</button>
+        <button id="btnRing">Panggil (Getar)</button>
+        <button id="btnSpk">Speaker</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="lbl">Bagikan ke Staff</div>
+      <div class="btn-row">
+        <button class="btn" id="btnCopy">Salin Link HT</button>
+        <button class="btn danger" id="btnLeave">Keluar</button>
+      </div>
+      <div class="note" id="linkNote"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- panggilan masuk -->
+<div class="ring" id="ringBox">
+  <div class="ring-box">
+    <div class="ring-ic">◉</div>
+    <div class="ring-who" id="ringWho">Panggilan</div>
+    <div class="ring-sub">memanggil di saluran <span id="ringCh"></span></div>
+    <div class="btn-row">
+      <button class="btn gold" id="ringOk">Jawab</button>
+      <button class="btn" id="ringNo">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   HT IBASS 2026 — panggilan suara langsung antar-HP (WebRTC).
+   Server hanya dipakai untuk saling mengenalkan; suara mengalir
+   langsung dari HP ke HP, jadi jedanya di bawah satu detik.
+══════════════════════════════════════════════════════════════ */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxCTCMFY1KEBuT6TeiBbMeDgB-JL2o3zOXtdvpDagd1E-tMScq45uxX-nwUqA9qf9Becg/exec';
+const ICE = { iceServers: [
+  { urls: ['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302'] },
+  { urls: ['stun:stun.cloudflare.com:3478'] }
+] };
+
+let nama = '', room = '', masuk = false;
+let micStream = null, micTrack = null;
+let sejak = 0, pollTimer = null, pollJeda = 1500;
+let modeTerbuka = false, sedangBicara = false;
+const peers = {};        // nama → { pc, audio, stream }
+const outbox = [];       // sinyal menunggu kirim
+let ringOsc = null, ringTimer = null, wakeLock = null;
+let pemanggil = '';
+
+const $ = id => document.getElementById(id);
+const esc = s => { const d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; };
+
+let toastTimer;
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+function status(txt, kelas){
+  $('statusTxt').textContent = txt;
+  $('dot').className = 'dot' + (kelas ? ' ' + kelas : '');
+}
+
+/* ── kirim ke server: sekaligus setor sinyal, absen, dan ambil sinyal masuk ── */
+async function serverSync(extra){
+  const kirim = outbox.splice(0, outbox.length);
+  const body = Object.assign({ action:'ht', room, me:nama, sejak, kirim }, extra || {});
+  const res = await fetch(GAS_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body)
+  });
+  const js = await res.json();
+  if(!js.ok) throw new Error(js.error || 'server menolak');
+  if(js.terakhir > sejak) sejak = js.terakhir;
+  return js;
+}
+function antre(to, kind, data){ outbox.push({ to, kind, data: data==null?'':String(data) }); }
+
+/* ── mikrofon ── */
+async function siapkanMic(){
+  micStream = await navigator.mediaDevices.getUserMedia({
+    audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true },
+    video:false
+  });
+  micTrack = micStream.getAudioTracks()[0];
+  micTrack.enabled = false;   // mulai dalam keadaan diam
+}
+
+/* ── sambungan ke satu orang ── */
+function buatPeer(lawan, sayaYangMulai){
+  if(peers[lawan]) return peers[lawan];
+  const pc = new RTCPeerConnection(ICE);
+  const audio = document.createElement('audio');
+  audio.autoplay = true; audio.playsInline = true;
+  document.body.appendChild(audio);
+
+  if(micStream) micStream.getTracks().forEach(t => pc.addTrack(t, micStream));
+
+  pc.onicecandidate = e => { if(e.candidate) antre(lawan, 'ice', JSON.stringify(e.candidate)); };
+  pc.ontrack = e => {
+    audio.srcObject = e.streams[0];
+    audio.play().catch(()=>{});
+    pantauSuara(lawan, e.streams[0]);
+  };
+  pc.onconnectionstatechange = () => {
+    const s = pc.connectionState;
+    if(s === 'connected') status('Tersambung', 'on');
+    if(s === 'failed' || s === 'disconnected'){
+      tutupPeer(lawan);
+      // coba sambung ulang sebentar lagi
+      setTimeout(()=>{ if(masuk) sinkronPeer(); }, 1500);
+    }
+    gambarOrang();
+  };
+
+  const p = { pc, audio, mulai: sayaYangMulai, bicara:false };
+  peers[lawan] = p;
+
+  if(sayaYangMulai){
+    pc.onnegotiationneeded = async () => {
+      try{
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        antre(lawan, 'offer', JSON.stringify(pc.localDescription));
+      }catch(e){}
+    };
+  }
+  return p;
+}
+
+function tutupPeer(lawan){
+  const p = peers[lawan];
+  if(!p) return;
+  try{ p.pc.close(); }catch(e){}
+  try{ p.audio.remove(); }catch(e){}
+  delete peers[lawan];
+  gambarOrang();
+}
+
+/* ── indikator siapa yang sedang bicara ── */
+function pantauSuara(lawan, stream){
+  try{
+    const ac = new (window.AudioContext||window.webkitAudioContext)();
+    const src = ac.createMediaStreamSource(stream);
+    const an = ac.createAnalyser(); an.fftSize = 512;
+    src.connect(an);
+    const buf = new Uint8Array(an.frequencyBinCount);
+    const cek = () => {
+      if(!peers[lawan]) { try{ ac.close(); }catch(e){} return; }
+      an.getByteFrequencyData(buf);
+      let jml = 0; for(let i=0;i<buf.length;i++) jml += buf[i];
+      const keras = (jml/buf.length) > 8;
+      if(keras !== peers[lawan].bicara){ peers[lawan].bicara = keras; gambarOrang(); }
+      requestAnimationFrame(cek);
+    };
+    cek();
+  }catch(e){}
+}
+
+/* ── daftar orang di saluran ── */
+let daftarOnline = [];
+function gambarOrang(){
+  const el = $('people');
+  const semua = daftarOnline.slice().sort((a,b)=>a.localeCompare(b,'id'));
+  el.innerHTML = `<span class="chip talk"><span class="av">${esc((nama[0]||'?').toUpperCase())}</span>${esc(nama)} <span class="st">kamu</span></span>`
+    + semua.map(n=>{
+        const p = peers[n];
+        const nyambung = p && p.pc.connectionState === 'connected';
+        const st = nyambung ? (p.bicara ? 'bicara' : 'siap') : 'menyambung';
+        return `<span class="chip${p && p.bicara ? ' talk':''}"><span class="av">${esc((n[0]||'?').toUpperCase())}</span>${esc(n)} <span class="st">${st}</span></span>`;
+      }).join('');
+  $('sendiri').classList.toggle('hide', semua.length > 0);
+  const adaLawan = semua.length > 0;
+  $('ptt').disabled = !adaLawan;
+  $('pttHint').textContent = adaLawan
+    ? 'Tahan tombol untuk bicara, lepas untuk mendengar'
+    : 'Menunggu staff lain masuk ke saluran ini';
+}
+
+/* ── samakan sambungan dengan daftar online ── */
+function sinkronPeer(){
+  daftarOnline.forEach(n=>{
+    if(!peers[n]) buatPeer(n, nama < n);   // yang namanya lebih awal jadi pemulai
+  });
+  Object.keys(peers).forEach(n=>{
+    if(daftarOnline.indexOf(n) < 0) tutupPeer(n);
+  });
+}
+
+/* ── olah sinyal masuk ── */
+async function olahSinyal(m){
+  const dari = m.dari;
+  if(m.kind === 'ring'){ tampilkanPanggilan(dari); return; }
+  if(m.kind === 'bye'){ tutupPeer(dari); return; }
+
+  let p = peers[dari];
+  if(!p) p = buatPeer(dari, false);
+  const pc = p.pc;
+
+  try{
+    if(m.kind === 'offer'){
+      await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(m.data)));
+      const ans = await pc.createAnswer();
+      await pc.setLocalDescription(ans);
+      antre(dari, 'answer', JSON.stringify(pc.localDescription));
+    } else if(m.kind === 'answer'){
+      if(pc.signalingState !== 'stable'){
+        await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(m.data)));
+      }
+    } else if(m.kind === 'ice'){
+      const c = JSON.parse(m.data);
+      if(pc.remoteDescription) await pc.addIceCandidate(new RTCIceCandidate(c));
+      else (p.tunda = p.tunda || []).push(c);
+    }
+    if(p.tunda && pc.remoteDescription){
+      for(const c of p.tunda){ try{ await pc.addIceCandidate(new RTCIceCandidate(c)); }catch(e){} }
+      p.tunda = null;
+    }
+  }catch(e){ /* sinyal cacat: abaikan, akan dicoba ulang */ }
+}
+
+/* ── putaran utama ── */
+async function putaran(){
+  if(!masuk) return;
+  try{
+    const js = await serverSync();
+    daftarOnline = js.online || [];
+    for(const m of (js.pesan||[])) await olahSinyal(m);
+    sinkronPeer();
+    gambarOrang();
+    if(outbox.length) { pollJeda = 900; }
+    else {
+      const adaYangBelumNyambung = Object.values(peers).some(p=>p.pc.connectionState !== 'connected');
+      pollJeda = adaYangBelumNyambung ? 1200 : (daftarOnline.length ? 2500 : 4000);
+    }
+    status(daftarOnline.length ? 'Aktif · ' + daftarOnline.length + ' orang' : 'Aktif · sendiri', 'on');
+  }catch(e){
+    status('Sambungan lemah', 'warn');
+    pollJeda = 4000;
+  }
+  pollTimer = setTimeout(putaran, pollJeda);
+}
+
+/* ── nada dering + getar ── */
+function mulaiDering(){
+  try{
+    const ac = new (window.AudioContext||window.webkitAudioContext)();
+    ringOsc = ac;
+    const bunyi = () => {
+      [0, 0.28].forEach(t=>{
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.frequency.value = 880; o.type = 'sine';
+        g.gain.setValueAtTime(0.0001, ac.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.25, ac.currentTime + t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + t + 0.2);
+        o.connect(g); g.connect(ac.destination);
+        o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.22);
+      });
+      if(navigator.vibrate) navigator.vibrate([220,120,220]);
+    };
+    bunyi();
+    ringTimer = setInterval(bunyi, 1400);
+  }catch(e){}
+}
+function hentikanDering(){
+  clearInterval(ringTimer); ringTimer = null;
+  if(navigator.vibrate) navigator.vibrate(0);
+  if(ringOsc){ try{ ringOsc.close(); }catch(e){} ringOsc = null; }
+}
+function tampilkanPanggilan(dari){
+  pemanggil = dari;
+  $('ringWho').textContent = dari;
+  $('ringCh').textContent = room;
+  $('ringBox').classList.add('open');
+  mulaiDering();
+  setTimeout(()=>{ if($('ringBox').classList.contains('open')) tutupPanggilan(); }, 25000);
+}
+function tutupPanggilan(){
+  $('ringBox').classList.remove('open');
+  hentikanDering();
+}
+
+/* ── bicara ── */
+function bicaraMulai(){
+  if(!micTrack || sedangBicara) return;
+  sedangBicara = true; micTrack.enabled = true;
+  $('ptt').classList.add('live');
+  $('pttLbl').textContent = 'Bicara…';
+  if(navigator.vibrate) navigator.vibrate(18);
+}
+function bicaraSelesai(){
+  if(!micTrack || !sedangBicara) return;
+  sedangBicara = false;
+  if(!modeTerbuka){ micTrack.enabled = false; $('ptt').classList.remove('live'); }
+  $('pttLbl').textContent = modeTerbuka ? 'Mic Terbuka' : 'Tekan & Tahan';
+}
+
+/* ── masuk / keluar ── */
+async function masukHT(){
+  const n = $('nama').value.trim();
+  if(!n){ toast('Isi nama dulu'); return; }
+  nama = n; room = $('room').value;
+  $('joinBtn').disabled = true;
+  status('Menyiapkan mikrofon…');
+  try{
+    await siapkanMic();
+  }catch(e){
+    $('joinBtn').disabled = false;
+    status('Mikrofon ditolak', 'warn');
+    toast('Izin mikrofon ditolak — aktifkan di pengaturan browser');
+    return;
+  }
+  try{ localStorage.setItem('ibass_ht_nama', nama); localStorage.setItem('ibass_ht_room', room); }catch(e){}
+  masuk = true;
+  $('joinView').classList.add('hide');
+  $('htView').classList.remove('hide');
+  $('chLabel').textContent = 'Saluran ' + room;
+  $('linkNote').innerHTML = 'Link ini khusus HT — staff tidak bisa melihat data dashboard kadiv.<br>Saluran: <strong>' + esc(room) + '</strong>';
+  status('Aktif', 'on');
+  jagaLayar();
+  putaran();
+}
+
+async function keluarHT(){
+  masuk = false;
+  clearTimeout(pollTimer);
+  Object.keys(peers).forEach(tutupPeer);
+  try{ antre('', 'bye', ''); await serverSync({ keluar:true }); }catch(e){}
+  if(micStream) micStream.getTracks().forEach(t=>t.stop());
+  micStream = null; micTrack = null;
+  if(wakeLock){ try{ wakeLock.release(); }catch(e){} wakeLock = null; }
+  $('htView').classList.add('hide');
+  $('joinView').classList.remove('hide');
+  $('joinBtn').disabled = false;
+  status('Keluar');
+}
+
+async function jagaLayar(){
+  try{ if('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); }catch(e){}
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible' && masuk && !wakeLock) jagaLayar();
+});
+
+/* ── pasang tombol ── */
+$('joinBtn').onclick = masukHT;
+$('btnLeave').onclick = keluarHT;
+
+const ptt = $('ptt');
+['mousedown','touchstart'].forEach(ev=>ptt.addEventListener(ev, e=>{ e.preventDefault(); bicaraMulai(); }, {passive:false}));
+['mouseup','mouseleave','touchend','touchcancel'].forEach(ev=>ptt.addEventListener(ev, e=>{ e.preventDefault(); bicaraSelesai(); }, {passive:false}));
+document.addEventListener('keydown', e=>{ if(e.code==='Space' && masuk && !e.repeat){ e.preventDefault(); bicaraMulai(); } });
+document.addEventListener('keyup', e=>{ if(e.code==='Space' && masuk){ e.preventDefault(); bicaraSelesai(); } });
+
+$('btnOpen').onclick = function(){
+  modeTerbuka = !modeTerbuka;
+  this.classList.toggle('on', modeTerbuka);
+  if(micTrack) micTrack.enabled = modeTerbuka;
+  ptt.classList.toggle('live', modeTerbuka);
+  $('pttLbl').textContent = modeTerbuka ? 'Mic Terbuka' : 'Tekan & Tahan';
+  $('pttHint').textContent = modeTerbuka
+    ? 'Mikrofon menyala terus — tekan lagi untuk kembali ke tekan-tahan'
+    : 'Tahan tombol untuk bicara, lepas untuk mendengar';
+  toast(modeTerbuka ? 'Mikrofon menyala terus' : 'Kembali ke tekan-tahan');
+};
+
+$('btnRing').onclick = async function(){
+  if(!daftarOnline.length){ toast('Belum ada staff di saluran ini'); return; }
+  antre('', 'ring', '');
+  try{ await serverSync(); toast('Panggilan dikirim — HP mereka bergetar'); }
+  catch(e){ toast('Gagal memanggil, coba lagi'); }
+};
+
+$('btnSpk').onclick = function(){
+  // paksa suara keluar lewat speaker (bukan earpiece) di HP
+  this.classList.toggle('on');
+  const aktif = this.classList.contains('on');
+  Object.values(peers).forEach(p=>{
+    try{ if(p.audio.setSinkId) p.audio.setSinkId(''); }catch(e){}
+    p.audio.volume = 1;
+  });
+  toast(aktif ? 'Suara lewat speaker' : 'Suara normal');
+};
+
+$('btnCopy').onclick = function(){
+  const url = location.origin + location.pathname + '?ch=' + encodeURIComponent(room);
+  const teks = 'HT IBASS 2026 — saluran ' + room + '\n' + url + '\n\nBuka link-nya, isi nama, lalu tekan Masuk HT. Izinkan mikrofon saat diminta.';
+  navigator.clipboard.writeText(teks)
+    .then(()=>toast('Link HT tersalin — kirim ke staff'))
+    .catch(()=>toast('Gagal menyalin'));
+};
+
+$('ringOk').onclick = ()=>{ tutupPanggilan(); toast('Tersambung — tahan tombol untuk bicara'); };
+$('ringNo').onclick = tutupPanggilan;
+
+/* ── isi otomatis dari link & ingatan terakhir ── */
+(function(){
+  const q = new URLSearchParams(location.search);
+  const ch = q.get('ch');
+  if(ch){
+    const sel = $('room');
+    if(![...sel.options].some(o=>o.value===ch)) sel.add(new Option(ch, ch));
+    sel.value = ch;
+    $('chLabel').textContent = 'Saluran ' + ch;
+  }
+  try{
+    const n = localStorage.getItem('ibass_ht_nama');
+    if(n) $('nama').value = n;
+    if(!ch){ const r = localStorage.getItem('ibass_ht_room'); if(r) $('room').value = r; }
+  }catch(e){}
+  $('nama').addEventListener('keydown', e=>{ if(e.key==='Enter') masukHT(); });
+})();
+
+window.addEventListener('beforeunload', ()=>{
+  if(masuk){
+    try{
+      navigator.sendBeacon(GAS_URL, new Blob([JSON.stringify({
+        action:'ht', room, me:nama, sejak, kirim:[{to:'',kind:'bye',data:''}], keluar:true
+      })], {type:'text/plain;charset=utf-8'}));
+    }catch(e){}
+  }
+});
+</script>
+</body>
+</html>

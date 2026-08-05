@@ -1466,6 +1466,7 @@ body::after {
       <div class="tab" onclick="switchTab('sk','riwayat',this)">Riwayat</div>
       <div class="tab" onclick="switchTab('sk','tugas',this)">Track File</div>
       <div class="tab" onclick="switchTab('sk','ht',this);renderHT('sk')">HT</div>
+      <div class="tab" onclick="switchTab('sk','ht',this);renderHT('sk')">HT</div>
       <div class="tab" onclick="switchTab('sk','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1711,6 +1712,7 @@ body::after {
       <!-- TAB: Panduan -->
       <div class="sk-content" id="sk-tugas" style="display:none"></div>
       <div class="sk-content" id="sk-ht" style="display:none"></div>
+      <div class="sk-content" id="sk-ht" style="display:none"></div>
       <div class="sk-content" id="sk-panduan" style="display:none"></div>
 
     </div><!-- end .main sekretaris -->
@@ -1726,6 +1728,7 @@ body::after {
       <div class="tab" onclick="switchTab('pd','trackfile',this);initUploadTracker()">Upload Konten</div>
       <div class="tab" onclick="switchTab('pd','laporan',this)">Laporan</div>
       <div class="tab" onclick="switchTab('pd','tugas',this)">Track File</div>
+      <div class="tab" onclick="switchTab('pd','ht',this);renderHT('pd')">HT</div>
       <div class="tab" onclick="switchTab('pd','ht',this);renderHT('pd')">HT</div>
       <div class="tab" onclick="switchTab('pd','panduan',this)">Panduan</div>
     </div>
@@ -1902,6 +1905,7 @@ body::after {
       <!-- TAB: Panduan -->
       <div class="pd-content" id="pd-tugas" style="display:none"></div>
       <div class="pd-content" id="pd-ht" style="display:none"></div>
+      <div class="pd-content" id="pd-ht" style="display:none"></div>
       <div class="pd-content" id="pd-panduan" style="display:none"></div>
 
       <!-- TAB: Edit Video -->
@@ -1942,6 +1946,7 @@ body::after {
       <div class="tab" onclick="switchTab('lg','laporan',this)">Laporan</div>
       <div class="tab" onclick="switchTab('lg','tugas',this)">Track File</div>
       <div class="tab" onclick="switchTab('lg','ht',this);renderHT('lg')">HT</div>
+      <div class="tab" onclick="switchTab('lg','ht',this);renderHT('lg')">HT</div>
       <div class="tab" onclick="switchTab('lg','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1950,6 +1955,7 @@ body::after {
       <div class="lg-content" id="lg-trackfile" style="display:none"></div>
       <div class="lg-content" id="lg-laporan" style="display:none"></div>
       <div class="lg-content" id="lg-tugas" style="display:none"></div>
+      <div class="lg-content" id="lg-ht" style="display:none"></div>
       <div class="lg-content" id="lg-ht" style="display:none"></div>
       <div class="lg-content" id="lg-panduan" style="display:none"></div>
     </div>
@@ -1963,6 +1969,7 @@ body::after {
       <div class="tab" onclick="switchTab('ac','laporan',this)">Laporan</div>
       <div class="tab" onclick="switchTab('ac','tugas',this)">Track File</div>
       <div class="tab" onclick="switchTab('ac','ht',this);renderHT('ac')">HT</div>
+      <div class="tab" onclick="switchTab('ac','ht',this);renderHT('ac')">HT</div>
       <div class="tab" onclick="switchTab('ac','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1971,6 +1978,7 @@ body::after {
       <div class="ac-content" id="ac-trackfile" style="display:none"></div>
       <div class="ac-content" id="ac-laporan" style="display:none"></div>
       <div class="ac-content" id="ac-tugas" style="display:none"></div>
+      <div class="ac-content" id="ac-ht" style="display:none"></div>
       <div class="ac-content" id="ac-ht" style="display:none"></div>
       <div class="ac-content" id="ac-panduan" style="display:none"></div>
     </div>
@@ -1985,6 +1993,7 @@ body::after {
       <div class="tab" onclick="switchTab('fn','laporan',this);renderFnLaporan()">Laporan</div>
       <div class="tab" onclick="switchTab('fn','tugas',this)">Track File</div>
       <div class="tab" onclick="switchTab('fn','ht',this);renderHT('fn')">HT</div>
+      <div class="tab" onclick="switchTab('fn','ht',this);renderHT('fn')">HT</div>
       <div class="tab" onclick="switchTab('fn','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1993,6 +2002,7 @@ body::after {
       <div class="fn-content" id="fn-trackfile" style="display:none"></div>
       <div class="fn-content" id="fn-laporan" style="display:none"></div>
       <div class="fn-content" id="fn-tugas" style="display:none"></div>
+      <div class="fn-content" id="fn-ht" style="display:none"></div>
       <div class="fn-content" id="fn-ht" style="display:none"></div>
       <div class="fn-content" id="fn-panduan" style="display:none"></div>
     </div>
@@ -2398,6 +2408,56 @@ function htMulaiPolling(){
     if(document.visibilityState!=='visible') return;
     htAmbilPesan();
   }, 3000);
+}
+
+/* ══ HT — radio suara kadiv ↔ staff (halaman terpisah: kadiv/ht/) ══ */
+const HT_DIV_NAMA = {sk:'Sekretaris', pd:'Pubdok', lg:'Logistik', ac:'Acara', fn:'Finance'};
+function htLink(prefix){
+  const dasar = location.origin + location.pathname.replace(/[^/]*$/, '') + 'ht/';
+  return dasar + '?ch=' + encodeURIComponent(HT_DIV_NAMA[prefix] || 'Semua Panitia');
+}
+function htBuka(prefix){ window.open(htLink(prefix), '_blank', 'noopener'); }
+function htSalin(prefix){
+  const div = HT_DIV_NAMA[prefix] || 'Semua Panitia';
+  const teks = 'HT IBASS 2026 — saluran ' + div + '\n' + htLink(prefix)
+    + '\n\nBuka link-nya, isi nama, lalu tekan Masuk HT. Izinkan mikrofon saat diminta.'
+    + '\nTahan tombol bundar untuk bicara, lepas untuk mendengar.';
+  navigator.clipboard.writeText(teks)
+    .then(()=>showToast('Link HT tersalin — kirim ke staff','success'))
+    .catch(()=>showToast('Gagal menyalin','error'));
+}
+function renderHT(prefix){
+  const el = document.getElementById(prefix + '-ht'); if(!el) return;
+  const div = HT_DIV_NAMA[prefix] || 'Semua Panitia';
+  el.innerHTML = `
+    <div class="sec-head">
+      <div class="sec-eye">${esc(div)} · Radio</div>
+      <div class="sec-title">HT Divisi</div>
+      <div class="sec-desc">Panggilan suara langsung antara kamu dan staff divisi, lewat HP masing-masing.</div>
+    </div>
+
+    <div class="card accent-${prefix==='sk'?'sekretaris':prefix==='pd'?'pubdok':prefix==='lg'?'logistik':prefix==='ac'?'acara':'finance'}" style="margin-bottom:0.65rem">
+      <div class="card-label">Saluran ${esc(div)}</div>
+      <div class="card-desc" style="margin-bottom:0.75rem">Buka di HP kamu, lalu kirim link yang sama ke staff. Yang sudah masuk saluran bisa saling bicara.</div>
+      <button class="btn" onclick="htBuka('${prefix}')" style="width:100%;margin-bottom:0.45rem">Buka HT Sekarang →</button>
+      <button class="btn btn-ghost" onclick="htSalin('${prefix}')" style="width:100%">Salin Link untuk Staff</button>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Cara Pakai</div>
+      ${pgSteps([
+        'Tekan <strong>Buka HT Sekarang</strong> — isi nama, izinkan mikrofon saat browser bertanya.',
+        'Tekan <strong>Salin Link untuk Staff</strong>, lalu kirim ke grup divisi. Mereka buka link yang sama.',
+        'Tahan tombol bundar besar untuk bicara, lepas untuk mendengar — persis seperti HT.',
+        'Kalau staff belum menyahut, tekan <strong>Panggil</strong> — HP mereka bergetar dan berdering.',
+        'Butuh dua tangan? Nyalakan <strong>Mic Terbuka</strong> supaya mikrofon menyala terus.'
+      ])}
+    </div>
+
+    <div class="info-box" style="font-size:0.66rem">
+      Suara mengalir langsung antar-HP, jadi jedanya di bawah satu detik. Butuh internet di kedua HP
+      (Wi-Fi atau data seluler). Halaman HT terpisah dari dashboard — staff tidak bisa melihat data divisi.
+    </div>`;
 }
 
 function renderPanduan(prefix){

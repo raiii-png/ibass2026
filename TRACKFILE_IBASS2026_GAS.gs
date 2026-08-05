@@ -133,30 +133,6 @@ function doGet(e) {
       return jsonOk({ states: out });
     }
 
-    if (action === 'htpoll') {
-      // HT: ambil pesan yang lebih baru dari id terakhir yang sudah diterima HP ini
-      const kanal = String(e.parameter.channel || '');
-      const sejak = Number(e.parameter.sejak || 0);
-      const sh = ss.getSheetByName(HT_SHEET);
-      const pesan = [];
-      let maxId = sejak;
-      if (sh && sh.getLastRow() > 1) {
-        const n = sh.getLastRow() - 1;
-        // cukup baca 60 baris terakhir — pesan lama tidak perlu dikirim ulang
-        const mulai = Math.max(2, sh.getLastRow() - 59);
-        const rows = sh.getRange(mulai, 1, sh.getLastRow() - mulai + 1, 6).getValues();
-        rows.forEach(function (r) {
-          const id = Number(r[0]) || 0;
-          if (id > maxId) maxId = id;
-          if (id <= sejak) return;
-          if (kanal && String(r[2]) !== kanal && String(r[2]) !== 'SEMUA') return;
-          pesan.push({ id: id, waktu: String(r[1] || ''), channel: String(r[2] || ''),
-            nama: String(r[3] || ''), tipe: String(r[4] || 'teks'), isi: String(r[5] || '') });
-        });
-      }
-      return jsonOk({ pesan: pesan, terakhir: maxId });
-    }
-
     if (action === 'aifilestatus') {
       // Cek status file yang di-upload ke AI (dipakai fitur potong video Pubdok)
       if (!geminiKey()) return jsonErr('Kunci AI belum diisi di Script Properties');
@@ -255,17 +231,71 @@ function doPost(e) {
       return jsonOk({ saved: body.key });
     }
 
-    // ── HT: kirim pesan suara / teks ke saluran divisi ──
-    if (action === 'htsend') {
-      if (!body.isi) return jsonErr('Pesan kosong');
+    // ── HT: satu panggilan = kirim sinyal + presensi + ambil sinyal masuk ──
+    // Dipakai halaman /kadiv/ht/ untuk menyambungkan suara antar-HP (WebRTC).
+    if (action === 'ht') {
+      const room = String(body.room || 'umum');
+      const me = String(body.me || '');
+      if (!me) return jsonErr('Nama kosong');
       const sh = htSheet(ss);
-      const id = Date.now();
-      sh.appendRow([id, new Date().toISOString(), String(body.channel || 'SEMUA'),
-        String(body.nama || 'Tanpa Nama'), String(body.tipe || 'teks'), String(body.isi)]);
-      // Buang pesan lama supaya sheet tetap ringan
-      const last = sh.getLastRow();
-      if (last > 151) sh.deleteRows(2, last - 151);
-      return jsonOk({ id: id });
+
+      // 1) tulis sinyal keluar (offer/answer/ice/ring/bye)
+      const kirim = Array.isArray(body.kirim) ? body.kirim : [];
+      if (kirim.length) {
+        const mulaiId = htNextId(kirim.length);
+        const waktu = new Date().toISOString();
+        const rows = kirim.map(function (m, i) {
+          return [mulaiId + i + 1, waktu, room, me,
+            String(m.to || ''), String(m.kind || ''), String(m.data || '')];
+        });
+        sh.getRange(sh.getLastRow() + 1, 1, rows.length, 7).setValues(rows);
+      }
+
+      // 2) presensi: perbarui jejak saya, lalu kumpulkan siapa saja yang masih aktif
+      const ph = htPresenceSheet(ss);
+      const sekarang = Date.now();
+      const online = [];
+      let barisSaya = 0;
+      if (ph.getLastRow() > 1) {
+        const pr = ph.getRange(2, 1, ph.getLastRow() - 1, 3).getValues();
+        for (let i = 0; i < pr.length; i++) {
+          if (String(pr[i][0]) === room && String(pr[i][1]) === me) barisSaya = i + 2;
+          if (String(pr[i][0]) !== room) continue;
+          if (sekarang - Number(pr[i][2] || 0) > 20000) continue; // lewat 20 dtk = dianggap keluar
+          if (String(pr[i][1]) !== me) online.push(String(pr[i][1]));
+        }
+      }
+      if (body.keluar) {
+        if (barisSaya) ph.getRange(barisSaya, 3).setValue(0);
+      } else if (barisSaya) {
+        ph.getRange(barisSaya, 3).setValue(sekarang);
+      } else {
+        ph.appendRow([room, me, sekarang]);
+      }
+
+      // 3) ambil sinyal yang ditujukan ke saya (atau siaran ke semua)
+      const sejak = Number(body.sejak || 0);
+      const pesan = [];
+      let terakhir = sejak;
+      const lastRow = sh.getLastRow();
+      if (lastRow > 1) {
+        const mulai = Math.max(2, lastRow - 119); // cukup 120 baris terakhir
+        sh.getRange(mulai, 1, lastRow - mulai + 1, 7).getValues().forEach(function (r) {
+          const id = Number(r[0]) || 0;
+          if (id > terakhir) terakhir = id;
+          if (id <= sejak) return;
+          if (String(r[2]) !== room) return;
+          if (String(r[3]) === me) return;                     // jangan pantulkan sinyal sendiri
+          const to = String(r[4] || '');
+          if (to && to !== me) return;                          // bukan untuk saya
+          pesan.push({ id: id, dari: String(r[3]), kind: String(r[5]), data: String(r[6] || '') });
+        });
+      }
+
+      // 4) bersihkan sinyal lama supaya sheet tetap ringan
+      if (lastRow > 400) sh.deleteRows(2, lastRow - 200);
+
+      return jsonOk({ pesan: pesan, terakhir: terakhir, online: online });
     }
 
     // ── Cari contoh gambar referensi desain (untuk Pubdok) ──
@@ -734,15 +764,37 @@ function fmtDate(val) {
 }
 
 // ─── Helper: sheet STATE (sync antar-perangkat, tersembunyi) ──────
-// ─── Helper: sheet HT (pesan suara antar panitia, tersembunyi) ────
+// ─── Helper: sheet HT (lalu lintas sinyal panggilan suara, tersembunyi) ────
 function htSheet(ss) {
   let sh = ss.getSheetByName(HT_SHEET);
   if (!sh) {
     sh = ss.insertSheet(HT_SHEET);
-    sh.getRange(1, 1, 1, 6).setValues([['id', 'waktu', 'channel', 'nama', 'tipe', 'isi']]);
+    sh.getRange(1, 1, 1, 7).setValues([['id', 'waktu', 'room', 'dari', 'ke', 'kind', 'data']]);
     try { sh.hideSheet(); } catch (e) {}
   }
   return sh;
+}
+
+// Siapa saja yang sedang membuka HT (room, nama, jejak waktu terakhir)
+function htPresenceSheet(ss) {
+  let sh = ss.getSheetByName(HT_SHEET + '_ON');
+  if (!sh) {
+    sh = ss.insertSheet(HT_SHEET + '_ON');
+    sh.getRange(1, 1, 1, 3).setValues([['room', 'nama', 'terakhir']]);
+    try { sh.hideSheet(); } catch (e) {}
+  }
+  return sh;
+}
+
+// Nomor urut sinyal yang selalu naik — supaya tidak ada sinyal terlewat/ganda
+function htNextId(n) {
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(8000); } catch (e) {}
+  const props = PropertiesService.getScriptProperties();
+  const cur = Number(props.getProperty('ht_counter') || 0);
+  props.setProperty('ht_counter', String(cur + n));
+  try { lock.releaseLock(); } catch (e) {}
+  return cur;
 }
 
 function stateSheet(ss) {
