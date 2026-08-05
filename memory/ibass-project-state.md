@@ -10,6 +10,18 @@ metadata:
 
 # Proyek IBASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
 
+## RANJAU YANG SUDAH DIJINAKKAN (2026-08-06)
+- **update.bat DULU menimpa index.html** dengan `Downloads/PENILAIAN_IBASS_2026 (1).html` (12 Juni).
+  Ini sumber "penilaian tiba-tiba hilang". Sekarang update.bat: cek isi index.html dulu (harus ada
+  teks "Penilaian Bizstar"), tolak+beri instruksi pulih kalau bukan, lalu `git add -A` push apa adanya
+  dan menyegarkan penilaian.html. Salinan usang `PENILAIAN_IBASS_2026 (1).html` sudah dihapus dari repo.
+- **curl BUKAN alat uji yang sahih untuk GET ke GAS** — balasannya "Halaman Tidak Ditemukan" (kunci
+  redirect sekali pakai). Dari browser semua GET (dap/penilaian/loadstate/read) JSON OK. Uji GET
+  selalu lewat javascript_tool di browser; POST via curl tetap sahih.
+- Roster 18 = 17 panitia + **Nadzril Fauzan Lelan P (Supervisor)**, ditambah sengaja 12 Jul.
+  Nur Hafiizh sudah keluar (difilter FN_KELUAR). Jangan dikira bug.
+- Ikon situs (SVG data-URI bintang emas) terpasang di 3 halaman.
+
 ## FITUR HT (per 2026-08-06) — radio suara panitia
 - **Halaman terpisah `kadiv/ht/index.html`** → `raiii-png.github.io/ibass2026/kadiv/ht/?ch=Divisi`.
   Sengaja dipisah: staff cuma dapat HT, tidak melihat data dashboard. Tab "HT" di 5 divisi
