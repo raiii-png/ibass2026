@@ -5,10 +5,18 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 5b58bde3-339d-4414-b122-b7aaba92099c
-  modified: 2026-07-21T07:15:05.921Z
+  modified: 2026-08-05T10:12:12.511Z
 ---
 
 # Proyek I-BASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
+
+## PENAMAAN: "IBASS" TANPA STRIP (per 2026-08-04)
+- Boss minta nama di UI kedua web = **IBASS 2026** (bukan "I-BASS"). Sudah diganti 44 tempat
+  (index.html 4, kadiv/index.html 40). Jangan tulis "I-BASS" lagi di teks yang user lihat.
+- Nama folder Drive & sheet di GAS SENGAJA dibiarkan ("Track File I-BASS 2026", "Bukti
+  Pembayaran I-BASS 2026") — kalau diganti, GAS bikin folder/sheet BARU dan file lama terputus.
+- `.claude/static_server.js` sekarang di dalam repo (dulu di scratchpad yang hilang tiap sesi);
+  launch.json menunjuk ke sana. ROOT = folder repo, sudah handle directory index (/kadiv/).
 
 ## STRUKTUR FILE & LINK (per 2026-07-21) — BACA DULU
 - **Penilaian Bizstar** = `index.html` (root) → `raiii-png.github.io/ibass2026/`.
