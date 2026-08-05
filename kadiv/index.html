@@ -1440,6 +1440,7 @@ body::after {
       <div class="tab" onclick="switchTab('sk','notulen',this)">Notulen</div>
       <div class="tab" onclick="switchTab('sk','riwayat',this)">Riwayat</div>
       <div class="tab" onclick="switchTab('sk','tugas',this)">Track File</div>
+      <div class="tab" onclick="switchTab('sk','ht',this);renderHT('sk')">HT</div>
       <div class="tab" onclick="switchTab('sk','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1684,6 +1685,7 @@ body::after {
 
       <!-- TAB: Panduan -->
       <div class="sk-content" id="sk-tugas" style="display:none"></div>
+      <div class="sk-content" id="sk-ht" style="display:none"></div>
       <div class="sk-content" id="sk-panduan" style="display:none"></div>
 
     </div><!-- end .main sekretaris -->
@@ -1699,6 +1701,7 @@ body::after {
       <div class="tab" onclick="switchTab('pd','trackfile',this);initUploadTracker()">Upload Konten</div>
       <div class="tab" onclick="switchTab('pd','laporan',this)">Laporan</div>
       <div class="tab" onclick="switchTab('pd','tugas',this)">Track File</div>
+      <div class="tab" onclick="switchTab('pd','ht',this);renderHT('pd')">HT</div>
       <div class="tab" onclick="switchTab('pd','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1873,6 +1876,7 @@ body::after {
 
       <!-- TAB: Panduan -->
       <div class="pd-content" id="pd-tugas" style="display:none"></div>
+      <div class="pd-content" id="pd-ht" style="display:none"></div>
       <div class="pd-content" id="pd-panduan" style="display:none"></div>
 
       <!-- TAB: Edit Video -->
@@ -1912,6 +1916,7 @@ body::after {
       <div class="tab" onclick="switchTab('lg','harih',this);renderLgHariH()">Hari-H</div>
       <div class="tab" onclick="switchTab('lg','laporan',this)">Laporan</div>
       <div class="tab" onclick="switchTab('lg','tugas',this)">Track File</div>
+      <div class="tab" onclick="switchTab('lg','ht',this);renderHT('lg')">HT</div>
       <div class="tab" onclick="switchTab('lg','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1920,6 +1925,7 @@ body::after {
       <div class="lg-content" id="lg-trackfile" style="display:none"></div>
       <div class="lg-content" id="lg-laporan" style="display:none"></div>
       <div class="lg-content" id="lg-tugas" style="display:none"></div>
+      <div class="lg-content" id="lg-ht" style="display:none"></div>
       <div class="lg-content" id="lg-panduan" style="display:none"></div>
     </div>
   </div>
@@ -1931,6 +1937,7 @@ body::after {
       <div class="tab" onclick="switchTab('ac','penilaian',this);renderAcPenilaian()">Penilaian</div>
       <div class="tab" onclick="switchTab('ac','laporan',this)">Laporan</div>
       <div class="tab" onclick="switchTab('ac','tugas',this)">Track File</div>
+      <div class="tab" onclick="switchTab('ac','ht',this);renderHT('ac')">HT</div>
       <div class="tab" onclick="switchTab('ac','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1939,6 +1946,7 @@ body::after {
       <div class="ac-content" id="ac-trackfile" style="display:none"></div>
       <div class="ac-content" id="ac-laporan" style="display:none"></div>
       <div class="ac-content" id="ac-tugas" style="display:none"></div>
+      <div class="ac-content" id="ac-ht" style="display:none"></div>
       <div class="ac-content" id="ac-panduan" style="display:none"></div>
     </div>
   </div>
@@ -1951,6 +1959,7 @@ body::after {
       <div class="tab" onclick="switchTab('fn','trackfile',this);renderFnDAP()">Kas &amp; DAP</div>
       <div class="tab" onclick="switchTab('fn','laporan',this);renderFnLaporan()">Laporan</div>
       <div class="tab" onclick="switchTab('fn','tugas',this)">Track File</div>
+      <div class="tab" onclick="switchTab('fn','ht',this);renderHT('fn')">HT</div>
       <div class="tab" onclick="switchTab('fn','panduan',this)">Panduan</div>
     </div>
     <div class="main">
@@ -1959,6 +1968,7 @@ body::after {
       <div class="fn-content" id="fn-trackfile" style="display:none"></div>
       <div class="fn-content" id="fn-laporan" style="display:none"></div>
       <div class="fn-content" id="fn-tugas" style="display:none"></div>
+      <div class="fn-content" id="fn-ht" style="display:none"></div>
       <div class="fn-content" id="fn-panduan" style="display:none"></div>
     </div>
   </div>
@@ -2114,6 +2124,257 @@ function pgCard(label, steps, tips){
     ${tips?`<div class="info-box" style="margin:0.75rem 0 0;font-size:0.7rem">${tips}</div>`:''}
   </div>`;
 }
+/* ══════════════════════════════════════
+   HT — pesan suara antar panitia saat kegiatan
+   Tekan-tahan bicara, lepas terkirim; HP lain berbunyi otomatis.
+══════════════════════════════════════ */
+const HT_DIV = { sk:'Sekretaris', pd:'Pubdok', lg:'Logistik', ac:'Acara', fn:'Finance' };
+const HT_MAKS_DETIK = 12;
+let htPrefix = 'sk', htKanal = '', htTerakhirId = 0, htTimer = null;
+let htRec = null, htChunks = [], htMulai = 0, htHitung = null, htSedangRekam = false;
+let htDiputar = {};
+
+function htNama(){ return localStorage.getItem('ibass_ht_nama') || ''; }
+function htSetNama(v){ localStorage.setItem('ibass_ht_nama', String(v||'').trim()); }
+function htRiwayat(){ try{ return JSON.parse(localStorage.getItem('ibass_ht_log')||'[]'); }catch{ return []; } }
+function htSimpanRiwayat(list){
+  localStorage.setItem('ibass_ht_log', JSON.stringify(list.slice(-40)));
+}
+
+function renderHT(prefix){
+  htPrefix = prefix;
+  const el = document.getElementById(prefix+'-ht'); if(!el) return;
+  const divisi = HT_DIV[prefix] || 'Divisi';
+  if(!htKanal) htKanal = divisi;
+  const nama = htNama();
+
+  if(!nama){
+    el.innerHTML = `
+      <div class="sec-head">
+        <div class="sec-eye">${esc(divisi)} · HT</div>
+        <div class="sec-title">HT Panitia</div>
+        <div class="sec-desc">Bicara ke staf divisi lewat HP — tekan tahan tombolnya, lepas untuk mengirim.</div>
+      </div>
+      <div class="card accent-${prefix==='sk'?'sekretaris':prefix==='pd'?'pubdok':prefix==='lg'?'logistik':prefix==='ac'?'acara':'finance'}">
+        <div class="card-label">Siapa kamu?</div>
+        <div class="card-desc" style="margin-bottom:0.6rem">Nama ini yang muncul saat kamu bicara, supaya staf tahu siapa yang memberi instruksi.</div>
+        <div class="inline-form">
+          <input type="text" id="ht-nama-input" placeholder="Nama panggilan — contoh: Rikep" onkeydown="if(event.key==='Enter')htPakaiNama()">
+          <button class="btn btn-sm" onclick="htPakaiNama()">Masuk HT</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const kanalOpsi = [divisi, 'SEMUA'].map(k=>
+    `<button class="chip${htKanal===k?' on':''}" onclick="htGantiKanal('${esc(k)}')">${k==='SEMUA'?'Semua Divisi':esc(k)}</button>`).join('');
+
+  el.innerHTML = `
+    <div class="sec-head">
+      <div class="sec-eye">${esc(divisi)} · HT</div>
+      <div class="sec-title">HT Panitia</div>
+      <div class="sec-desc">Tekan tahan tombol lalu bicara. Pesan langsung berbunyi di HP staf yang membuka HT saluran ini.</div>
+    </div>
+
+    <div class="filter-row" style="margin-bottom:0.6rem">
+      <div class="chip-row">${kanalOpsi}</div>
+      <span style="font-size:0.62rem;color:var(--muted)">Kamu: <strong style="color:var(--gold2)">${esc(nama)}</strong> <span style="cursor:pointer;color:var(--blue2)" onclick="htGantiNama()">ubah</span></span>
+    </div>
+
+    <div class="card" style="text-align:center;padding:1.1rem 1rem">
+      <button id="ht-ptt" class="ht-ptt"
+        onmousedown="htMulaiRekam(event)" onmouseup="htSelesaiRekam()" onmouseleave="htBatalKalauRekam()"
+        ontouchstart="htMulaiRekam(event)" ontouchend="htSelesaiRekam()" ontouchcancel="htBatalKalauRekam()">
+        <span id="ht-ptt-label">Tekan &amp; Tahan untuk Bicara</span>
+      </button>
+      <div id="ht-ptt-info" style="font-size:0.62rem;color:var(--muted);margin-top:0.5rem">Maksimal ${HT_MAKS_DETIK} detik sekali bicara</div>
+    </div>
+
+    <div class="inline-form" style="margin-bottom:0.65rem">
+      <input type="text" id="ht-teks" placeholder="Atau ketik pesan cepat..." onkeydown="if(event.key==='Enter')htKirimTeks()">
+      <button class="btn btn-ghost btn-sm" onclick="htKirimTeks()">Kirim</button>
+    </div>
+
+    <div class="list-title">Percakapan · <span id="ht-status" style="font-weight:400;color:var(--muted)">menyambung...</span></div>
+    <div id="ht-log"></div>`;
+
+  htRenderLog();
+  htMulaiPolling();
+}
+
+function htPakaiNama(){
+  const v = document.getElementById('ht-nama-input')?.value.trim();
+  if(!v){ showToast('Isi namamu dulu','warning'); return; }
+  htSetNama(v);
+  renderHT(htPrefix);
+}
+function htGantiNama(){
+  const v = prompt('Nama kamu di HT:', htNama());
+  if(v===null) return;
+  htSetNama(v);
+  renderHT(htPrefix);
+}
+function htGantiKanal(k){
+  htKanal = k;
+  htTerakhirId = 0;
+  renderHT(htPrefix);
+}
+
+function htRenderLog(){
+  const box = document.getElementById('ht-log'); if(!box) return;
+  const list = htRiwayat().filter(m=>m.channel===htKanal || m.channel==='SEMUA');
+  if(!list.length){
+    box.innerHTML = '<div class="tf-empty">Belum ada pesan di saluran ini.<br>Tekan tombol di atas dan bicara.</div>';
+    return;
+  }
+  box.innerHTML = list.slice().reverse().map(m=>{
+    const jam = m.waktu ? new Date(m.waktu).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : '';
+    const sendiri = m.nama === htNama();
+    const isi = m.tipe === 'suara'
+      ? `<button class="btn btn-ghost btn-sm" style="padding:0.25rem 0.7rem" onclick="htPutar('${m.id}')">Putar suara</button>`
+      : `<div style="font-size:0.76rem;color:var(--text);line-height:1.5">${esc(m.isi)}</div>`;
+    return `<div style="display:flex;gap:0.6rem;padding:0.5rem 0.65rem;margin-bottom:0.3rem;background:${sendiri?'rgba(232,191,106,0.06)':'var(--bg2s)'};border:1px solid ${sendiri?'rgba(232,191,106,0.2)':'var(--bdr2)'};border-radius:var(--r)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:0.6rem;color:${sendiri?'var(--gold2)':'var(--blue2)'};margin-bottom:2px">${esc(m.nama)}${m.channel==='SEMUA'?' · semua divisi':''} <span style="color:var(--muted)">· ${jam}</span></div>
+        ${isi}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function htPutar(id){
+  const m = htRiwayat().find(x=>String(x.id)===String(id));
+  if(!m || m.tipe!=='suara') return;
+  try{
+    const a = new Audio('data:'+(m.mime||'audio/webm')+';base64,'+m.isi);
+    a.play().catch(()=>showToast('Ketuk sekali lagi untuk memutar','warning'));
+  }catch(e){ showToast('Suara tidak bisa diputar','error'); }
+}
+
+/* ── Rekam tekan-tahan ── */
+async function htMulaiRekam(ev){
+  if(ev && ev.preventDefault) ev.preventDefault();
+  if(htSedangRekam) return;
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    showToast('Perangkat ini tidak mendukung rekaman suara','warning'); return;
+  }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+    const mime = (typeof getSupportedMime==='function' && getSupportedMime()) || '';
+    htRec = mime ? new MediaRecorder(stream,{mimeType:mime, audioBitsPerSecond:16000})
+                 : new MediaRecorder(stream,{audioBitsPerSecond:16000});
+    htChunks = [];
+    htRec.ondataavailable = e => { if(e.data && e.data.size>0) htChunks.push(e.data); };
+    htRec.onstop = () => {
+      try{ stream.getTracks().forEach(t=>t.stop()); }catch(e){}
+      htKirimSuara();
+    };
+    htRec.start();
+    htSedangRekam = true;
+    htMulai = Date.now();
+    const btn = document.getElementById('ht-ptt');
+    const lbl = document.getElementById('ht-ptt-label');
+    if(btn) btn.classList.add('rekam');
+    if(lbl) lbl.textContent = 'Bicara... 0 dtk';
+    htHitung = setInterval(()=>{
+      const d = Math.floor((Date.now()-htMulai)/1000);
+      if(lbl) lbl.textContent = 'Bicara... '+d+' dtk';
+      if(d >= HT_MAKS_DETIK) htSelesaiRekam();
+    }, 250);
+  }catch(err){
+    showToast(err.name==='NotAllowedError' ? 'Izin mikrofon ditolak — aktifkan di pengaturan browser' : 'Gagal membuka mikrofon','error');
+  }
+}
+function htBatalKalauRekam(){ if(htSedangRekam) htSelesaiRekam(); }
+function htSelesaiRekam(){
+  if(!htSedangRekam) return;
+  htSedangRekam = false;
+  clearInterval(htHitung);
+  const btn = document.getElementById('ht-ptt');
+  const lbl = document.getElementById('ht-ptt-label');
+  if(btn) btn.classList.remove('rekam');
+  if(lbl) lbl.textContent = 'Tekan & Tahan untuk Bicara';
+  try{ if(htRec && htRec.state!=='inactive') htRec.stop(); }catch(e){}
+}
+
+function htKirimSuara(){
+  const durasi = (Date.now()-htMulai)/1000;
+  if(durasi < 0.6){ showToast('Terlalu singkat — tahan tombolnya sambil bicara','warning'); return; }
+  const blob = new Blob(htChunks, {type: htChunks[0]?.type || 'audio/webm'});
+  if(!blob.size){ showToast('Suara tidak terekam','warning'); return; }
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const b64 = String(reader.result).split(',')[1] || '';
+    if(b64.length > 45000){ showToast('Pesan terlalu panjang — bicara lebih singkat','warning'); return; }
+    const info = document.getElementById('ht-ptt-info');
+    if(info) info.innerHTML = '<span class="spinner"></span> Mengirim...';
+    try{
+      await gasPost(GAS_URL, { action:'htsend', channel:htKanal, nama:htNama(), tipe:'suara', isi:b64 });
+      if(info) info.textContent = 'Terkirim';
+      setTimeout(()=>{ const i=document.getElementById('ht-ptt-info'); if(i) i.textContent='Maksimal '+HT_MAKS_DETIK+' detik sekali bicara'; }, 1500);
+      htAmbilPesan();
+    }catch(e){
+      if(info) info.textContent = 'Gagal kirim — cek koneksi';
+      showToast('Gagal mengirim pesan suara','error');
+    }
+  };
+  reader.readAsDataURL(blob);
+}
+
+function htKirimTeks(){
+  const inp = document.getElementById('ht-teks');
+  const v = inp?.value.trim();
+  if(!v) return;
+  inp.value = '';
+  gasPost(GAS_URL, { action:'htsend', channel:htKanal, nama:htNama(), tipe:'teks', isi:v })
+    .then(()=>htAmbilPesan())
+    .catch(()=>showToast('Gagal mengirim','error'));
+}
+
+/* ── Terima pesan ── */
+async function htAmbilPesan(){
+  if(!hasGasUrl()) return;
+  try{
+    const res = await fetch(GAS_URL+'?action=htpoll&channel='+encodeURIComponent(htKanal)+'&sejak='+htTerakhirId);
+    const js = await res.json();
+    const st = document.getElementById('ht-status');
+    if(!js.ok) throw new Error(js.error||'gagal');
+    if(st) st.textContent = 'tersambung';
+    const baru = js.pesan || [];
+    if(js.terakhir) htTerakhirId = Math.max(htTerakhirId, js.terakhir);
+    if(!baru.length) return;
+    const log = htRiwayat();
+    baru.forEach(m=>{
+      if(log.some(x=>String(x.id)===String(m.id))) return;
+      log.push(m);
+      // pesan orang lain langsung dibunyikan
+      if(m.tipe==='suara' && m.nama!==htNama() && !htDiputar[m.id]){
+        htDiputar[m.id] = true;
+        try{
+          const a = new Audio('data:audio/webm;base64,'+m.isi);
+          a.play().catch(()=>{});
+        }catch(e){}
+      }
+    });
+    htSimpanRiwayat(log);
+    htRenderLog();
+  }catch(e){
+    const st = document.getElementById('ht-status');
+    if(st) st.textContent = 'koneksi terputus — mencoba lagi';
+  }
+}
+
+function htMulaiPolling(){
+  clearInterval(htTimer);
+  htAmbilPesan();
+  htTimer = setInterval(()=>{
+    const panel = document.getElementById(htPrefix+'-ht');
+    if(!panel || panel.style.display==='none' || currentDiv==null){ clearInterval(htTimer); htTimer=null; return; }
+    if(document.visibilityState!=='visible') return;
+    htAmbilPesan();
+  }, 3000);
+}
+
 function renderPanduan(prefix){
   const el = document.getElementById(prefix+'-panduan');
   if(!el || el.dataset.rendered) return;

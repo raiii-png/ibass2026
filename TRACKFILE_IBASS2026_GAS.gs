@@ -45,6 +45,7 @@ function geminiKey() {
 // Web Penilaian Bizstar — token harus sama dengan SUBMIT_TOKEN di index.html
 const PENILAIAN_TOKEN = 'ibass26-vGDnSmco7cBoju';
 const PENILAIAN_SHEET = 'Penilaian';
+const HT_SHEET = 'HT'; // pesan suara/teks antar panitia saat kegiatan
 const PENILAIAN_HEADER = ['Waktu', 'Peran', 'Penilai', 'Dept Penilai', 'Milestone', 'Nama Bizstar',
   'Adaptive (raw)', 'Collaborative (raw)', 'Growth (raw)',
   'Adaptive %', 'Collaborative %', 'Growth %', 'Skor Akhir', 'Kelebihan', 'Perlu Perbaikan'];
@@ -130,6 +131,30 @@ function doGet(e) {
         });
       }
       return jsonOk({ states: out });
+    }
+
+    if (action === 'htpoll') {
+      // HT: ambil pesan yang lebih baru dari id terakhir yang sudah diterima HP ini
+      const kanal = String(e.parameter.channel || '');
+      const sejak = Number(e.parameter.sejak || 0);
+      const sh = ss.getSheetByName(HT_SHEET);
+      const pesan = [];
+      let maxId = sejak;
+      if (sh && sh.getLastRow() > 1) {
+        const n = sh.getLastRow() - 1;
+        // cukup baca 60 baris terakhir — pesan lama tidak perlu dikirim ulang
+        const mulai = Math.max(2, sh.getLastRow() - 59);
+        const rows = sh.getRange(mulai, 1, sh.getLastRow() - mulai + 1, 6).getValues();
+        rows.forEach(function (r) {
+          const id = Number(r[0]) || 0;
+          if (id > maxId) maxId = id;
+          if (id <= sejak) return;
+          if (kanal && String(r[2]) !== kanal && String(r[2]) !== 'SEMUA') return;
+          pesan.push({ id: id, waktu: String(r[1] || ''), channel: String(r[2] || ''),
+            nama: String(r[3] || ''), tipe: String(r[4] || 'teks'), isi: String(r[5] || '') });
+        });
+      }
+      return jsonOk({ pesan: pesan, terakhir: maxId });
     }
 
     if (action === 'aifilestatus') {
@@ -228,6 +253,19 @@ function doPost(e) {
       if (rowIdx) sh.getRange(rowIdx, 1, 1, 3).setValues(rowVals);
       else sh.appendRow(rowVals[0]);
       return jsonOk({ saved: body.key });
+    }
+
+    // ── HT: kirim pesan suara / teks ke saluran divisi ──
+    if (action === 'htsend') {
+      if (!body.isi) return jsonErr('Pesan kosong');
+      const sh = htSheet(ss);
+      const id = Date.now();
+      sh.appendRow([id, new Date().toISOString(), String(body.channel || 'SEMUA'),
+        String(body.nama || 'Tanpa Nama'), String(body.tipe || 'teks'), String(body.isi)]);
+      // Buang pesan lama supaya sheet tetap ringan
+      const last = sh.getLastRow();
+      if (last > 151) sh.deleteRows(2, last - 151);
+      return jsonOk({ id: id });
     }
 
     // ── Cari contoh gambar referensi desain (untuk Pubdok) ──
@@ -696,6 +734,17 @@ function fmtDate(val) {
 }
 
 // ─── Helper: sheet STATE (sync antar-perangkat, tersembunyi) ──────
+// ─── Helper: sheet HT (pesan suara antar panitia, tersembunyi) ────
+function htSheet(ss) {
+  let sh = ss.getSheetByName(HT_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(HT_SHEET);
+    sh.getRange(1, 1, 1, 6).setValues([['id', 'waktu', 'channel', 'nama', 'tipe', 'isi']]);
+    try { sh.hideSheet(); } catch (e) {}
+  }
+  return sh;
+}
+
 function stateSheet(ss) {
   let sh = ss.getSheetByName('STATE');
   if (!sh) {
