@@ -86,6 +86,14 @@ input:focus,select:focus{border-color:rgba(232,191,106,0.55);box-shadow:0 0 0 2p
 .o .call:active{background:var(--bg4)}
 .kosong{font-size:0.72rem;color:var(--muted);line-height:1.65;padding:0.3rem 0}
 
+/* pemberitahuan keadaan sambungan */
+.banner{display:none}
+.banner.tampil{display:block;background:rgba(240,168,32,0.1);border:1px solid rgba(240,168,32,0.4);
+  border-radius:var(--r);padding:0.65rem 0.8rem;font-size:0.68rem;line-height:1.65;color:var(--text2)}
+.banner.tampil strong{color:var(--amber)}
+.banner.merah{background:rgba(224,82,96,0.1);border-color:rgba(224,82,96,0.45)}
+.banner.merah strong{color:var(--red)}
+
 /* riwayat percakapan */
 #riwayat{display:flex;flex-direction:column;gap:0.3rem;max-height:230px;overflow-y:auto}
 .rw{display:flex;align-items:center;gap:0.6rem;background:var(--bg3);border:1px solid var(--bdr2);
@@ -169,6 +177,7 @@ input:focus,select:focus{border-color:rgba(232,191,106,0.55);box-shadow:0 0 0 2p
   <!-- RUANG HT -->
   <div id="htView" class="hide" style="display:flex;flex-direction:column;gap:0.7rem;flex:1">
 
+    <div class="banner" id="banner"></div>
     <div class="kanal" id="kanal"></div>
 
     <div class="card">
@@ -339,15 +348,85 @@ function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');
 function status(t,k){$('statusTxt').textContent=t;$('dot').className='dot'+(k?' '+k:'');}
 
 /* ── satu panggilan server: setor sinyal + absen + ambil sinyal masuk ── */
+let masalahServer='';
 async function serverSync(extra){
   const kirim=outbox.splice(0,outbox.length);
   const body=Object.assign({action:'ht',room,me:nama,sejak,kirim,status:statusSaya},extra||{});
+  // Selalu tanya suara mode hemat selama ada orang lain — sebab bisa saja HP KITA
+  // lancar tapi HP staff yang terblokir; suaranya tetap harus sampai.
+  if(modeHemat||daftarOnline.length) body.sejakSuara=sejakSuara;
   const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
-  const js=await res.json();
-  if(!js.ok) throw new Error(js.error||'server menolak');
+  const teks=await res.text();
+  let js=null; try{ js=JSON.parse(teks); }catch(e){}
+  if(!js){ masalahServer='Server membalas bukan data (mungkin sedang diperbarui)'; throw new Error(masalahServer); }
+  if(!js.ok){
+    // Sebutkan masalahnya apa adanya — jangan sembunyikan di balik "sambungan lemah"
+    masalahServer = /tidak dikenal/i.test(js.error||'')
+      ? 'Server belum diperbarui untuk HT — minta admin deploy versi baru'
+      : (js.error||'server menolak');
+    throw new Error(masalahServer);
+  }
+  masalahServer='';
   if(js.terakhir>sejak) sejak=js.terakhir;
+  if(js.terakhirSuara>sejakSuara) sejakSuara=js.terakhirSuara;
+  if(js.suara&&js.suara.length) js.suara.forEach(terimaSuaraHemat);
   return js;
 }
+
+/* ── MODE HEMAT ──────────────────────────────────────────────
+   Sebagian jaringan seluler memblokir suara langsung antar-HP.
+   Kalau setelah beberapa detik tidak ada yang tersambung, HT
+   otomatis pindah ke jalur server: bicara tetap terkirim, hanya
+   jedanya beberapa detik. Lebih baik telat daripada tidak bisa. */
+let modeHemat=false, sejakSuara=0, sejakAdaOrang=0;
+let rekamHemat=null, potonganHemat=[];
+
+function setModeHemat(on){
+  if(modeHemat===on) return;
+  modeHemat=on;
+  const b=$('banner');
+  if(on){
+    b.className='banner tampil';
+    b.innerHTML='<strong>Mode hemat aktif.</strong> Jaringan memblokir suara langsung, jadi bicara dikirim lewat server — sampai dalam beberapa detik. Kalau bisa, sambungkan ke Wi-Fi yang sama supaya kembali langsung.';
+    toast('Mode hemat — suara lewat server');
+  }else{
+    b.className='banner';
+    toast('Suara langsung tersambung');
+  }
+  gambarOrang();
+}
+
+function terimaSuaraHemat(v){
+  try{
+    const bin=atob(v.data);
+    const buf=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
+    const blob=new Blob([buf],{type:'audio/webm'});
+    const url=URL.createObjectURL(blob);
+    new Audio(url).play().catch(()=>{});
+    tambahRiwayat({dari:v.dari,waktu:Date.now(),url,detik:0});
+    if(navigator.vibrate) navigator.vibrate(40);
+  }catch(e){}
+}
+
+function mulaiRekamHemat(){
+  if(!micStream||rekamHemat) return;
+  try{
+    const m=mimeRekam();
+    rekamHemat=m?new MediaRecorder(micStream,{mimeType:m,audioBitsPerSecond:20000}):new MediaRecorder(micStream);
+    potonganHemat=[];
+    rekamHemat.ondataavailable=e=>{ if(e.data&&e.data.size>0) potonganHemat.push(e.data); };
+    rekamHemat.onstop=async()=>{
+      const blob=new Blob(potonganHemat,{type:potonganHemat[0]?.type||'audio/webm'});
+      potonganHemat=[]; rekamHemat=null;
+      if(blob.size<800||blob.size>260000) return;      // terlalu pendek / terlalu besar
+      const b64=await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
+      try{ await serverSync({suara:b64}); }catch(e){ toast('Gagal mengirim suara'); }
+    };
+    rekamHemat.start();
+  }catch(e){ rekamHemat=null; }
+}
+function stopRekamHemat(){ if(rekamHemat&&rekamHemat.state!=='inactive'){ try{ rekamHemat.stop(); }catch(e){} } }
 function antre(to,kind,data,roomKhusus){
   outbox.push({to,kind,data:data==null?'':String(data),room:roomKhusus||''});
 }
@@ -511,10 +590,27 @@ async function putaran(){
     daftarSemua=js.semua||[];
     for(const m of (js.pesan||[])) await olah(m);
     sinkron();gambarOrang();gambarKanal();
+
+    // Suara langsung berhasil? Kalau lama tidak nyambung, pindah ke mode hemat.
+    const adaTersambung=Object.values(peers).some(p=>p.pc.connectionState==='connected');
+    if(daftarOnline.length){
+      if(!sejakAdaOrang) sejakAdaOrang=Date.now();
+      if(adaTersambung){ sejakAdaOrang=Date.now(); setModeHemat(false); }
+      else if(Date.now()-sejakAdaOrang>14000) setModeHemat(true);
+    }else{ sejakAdaOrang=0; setModeHemat(false); }
+
     const nunggu=Object.values(peers).some(p=>p.pc.connectionState!=='connected');
-    jeda=outbox.length?900:(nunggu?1200:(daftarOnline.length?2500:4000));
-    status(daftarOnline.length?('Aktif · '+daftarOnline.length+' orang'):'Aktif · sendiri','on');
-  }catch(e){ status('Sambungan lemah','warn'); jeda=4000; }
+    jeda=outbox.length?900:(modeHemat?2000:(nunggu?1200:(daftarOnline.length?2500:4000)));
+    status(daftarOnline.length?('Aktif · '+daftarOnline.length+' orang'+(modeHemat?' · hemat':'')):'Aktif · sendiri','on');
+  }catch(e){
+    status(masalahServer?'Server bermasalah':'Sambungan lemah','warn');
+    if(masalahServer){
+      const b=$('banner');
+      b.className='banner tampil merah';
+      b.innerHTML='<strong>Belum bisa tersambung.</strong> '+esc(masalahServer)+'.';
+    }
+    jeda=4000;
+  }
   pollTimer=setTimeout(putaran,jeda);
 }
 
@@ -566,6 +662,7 @@ function bicaraMulai(){
   $('ptt').classList.add('live');$('pttLbl').textContent='Bicara…';
   if(navigator.vibrate) navigator.vibrate(16);
   mulaiRekamSaya();
+  if(modeHemat) mulaiRekamHemat();
 }
 function bicaraSelesai(){
   if(!micTrack||!sedangBicara) return;
@@ -573,6 +670,7 @@ function bicaraSelesai(){
   if(!modeTerbuka){micTrack.enabled=false;$('ptt').classList.remove('live');}
   $('pttLbl').textContent=modeTerbuka?'Mic Terbuka':'Tekan & Tahan';
   stopRekamSaya();
+  stopRekamHemat();
 }
 
 /* ── Pesan teks cepat: untuk lokasi berisik atau saat tidak bisa bicara ── */

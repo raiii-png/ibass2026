@@ -825,6 +825,17 @@ function htPresenceSheet(ss) {
   return sh;
 }
 
+// Potongan suara mode hemat (dipakai saat suara langsung diblokir jaringan)
+function htSuaraSheet(ss) {
+  let sh = ss.getSheetByName(HT_SHEET + '_V');
+  if (!sh) {
+    sh = ss.insertSheet(HT_SHEET + '_V');
+    sh.getRange(1, 1, 1, 5).setValues([['id', 'waktu', 'room', 'dari', 'data']]);
+    try { sh.hideSheet(); } catch (e) {}
+  }
+  return sh;
+}
+
 // Nomor urut sinyal yang selalu naik — supaya tidak ada sinyal terlewat/ganda
 function htNextId(n) {
   const lock = LockService.getScriptLock();
