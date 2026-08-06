@@ -10,6 +10,24 @@ metadata:
 
 # Proyek IBASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
 
+## HT: HASIL DEBUG "TIDAK KONEK" (2026-08-06)
+- **Akar masalah**: server tidak punya action `ht` — Boss deploy SEBELUM HT dibuat. Kedua HP
+  gagal absen → tak pernah saling terlihat. Gejalanya dulu tampil menyesatkan sebagai
+  "Sambungan lemah"; sekarang banner menyebut apa adanya + instruksi deploy.
+- **TIDAK ADA TURN gratis yang hidup** (diuji di browser: openrelay.metered.ca 80/443/tcp,
+  freeturn.net, freestun.net, expressturn → tak satu pun menghasilkan kandidat `relay`).
+  STUN saja hanya dapat host+srflx → dua HP di seluler (CGNAT/symmetric) sering gagal.
+  Kalau nanti perlu betul-betul real-time di seluler: harus TURN berbayar (metered.ca free
+  tier 50GB butuh daftar+API key) — tambahkan ke array ICE di kadiv/ht/index.html.
+- **Solusi dipakai: MODE HEMAT otomatis.** 14 dtk tanpa peer connected → `setModeHemat(true)`:
+  PTT merekam (20kbps) → base64 → `serverSync({suara})` → sheet `HT_V` (dipangkas tiap 40 baris,
+  hanya 12 baris terakhir dibaca) → HP lain auto-play + masuk riwayat. Balik ke suara langsung
+  otomatis begitu ada peer connected.
+- **Bug yang ketemu saat uji**: permintaan suara awalnya hanya dikirim kalau HP SENDIRI mode
+  hemat → suara staf yang terblokir tak pernah sampai ke kadiv yang lancar. Diperbaiki:
+  `if(modeHemat||daftarOnline.length) body.sejakSuara=...`.
+- Pelajaran alat: uji WebRTC/GAS lewat javascript_tool di browser; curl menyesatkan untuk GAS.
+
 ## RANJAU YANG SUDAH DIJINAKKAN (2026-08-06)
 - **update.bat DULU menimpa index.html** dengan `Downloads/PENILAIAN_IBASS_2026 (1).html` (12 Juni).
   Ini sumber "penilaian tiba-tiba hilang". Sekarang update.bat: cek isi index.html dulu (harus ada
