@@ -80,6 +80,14 @@ input:focus,select:focus{border-color:rgba(232,191,106,0.55);box-shadow:0 0 0 2p
 .o .nm{font-size:0.82rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .o .sub{font-size:0.58rem;color:var(--muted);letter-spacing:0.04em;margin-top:1px}
 .o .sub.hijau{color:var(--green)}
+.o.goyah{border-color:rgba(240,168,32,0.45)}
+.o.goyah .sub{color:var(--amber)}
+.sinyal{display:inline-flex;align-items:flex-end;gap:1.5px;height:10px;margin-left:6px;vertical-align:-1px}
+.sinyal i{width:3px;background:var(--muted);border-radius:1px;display:block}
+.sinyal i:nth-child(1){height:4px}.sinyal i:nth-child(2){height:7px}.sinyal i:nth-child(3){height:10px}
+.sinyal.kuat i{background:var(--green)}
+.sinyal.sedang i:nth-child(1),.sinyal.sedang i:nth-child(2){background:var(--amber)}
+.sinyal.lemah i:nth-child(1){background:var(--red)}
 .o .call{background:transparent;border:1px solid rgba(232,191,106,0.4);color:var(--gold2);
   width:38px;height:38px;border-radius:50%;font-size:0.95rem;cursor:pointer;flex-shrink:0;
   display:flex;align-items:center;justify-content:center}
@@ -396,14 +404,25 @@ function setModeHemat(on){
   gambarOrang();
 }
 
+/* Putar berurutan, jangan tumpang-tindih — kalau dua potongan datang bersamaan
+   dan diputar sekaligus, yang terdengar malah kacau. */
+const antrianPutar=[]; let sedangPutar=false;
+function putarBerikutnya(){
+  if(sedangPutar||!antrianPutar.length) return;
+  sedangPutar=true;
+  const url=antrianPutar.shift();
+  const a=new Audio(url);
+  a.onended=a.onerror=()=>{ sedangPutar=false; putarBerikutnya(); };
+  a.play().catch(()=>{ sedangPutar=false; putarBerikutnya(); });
+}
 function terimaSuaraHemat(v){
   try{
     const bin=atob(v.data);
     const buf=new Uint8Array(bin.length);
     for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
-    const blob=new Blob([buf],{type:'audio/webm'});
-    const url=URL.createObjectURL(blob);
-    new Audio(url).play().catch(()=>{});
+    const url=URL.createObjectURL(new Blob([buf],{type:'audio/webm'}));
+    antrianPutar.push(url);
+    putarBerikutnya();
     tambahRiwayat({dari:v.dari,waktu:Date.now(),url,detik:0});
     if(navigator.vibrate) navigator.vibrate(40);
   }catch(e){}
@@ -448,20 +467,135 @@ function buatPeer(lawan,sayaMulai){
   if(micStream) micStream.getTracks().forEach(t=>pc.addTrack(t,micStream));
   pc.onicecandidate=e=>{if(e.candidate) antre(lawan,'ice',JSON.stringify(e.candidate));};
   pc.ontrack=e=>{audio.srcObject=e.streams[0];audio.play().catch(()=>{});pantau(lawan,e.streams[0]);};
+  /* Sambungan goyah itu biasa di sinyal lemah dan umumnya pulih sendiri.
+     Jangan langsung dibongkar — membangun ulang butuh 5-10 detik hening.
+     Urutan penanganan: tunggu pulih → segarkan jalur → baru bongkar. */
   pc.onconnectionstatechange=()=>{
     const s=pc.connectionState;
-    if(s==='failed'||s==='disconnected'){tutupPeer(lawan);setTimeout(()=>{if(masuk)sinkron();},1500);}
+    const p=peers[lawan]; if(!p) return;
+    if(s==='connected'){
+      clearTimeout(p.timerPulih); p.timerPulih=null; p.sedangSegarkan=false;
+      p.putusSejak=0;
+    }
+    else if(s==='disconnected'){
+      p.putusSejak=Date.now();
+      clearTimeout(p.timerPulih);
+      // beri 6 detik untuk pulih sendiri sebelum diapa-apakan
+      p.timerPulih=setTimeout(()=>{
+        if(!peers[lawan]) return;
+        if(pc.connectionState==='disconnected') segarkanJalur(lawan);
+      },6000);
+    }
+    else if(s==='failed'){
+      clearTimeout(p.timerPulih);
+      if(!p.sedangSegarkan) segarkanJalur(lawan);
+      else { tutupPeer(lawan); setTimeout(()=>{ if(masuk) sinkron(); },1200); }
+    }
     gambarOrang();
   };
-  const p={pc,audio,bicara:false};
+  const p={pc,audio,bicara:false,mulai:sayaMulai,putusSejak:0,timerPulih:null,sedangSegarkan:false};
   peers[lawan]=p;
   if(sayaMulai){
     pc.onnegotiationneeded=async()=>{
-      try{const o=await pc.createOffer();await pc.setLocalDescription(o);
+      try{const o=await pc.createOffer();await pc.setLocalDescription(perbaikiSdp(o));
         antre(lawan,'offer',JSON.stringify(pc.localDescription));}catch(e){}
     };
   }
+  batasiLaju(pc);
   return p;
+}
+
+/* Setelan suara tahan gangguan:
+   - useinbandfec: potongan yang hilang ditambal otomatis, suara tidak "bolong"
+   - usedtx: berhenti mengirim saat hening, hemat jalur di sinyal lemah
+   - maxaveragebitrate: dipatok rendah supaya tetap lancar di sinyal seadanya */
+function perbaikiSdp(desc){
+  try{
+    let sdp=desc.sdp;
+    sdp=sdp.replace(/a=fmtp:(\d+) ([^\r\n]*minptime[^\r\n]*)/g,(m,pt,isi)=>{
+      let baru=isi;
+      if(!/useinbandfec/.test(baru)) baru+=';useinbandfec=1';
+      if(!/usedtx/.test(baru)) baru+=';usedtx=1';
+      if(!/maxaveragebitrate/.test(baru)) baru+=';maxaveragebitrate=24000';
+      return 'a=fmtp:'+pt+' '+baru;
+    });
+    return {type:desc.type,sdp};
+  }catch(e){ return desc; }
+}
+
+/* Patok laju kirim supaya tidak memaksakan mutu tinggi di jaringan lemah */
+function batasiLaju(pc){
+  try{
+    pc.getSenders().forEach(s=>{
+      if(!s.track||s.track.kind!=='audio') return;
+      const par=s.getParameters();
+      if(!par.encodings||!par.encodings.length) par.encodings=[{}];
+      par.encodings[0].maxBitrate=28000;
+      par.encodings[0].networkPriority='high';
+      par.encodings[0].priority='high';
+      s.setParameters(par).catch(()=>{});
+    });
+  }catch(e){}
+}
+
+/* Pantau mutu jalur tiap 3 detik: berapa banyak potongan suara yang hilang.
+   Dipakai untuk menampilkan kekuatan sinyal per orang, dan menyalakan mode
+   hemat lebih awal kalau jalurnya sudah jelas tidak sanggup. */
+let timerMutu=null;
+function mulaiPantauMutu(){
+  clearInterval(timerMutu);
+  timerMutu=setInterval(async()=>{
+    if(!masuk) return;
+    let adaYangParah=false, adaYangSehat=false;
+    for(const [n,p] of Object.entries(peers)){
+      if(p.pc.connectionState!=='connected'){ p.mutu='—'; continue; }
+      try{
+        const st=await p.pc.getStats();
+        let hilang=0, terima=0;
+        st.forEach(r=>{
+          if(r.type==='inbound-rtp'&&r.kind==='audio'){
+            hilang=r.packetsLost||0; terima=r.packetsReceived||0;
+          }
+        });
+        const dHilang=hilang-(p.hilangLalu||0), dTerima=terima-(p.terimaLalu||0);
+        p.hilangLalu=hilang; p.terimaLalu=terima;
+        const total=dHilang+dTerima;
+        const rasio=total>0?dHilang/total:0;
+        if(total<3){ p.mutu=p.mutu||'kuat'; }
+        else if(rasio>0.18){ p.mutu='lemah'; adaYangParah=true; }
+        else if(rasio>0.06){ p.mutu='sedang'; adaYangSehat=true; }
+        else { p.mutu='kuat'; adaYangSehat=true; }
+      }catch(e){}
+    }
+    // jalur langsung terus-terusan rusak parah → pindah ke mode hemat lebih awal
+    if(adaYangParah&&!adaYangSehat){
+      parahBerturut=(parahBerturut||0)+1;
+      if(parahBerturut>=4) setModeHemat(true);
+    }else parahBerturut=0;
+    gambarOrang();
+  },3000);
+}
+let parahBerturut=0;
+
+/* Segarkan jalur tanpa membongkar sambungan — jauh lebih cepat daripada bangun ulang */
+async function segarkanJalur(lawan){
+  const p=peers[lawan]; if(!p||p.sedangSegarkan) return;
+  p.sedangSegarkan=true;
+  try{
+    if(p.mulai){
+      const o=await p.pc.createOffer({iceRestart:true});
+      await p.pc.setLocalDescription(perbaikiSdp(o));
+      antre(lawan,'offer',JSON.stringify(p.pc.localDescription));
+    }else{
+      antre(lawan,'segarkan','');   // minta lawan yang menyegarkan
+    }
+    jeda=900;                        // percepat pertukaran sinyal sebentar
+  }catch(e){}
+  // kalau 12 detik tetap tidak pulih, baru bangun ulang dari nol
+  setTimeout(()=>{
+    const q=peers[lawan];
+    if(q&&q.pc.connectionState!=='connected'){ tutupPeer(lawan); if(masuk) sinkron(); }
+  },12000);
 }
 function tutupPeer(l){const p=peers[l];if(!p)return;
   try{p.pc.close();}catch(e){}try{p.audio.remove();}catch(e){}delete peers[l];gambarOrang();}
@@ -522,10 +656,15 @@ function gambarOrang(){
     + list.map(o=>{
       const p=peers[o.nama];
       const nyambung=p&&p.pc.connectionState==='connected';
-      const sub=p&&p.bicara?'sedang bicara':(nyambung?esc(o.status):'menyambung…');
-      return `<div class="o${p&&p.bicara?' talk':''}">
+      const goyah=p&&p.pc.connectionState==='disconnected';
+      const sub=p&&p.bicara?'sedang bicara'
+        :(goyah?'sinyal terganggu, menunggu pulih'
+        :(nyambung?esc(o.status):(modeHemat?'lewat server':'menyambung…')));
+      const mutu=nyambung?(p.mutu||'kuat'):null;
+      const bar=mutu?`<span class="sinyal ${mutu}" title="Kekuatan sinyal: ${mutu}"><i></i><i></i><i></i></span>`:'';
+      return `<div class="o${p&&p.bicara?' talk':''}${goyah?' goyah':''}">
         <div class="av">${esc((o.nama[0]||'?').toUpperCase())}</div>
-        <div class="info"><div class="nm">${esc(o.nama)}</div>
+        <div class="info"><div class="nm">${esc(o.nama)}${bar}</div>
         <div class="sub${p&&p.bicara?' hijau':''}">${sub}</div></div>
         <button class="call" title="Panggil ${esc(o.nama)}" onclick="panggilOrang('${esc(o.nama).replace(/'/g,"\\'")}')">◉</button>
       </div>`;
@@ -554,6 +693,7 @@ function sinkron(){
 async function olah(m){
   if(m.kind==='ring'||m.kind==='ringall'){ terimaPanggilan(m); return; }
   if(m.kind==='bye'){ tutupPeer(m.dari); return; }
+  if(m.kind==='segarkan'){ segarkanJalur(m.dari); return; }
   if(m.kind==='teks'){
     tambahRiwayat({dari:m.dari,waktu:Date.now(),teks:m.data});
     if(navigator.vibrate) navigator.vibrate([90,60,90]);
@@ -565,7 +705,9 @@ async function olah(m){
   try{
     if(m.kind==='offer'){
       await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(m.data)));
-      const a=await pc.createAnswer();await pc.setLocalDescription(a);
+      const a=await pc.createAnswer();
+      await pc.setLocalDescription(perbaikiSdp(a));
+      batasiLaju(pc);
       antre(m.dari,'answer',JSON.stringify(pc.localDescription));
     }else if(m.kind==='answer'){
       if(pc.signalingState!=='stable') await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(m.data)));
@@ -716,10 +858,10 @@ async function masukHT(){
   $('joinView').classList.add('hide');
   $('htView').classList.remove('hide');
   $('chLabel').textContent='Saluran '+room;
-  status('Aktif','on');gambarKanal();gambarOrang();jagaLayar();putaran();
+  status('Aktif','on');gambarKanal();gambarOrang();jagaLayar();mulaiPantauMutu();putaran();
 }
 async function keluarHT(){
-  masuk=false;clearTimeout(pollTimer);
+  masuk=false;clearTimeout(pollTimer);clearInterval(timerMutu);
   Object.keys(peers).forEach(tutupPeer);
   try{antre('','bye','');await serverSync({keluar:true});}catch(e){}
   if(micStream) micStream.getTracks().forEach(t=>t.stop());
@@ -730,6 +872,20 @@ async function keluarHT(){
 }
 async function jagaLayar(){try{if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen');}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&masuk&&!wakeLock)jagaLayar();});
+
+/* Pindah Wi-Fi ↔ kuota, atau sinyal sempat hilang: segarkan jalur semua sambungan
+   supaya suara balik cepat, tidak menunggu batas waktu. */
+function segarkanSemua(){
+  if(!masuk) return;
+  Object.keys(peers).forEach(n=>{
+    const p=peers[n];
+    if(p&&p.pc.connectionState!=='connected'){ p.sedangSegarkan=false; segarkanJalur(n); }
+  });
+}
+window.addEventListener('online',()=>{ toast('Jaringan kembali — menyambungkan ulang'); segarkanSemua(); });
+if(navigator.connection&&navigator.connection.addEventListener){
+  navigator.connection.addEventListener('change',()=>{ setTimeout(segarkanSemua,800); });
+}
 
 /* ── tombol ── */
 $('joinBtn').onclick=masukHT;
