@@ -424,7 +424,8 @@ function terimaSuaraHemat(v){
     antrianPutar.push(url);
     putarBerikutnya();
     tambahRiwayat({dari:v.dari,waktu:Date.now(),url,detik:0});
-    if(navigator.vibrate) navigator.vibrate(40);
+    // Sengaja TANPA getar: suara sudah terdengar sendiri. Getaran hanya untuk
+    // panggilan (tombol Panggil), supaya tidak mengagetkan saat orang mengobrol biasa.
   }catch(e){}
 }
 
@@ -480,11 +481,13 @@ function buatPeer(lawan,sayaMulai){
     else if(s==='disconnected'){
       p.putusSejak=Date.now();
       clearTimeout(p.timerPulih);
-      // beri 6 detik untuk pulih sendiri sebelum diapa-apakan
+      // Biasanya beri 6 detik untuk pulih sendiri. Tapi kalau jaringan baru saja
+      // berganti (Wi-Fi ↔ kuota), jalur lama pasti sudah mati — langsung segarkan.
+      const baruGantiJaringan=Date.now()-gantiJaringanPada<20000;
       p.timerPulih=setTimeout(()=>{
         if(!peers[lawan]) return;
         if(pc.connectionState==='disconnected') segarkanJalur(lawan);
-      },6000);
+      }, baruGantiJaringan?1200:6000);
     }
     else if(s==='failed'){
       clearTimeout(p.timerPulih);
@@ -832,15 +835,32 @@ async function panggilOrang(siapa){
 }
 window.panggilOrang=panggilOrang;
 
+let sedangPindah=false;
 async function pindahSaluran(s){
-  if(s===room||!masuk) return;
-  Object.keys(peers).forEach(tutupPeer);
-  try{ await serverSync({keluar:true}); }catch(e){}
-  room=s;sejak=0;daftarOnline=[];
+  if(s===room||!masuk||sedangPindah) return;
+  sedangPindah=true;
+  clearTimeout(pollTimer);
+  const saluranLama=room;
+
+  // Tampilkan perpindahan SEKARANG supaya terasa langsung, tidak menunggu server
+  room=s; daftarOnline=[];
   try{ localStorage.setItem('ibass_ht_room',room); }catch(e){}
   $('chLabel').textContent='Saluran '+room;
-  gambarKanal();gambarOrang();
-  toast('Pindah ke saluran '+s);
+  gambarKanal(); gambarOrang();
+  status('Masuk '+s+'…');
+
+  // Lepas sambungan lama, lalu pamit DI SALURAN LAMA (bukan yang baru)
+  Object.keys(peers).forEach(tutupPeer);
+  setModeHemat(false); sejakAdaOrang=0; parahBerturut=0;
+  try{
+    antre('','bye','');
+    await serverSync({ keluar:true, room:saluranLama });
+  }catch(e){}
+
+  sedangPindah=false;
+  jeda=900;
+  putaran();                      // langsung daftar di saluran baru
+  toast('Saluran '+s);
 }
 window.pindahSaluran=pindahSaluran;
 
@@ -873,18 +893,29 @@ async function keluarHT(){
 async function jagaLayar(){try{if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen');}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&masuk&&!wakeLock)jagaLayar();});
 
-/* Pindah Wi-Fi ↔ kuota, atau sinyal sempat hilang: segarkan jalur semua sambungan
-   supaya suara balik cepat, tidak menunggu batas waktu. */
+/* Pindah Wi-Fi ↔ kuota, atau sinyal sempat hilang.
+   Sambungan yang masih sehat TIDAK diganggu — memaksa menyegarkan jalur yang
+   sebenarnya baik-baik saja justru bikin suara terputus sebentar. Yang dilakukan:
+   catat waktunya, percepat pengecekan, dan segarkan hanya yang benar-benar goyah. */
+let gantiJaringanPada=0;
 function segarkanSemua(){
   if(!masuk) return;
+  gantiJaringanPada=Date.now();
   Object.keys(peers).forEach(n=>{
     const p=peers[n];
-    if(p&&p.pc.connectionState!=='connected'){ p.sedangSegarkan=false; segarkanJalur(n); }
+    if(!p) return;
+    if(p.pc.connectionState!=='connected'){
+      clearTimeout(p.timerPulih); p.timerPulih=null;
+      p.sedangSegarkan=false;
+      segarkanJalur(n);
+    }
   });
+  jeda=900;
+  clearTimeout(pollTimer); putaran();   // langsung periksa, tidak menunggu jadwal
 }
-window.addEventListener('online',()=>{ toast('Jaringan kembali — menyambungkan ulang'); segarkanSemua(); });
+window.addEventListener('online',segarkanSemua);
 if(navigator.connection&&navigator.connection.addEventListener){
-  navigator.connection.addEventListener('change',()=>{ setTimeout(segarkanSemua,800); });
+  navigator.connection.addEventListener('change',()=>{ gantiJaringanPada=Date.now(); setTimeout(segarkanSemua,600); });
 }
 
 /* ── tombol ── */
