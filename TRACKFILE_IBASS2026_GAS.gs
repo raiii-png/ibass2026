@@ -298,7 +298,7 @@ function doPost(e) {
           const to = String(r[4] || '');
           if (to && to !== me) return;                          // bukan untuk saya
           pesan.push({ id: id, dari: String(r[3]), kind: String(r[5]),
-            data: String(r[6] || ''), room: rRoom });
+            data: String(r[6] || ''), room: rRoom, waktu: String(r[1] || '') });
         });
       }
 

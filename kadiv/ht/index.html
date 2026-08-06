@@ -356,13 +356,15 @@ function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');
 function status(t,k){$('statusTxt').textContent=t;$('dot').className='dot'+(k?' '+k:'');}
 
 /* ── satu panggilan server: setor sinyal + absen + ambil sinyal masuk ── */
-let masalahServer='';
+let masalahServer='', sapaanPertama=true;
 async function serverSync(extra){
   const kirim=outbox.splice(0,outbox.length);
   const body=Object.assign({action:'ht',room,me:nama,sejak,kirim,status:statusSaya},extra||{});
   // Selalu tanya suara mode hemat selama ada orang lain — sebab bisa saja HP KITA
   // lancar tapi HP staff yang terblokir; suaranya tetap harus sampai.
-  if(modeHemat||daftarOnline.length) body.sejakSuara=sejakSuara;
+  // Sapaan pertama juga perlu tahu posisi suara terkini, supaya potongan suara
+  // lama tidak ikut terputar saat nanti mode hemat menyala.
+  if(modeHemat||daftarOnline.length||sapaanPertama) body.sejakSuara=sejakSuara;
   const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
   const teks=await res.text();
   let js=null; try{ js=JSON.parse(teks); }catch(e){}
@@ -375,6 +377,16 @@ async function serverSync(extra){
     throw new Error(masalahServer);
   }
   masalahServer='';
+  // Sapaan pertama: catat posisi terkini lalu BUANG semua riwayat lama.
+  // Tanpa ini, panggilan & suara dari sesi sebelumnya ikut terputar saat baru masuk
+  // — HP bergetar sendiri padahal tidak ada yang memanggil.
+  if(sapaanPertama){
+    sapaanPertama=false;
+    sejak=js.terakhir||sejak;
+    sejakSuara=js.terakhirSuara||sejakSuara;
+    js.pesan=[]; js.suara=[];
+    return js;
+  }
   if(js.terakhir>sejak) sejak=js.terakhir;
   if(js.terakhirSuara>sejakSuara) sejakSuara=js.terakhirSuara;
   if(js.suara&&js.suara.length) js.suara.forEach(terimaSuaraHemat);
@@ -449,6 +461,21 @@ function mulaiRekamHemat(){
 function stopRekamHemat(){ if(rekamHemat&&rekamHemat.state!=='inactive'){ try{ rekamHemat.stop(); }catch(e){} } }
 function antre(to,kind,data,roomKhusus){
   outbox.push({to,kind,data:data==null?'':String(data),room:roomKhusus||''});
+  dorong();
+}
+
+/* Jangan tunggu jadwal berikutnya kalau ada sinyal siap kirim.
+   Tiap tahap jabat tangan (tawaran → jawaban → jalur) yang menunggu giliran
+   menambah 1–2 detik; mendorongnya langsung memangkas waktu tersambung. */
+let timerDorong=null;
+function dorong(){
+  if(!masuk||timerDorong) return;
+  timerDorong=setTimeout(()=>{
+    timerDorong=null;
+    if(!masuk||!outbox.length) return;
+    clearTimeout(pollTimer);
+    putaran();
+  },120);   // kumpulkan sinyal yang menyusul sesaat, lalu kirim sekaligus
 }
 
 /* ── mikrofon ── */
@@ -744,8 +771,10 @@ async function putaran(){
       else if(Date.now()-sejakAdaOrang>14000) setModeHemat(true);
     }else{ sejakAdaOrang=0; setModeHemat(false); }
 
+    // Saat masih menyambungkan, periksa lebih rapat supaya cepat tersambung;
+    // begitu semua stabil, dilonggarkan supaya hemat kuota dan baterai.
     const nunggu=Object.values(peers).some(p=>p.pc.connectionState!=='connected');
-    jeda=outbox.length?900:(modeHemat?2000:(nunggu?1200:(daftarOnline.length?2500:4000)));
+    jeda=outbox.length?400:(modeHemat?2000:(nunggu?700:(daftarOnline.length?2500:4000)));
     status(daftarOnline.length?('Aktif · '+daftarOnline.length+' orang'+(modeHemat?' · hemat':'')):'Aktif · sendiri','on');
   }catch(e){
     status(masalahServer?'Server bermasalah':'Sambungan lemah','warn');
@@ -785,6 +814,12 @@ function hentikanDering(){
   if(ringAc){try{ringAc.close();}catch(e){}ringAc=null;}
 }
 function terimaPanggilan(m){
+  // Pengaman kedua: panggilan lebih tua dari 45 detik itu sisa masa lalu, bukan
+  // panggilan sungguhan. Jangan bunyikan — inilah yang dulu bikin HP bergetar sendiri.
+  if(m.waktu){
+    const umur=Date.now()-new Date(m.waktu).getTime();
+    if(!isNaN(umur)&&umur>45000) return;
+  }
   ringData=m;
   const urgent=m.kind==='ringall';
   const pribadi=!urgent&&m.data==='pribadi';
@@ -874,11 +909,13 @@ async function masukHT(){
   catch(e){ $('joinBtn').disabled=false;status('Mikrofon ditolak','warn');
     toast('Izin mikrofon ditolak — aktifkan di pengaturan browser');return; }
   try{localStorage.setItem('ibass_ht_nama',nama);localStorage.setItem('ibass_ht_room',room);}catch(e){}
-  masuk=true;
+  masuk=true; sapaanPertama=true; sejak=0; sejakSuara=0;
   $('joinView').classList.add('hide');
   $('htView').classList.remove('hide');
   $('chLabel').textContent='Saluran '+room;
-  status('Aktif','on');gambarKanal();gambarOrang();jagaLayar();mulaiPantauMutu();putaran();
+  status('Menyambungkan…');gambarKanal();gambarOrang();jagaLayar();mulaiPantauMutu();
+  jeda=400;                       // beberapa detik pertama diperiksa rapat
+  putaran();
 }
 async function keluarHT(){
   masuk=false;clearTimeout(pollTimer);clearInterval(timerMutu);
@@ -989,11 +1026,21 @@ $('ringNo').onclick=tutupPanggilan;
     if(![...sel.options].some(o=>o.value===ch)) sel.add(new Option(ch,ch));
     sel.value=ch;$('chLabel').textContent='Saluran '+ch;
   }
+  let namaTersimpan='';
   try{
-    const n=localStorage.getItem('ibass_ht_nama');if(n)$('nama').value=n;
+    namaTersimpan=localStorage.getItem('ibass_ht_nama')||'';
+    if(namaTersimpan)$('nama').value=namaTersimpan;
     if(!ch){const r=localStorage.getItem('ibass_ht_room');if(r&&[...sel.options].some(o=>o.value===r))sel.value=r;}
   }catch(e){}
   $('nama').addEventListener('keydown',e=>{if(e.key==='Enter')masukHT();});
+
+  // Sudah pernah masuk: cukup satu ketukan, namanya sudah diingat.
+  // Baru pertama: kursor langsung di kolom nama supaya bisa mengetik seketika.
+  if(namaTersimpan){
+    $('joinBtn').textContent='Masuk sebagai '+namaTersimpan+' →';
+  }else{
+    setTimeout(()=>{ try{ $('nama').focus(); }catch(e){} },250);
+  }
 })();
 
 window.addEventListener('beforeunload',()=>{
