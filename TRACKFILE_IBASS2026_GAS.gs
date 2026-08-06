@@ -305,7 +305,36 @@ function doPost(e) {
       // 4) bersihkan sinyal lama supaya sheet tetap ringan
       if (lastRow > 400) sh.deleteRows(2, lastRow - 200);
 
-      return jsonOk({ pesan: pesan, terakhir: terakhir, online: online, semua: semuaOn });
+      // 5) MODE HEMAT — dipakai hanya kalau suara langsung diblokir jaringan.
+      //    Potongan suara dititipkan lewat server. Sheet terpisah supaya polling
+      //    biasa tetap ringan (sel suara berukuran besar).
+      const balasan = { pesan: pesan, terakhir: terakhir, online: online, semua: semuaOn };
+      if (body.suara || body.sejakSuara !== undefined) {
+        const vs = htSuaraSheet(ss);
+        if (body.suara) {
+          vs.appendRow([htNextId(1) + 1, new Date().toISOString(), room, me, String(body.suara)]);
+          const vlast = vs.getLastRow();
+          if (vlast > 40) vs.deleteRows(2, vlast - 20);   // suara cepat dibuang, hemat ruang
+        }
+        const sejakV = Number(body.sejakSuara || 0);
+        const suara = [];
+        let terakhirV = sejakV;
+        const vLast = vs.getLastRow();
+        if (vLast > 1) {
+          const vMulai = Math.max(2, vLast - 11);          // cukup 12 potongan terakhir
+          vs.getRange(vMulai, 1, vLast - vMulai + 1, 5).getValues().forEach(function (r) {
+            const vid = Number(r[0]) || 0;
+            if (vid > terakhirV) terakhirV = vid;
+            if (vid <= sejakV) return;
+            if (String(r[2]) !== room) return;
+            if (String(r[3]) === me) return;
+            suara.push({ id: vid, dari: String(r[3]), data: String(r[4] || '') });
+          });
+        }
+        balasan.suara = suara;
+        balasan.terakhirSuara = terakhirV;
+      }
+      return jsonOk(balasan);
     }
 
     // ── Cari contoh gambar referensi desain (untuk Pubdok) ──
