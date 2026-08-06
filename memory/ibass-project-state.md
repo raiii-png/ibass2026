@@ -10,6 +10,24 @@ metadata:
 
 # Proyek IBASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
 
+## HT: PANGGILAN HANTU & MASUK CEPAT (2026-08-06, uji Boss ke-3)
+- **Bug**: buka HT → langsung "memanggil" + bergetar padahal belum ada yang dikasih link.
+  Sebab: `sejak=0` saat masuk → server kirim SELURUH 120 baris terakhir saluran, termasuk
+  `ring`/`ringall` dari sesi & uji sebelumnya → diputar seolah panggilan baru. Sama untuk
+  `sejakSuara=0` (potongan suara lama bisa ikut terputar).
+- **Perbaikan lapis 1 (utama)**: flag `sapaanPertama` — sinkron pertama setelah masuk hanya
+  mengadopsi `terakhir`/`terakhirSuara` lalu MEMBUANG `pesan` & `suara`. `masukHT()` mereset
+  sapaanPertama=true, sejak=0, sejakSuara=0. `sejakSuara` ikut dikirim saat sapaan pertama.
+- **Lapis 2 (defense in depth)**: GAS kini menyertakan `waktu` tiap pesan; `terimaPanggilan()`
+  mengabaikan ring >45 dtk. Pesan TANPA waktu tetap diterima (kompatibel server versi lama).
+- **Masuk lebih cepat**: `dorong()` — begitu ada sinyal di outbox, poll dijadwalkan 120ms lagi
+  (bukan menunggu jeda normal); `antre()` memanggilnya otomatis. Jeda saat menyambung
+  700ms (dulu 1200), saat ada outbox 400ms (dulu 900). Diuji dengan server tiruan berlatensi
+  800ms: tawaran terkirim 2,5 dtk setelah masuk.
+- UX: nama diingat → tombol "Masuk sebagai <nama>"; pengguna baru → autofocus kolom nama.
+- **CATATAN PENTING**: jangan kembalikan `sejak=0` tanpa flag sapaanPertama — itu sumber
+  panggilan hantu. Dan jangan tambah getar untuk kejadian otomatis apa pun.
+
 ## HT: GETAR & PINDAH SALURAN (2026-08-06, uji Boss ke-2)
 - Boss: suara sudah LANCAR. Sisa keluhan: pindah Wi-Fi→kuota jadi lemot + HP tiba-tiba bergetar.
 - **Sumber getar mendadak**: `terimaSuaraHemat()` memanggil `navigator.vibrate(40)` tiap potongan
