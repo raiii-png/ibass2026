@@ -10,6 +10,23 @@ metadata:
 
 # Proyek IBASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
 
+## HT: GETAR & PINDAH SALURAN (2026-08-06, uji Boss ke-2)
+- Boss: suara sudah LANCAR. Sisa keluhan: pindah Wi-Fi→kuota jadi lemot + HP tiba-tiba bergetar.
+- **Sumber getar mendadak**: `terimaSuaraHemat()` memanggil `navigator.vibrate(40)` tiap potongan
+  suara masuk. Waktu Boss pindah kuota → mode hemat menyala → tiap orang bicara HP bergetar.
+  SUDAH DIHAPUS. **Aturan: getar HANYA untuk panggilan** (ring/ringall) dan haptic tombol PTT
+  (16ms, aksi sendiri). Pesan teks tetap bergetar (memang notifikasi). Jangan tambah getar
+  untuk suara/kejadian otomatis.
+- **Pemulihan pindah jaringan**: `gantiJaringanPada` dicatat saat event `online`/`connection change`.
+  Kalau disconnected terjadi <20 dtk setelah itu, masa tunggu 6 dtk dipangkas jadi 1,2 dtk
+  (jalur lama pasti mati). `segarkanSemua()` SENGAJA tidak memaksa peer yang masih `connected` —
+  memaksa ICE restart di sambungan sehat justru memutus suara sebentar.
+- **pindahSaluran()** ditulis ulang: tangkap `saluranLama` → ubah tampilan DULU (terasa instan)
+  → tutup peer → `serverSync({keluar:true, room:saluranLama})` (pamit di tempat yang benar;
+  extra di-Object.assign terakhir jadi menimpa room) → `putaran()` langsung, jeda 900.
+  `sejak` TIDAK direset (id global naik terus; reset bikin sinyal basi diproses ulang).
+  Flag `sedangPindah` mencegah dobel-tap.
+
 ## HT: PERBAIKAN SUARA PUTUS-PUTUS (2026-08-06)
 - Boss uji 2 HP: suara MASUK (jalur sehat) tapi putus-putus di sinyal lemah.
 - **Penyebab utama**: `onconnectionstatechange` memperlakukan `disconnected` sama dengan
