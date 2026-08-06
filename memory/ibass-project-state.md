@@ -10,6 +10,24 @@ metadata:
 
 # Proyek IBASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
 
+## HT: PERBAIKAN SUARA PUTUS-PUTUS (2026-08-06)
+- Boss uji 2 HP: suara MASUK (jalur sehat) tapi putus-putus di sinyal lemah.
+- **Penyebab utama**: `onconnectionstatechange` memperlakukan `disconnected` sama dengan
+  `failed` → `tutupPeer()` langsung. Padahal `disconnected` itu TRANSIEN dan umumnya pulih
+  sendiri; membongkar berarti handshake ulang lewat GAS polling = 5-10 dtk hening tiap
+  gangguan kecil. JANGAN kembalikan perilaku ini.
+- Penanganan sekarang bertingkat: disconnected → tunggu 6 dtk (timerPulih) → `segarkanJalur()`
+  (ICE restart, peer TIDAK dibongkar; yang bukan pemulai kirim kind:"segarkan" minta lawan
+  yang restart) → baru `tutupPeer` kalau 12 dtk tetap gagal. `p.mulai` disimpan di objek peer.
+- Ketahanan suara: `perbaikiSdp()` menyisipkan useinbandfec=1, usedtx=1, maxaveragebitrate=24000
+  ke baris fmtp Opus (dipakai di offer DAN answer); `batasiLaju()` set maxBitrate 28000 +
+  networkPriority high. Diuji: browser menerima SDP, dua peer tetap tersambung (regresi aman).
+- `online` event + `navigator.connection change` → `segarkanSemua()` (pindah Wi-Fi↔kuota).
+- `mulaiPantauMutu()` tiap 3 dtk baca getStats inbound-rtp (packetsLost/Received) → mutu
+  kuat/sedang/lemah, tampil sebagai 3 batang di samping nama. 4× berturut parah tanpa peer
+  sehat → mode hemat dinyalakan lebih awal.
+- Mode hemat: suara diputar BERURUTAN (antrianPutar/putarBerikutnya), tidak tumpang-tindih.
+
 ## HT: HASIL DEBUG "TIDAK KONEK" (2026-08-06)
 - **Akar masalah**: server tidak punya action `ht` — Boss deploy SEBELUM HT dibuat. Kedua HP
   gagal absen → tak pernah saling terlihat. Gejalanya dulu tampil menyesatkan sebagai
