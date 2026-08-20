@@ -1953,9 +1953,9 @@ input:focus, select:focus, textarea:focus {
             </div>
             <div class="scale-k" id="b_k1"></div>
             <div class="rubrik-k">
-              <div class="rk-baris"><span class="rk-p">+0,25</span><span>Tiap kegiatan: proker HIMA lain, kepanitiaan, atau kegiatan UKM kampus.</span></div>
+              <div class="rk-baris"><span class="rk-p">+2,5</span><span>Tiap kegiatan: proker HIMA lain, kepanitiaan, atau kegiatan UKM kampus.</span></div>
               <div class="rk-baris"><span class="rk-p no">0</span><span>Kegiatan IBASS sendiri tidak dihitung &mdash; sudah masuk penilaian KPI di atas.</span></div>
-              <div class="rk-baris"><span class="rk-p no">maks</span><span>Tambahan dibatasi <strong>+1,0</strong>. Empat kegiatan sudah mentok.</span></div>
+              <div class="rk-baris"><span class="rk-p no">maks</span><span>Tambahan dibatasi <strong>+10</strong> dari skor 100. Empat kegiatan sudah mentok.</span></div>
             </div>
           </div>
         </div>
@@ -2637,7 +2637,9 @@ function rate(id1, id2, val, cv){
 
 /* Keaktifan di luar IBASS — poin tambahan, bukan bagian KPI.
    Tiap kegiatan +0,25 dan dibatasi +1,0 supaya KPI tetap penentu utama. */
-const POIN_KEGIATAN = 0.25, POIN_MAKS = 1.0;
+/* Skor KPI berskala 0–100, jadi poin ditulis dalam skala yang sama:
+   +2,5 tiap kegiatan, maksimal +10 (setara 10% — batas yang disepakati). */
+const POIN_KEGIATAN = 2.5, POIN_MAKS = 10;
 function poinKeaktifan(n){ return Math.min((Number(n)||0)*POIN_KEGIATAN, POIN_MAKS); }
 
 function rateK(val){
