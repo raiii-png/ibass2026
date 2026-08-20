@@ -2658,11 +2658,16 @@ function gambarKeaktifan(){
   wadah.innerHTML=[0,1,2,3,4].map(n=>{
     const lit=nilai===n?' lit':'';
     const label=n===4?'4+':String(n);
-    const sub=n===0?'tidak ada':('+'+poinKeaktifan(n).toFixed(2).replace('.',','));
+    const angka=poinKeaktifan(n);
+    const sub=n===0?'tidak ada'
+      :('+'+(angka%1===0?angka.toFixed(0):angka.toFixed(1).replace('.',',')));
     return `<button class="sk${lit}" onclick="rateK(${n})">${label}<small>${sub}</small></button>`;
   }).join('');
   const disp=document.getElementById('b_k1_v');
-  if(disp) disp.textContent = nilai==null ? '–' : '+'+poinKeaktifan(nilai).toFixed(2).replace('.',',');
+  if(disp){
+    const p=poinKeaktifan(nilai||0);
+    disp.textContent = nilai==null ? '–' : '+'+(p%1===0?p.toFixed(0):p.toFixed(1).replace('.',','));
+  }
 }
 
 function rate5el(id, val, cv){
