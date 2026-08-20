@@ -515,6 +515,32 @@ body {
 .s10.lit.collab   { background: rgba(155,130,240,0.18); border-color: var(--collab);   color: var(--collab);   box-shadow: inset 0 0 8px rgba(155,130,240,0.08); }
 .s10.lit.growth   { background: rgba(68,201,138,0.18);  border-color: var(--growth);   color: var(--growth);   box-shadow: inset 0 0 8px rgba(68,201,138,0.08); }
 
+/* keaktifan: jumlah kegiatan luar IBASS (0-4+) */
+.cv-header.keaktifan { background: rgba(232,191,106,0.08); border-bottom: 1px solid rgba(232,191,106,0.2); }
+.cv-pill.keaktifan { background: rgba(232,191,106,0.15); color: #e8bf6a; }
+.ind-val.keaktifan { color: #e8bf6a; text-shadow: 0 0 12px rgba(232,191,106,0.35); }
+.scale-k { display: grid; grid-template-columns: repeat(5,1fr); gap: 0.28rem; }
+.sk {
+  height: 46px; border: 1px solid var(--bdr2);
+  background: var(--bg3); color: var(--text2);
+  font-family: 'Cinzel Decorative', serif; font-size: 0.82rem;
+  cursor: pointer; transition: all 0.15s; border-radius: var(--r);
+  -webkit-tap-highlight-color: transparent; user-select: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15;
+}
+.sk small { font-family: 'Raleway',sans-serif; font-size: 0.5rem; letter-spacing: 0.06em; color: var(--muted); }
+.sk:active { transform: scale(0.94); }
+.sk:hover { border-color: var(--bdr); color: var(--text); background: var(--bg4); }
+.sk.lit { background: rgba(232,191,106,0.16); border-color: #c8922a; color: #e8bf6a; }
+.sk.lit small { color: #e8bf6a; }
+.rubrik-k { margin-top: 0.7rem; padding-top: 0.65rem; border-top: 1px solid var(--bdr2);
+  display: flex; flex-direction: column; gap: 0.4rem; }
+.rk-baris { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.66rem;
+  line-height: 1.6; color: var(--text2); }
+.rk-p { flex-shrink: 0; min-width: 44px; text-align: center; font-size: 0.6rem;
+  color: #e8bf6a; border: 1px solid rgba(232,191,106,0.35); border-radius: 999px; padding: 0.1rem 0.3rem; }
+.rk-p.no { color: var(--muted); border-color: var(--bdr2); }
+
 /* scale 1-5 (panitia) */
 .scale5 { display: flex; gap: 0.28rem; }
 .s5 {
@@ -2609,6 +2635,34 @@ function rate(id1, id2, val, cv){
   updateLive(); checkCurrent();
 }
 
+/* Keaktifan di luar IBASS — poin tambahan, bukan bagian KPI.
+   Tiap kegiatan +0,25 dan dibatasi +1,0 supaya KPI tetap penentu utama. */
+const POIN_KEGIATAN = 0.25, POIN_MAKS = 1.0;
+function poinKeaktifan(n){ return Math.min((Number(n)||0)*POIN_KEGIATAN, POIN_MAKS); }
+
+function rateK(val){
+  const name=bizList[bizIdx]; if(!name)return;
+  if(!allScores[name])allScores[name]={};
+  // tekan ulang angka yang sama = batalkan
+  allScores[name].k = (allScores[name].k===val) ? undefined : val;
+  gambarKeaktifan();
+  updateLive(); checkCurrent();
+}
+
+function gambarKeaktifan(){
+  const wadah=document.getElementById('b_k1'); if(!wadah) return;
+  const name=bizList[bizIdx];
+  const nilai=(allScores[name]||{}).k;
+  wadah.innerHTML=[0,1,2,3,4].map(n=>{
+    const lit=nilai===n?' lit':'';
+    const label=n===4?'4+':String(n);
+    const sub=n===0?'tidak ada':('+'+poinKeaktifan(n).toFixed(2).replace('.',','));
+    return `<button class="sk${lit}" onclick="rateK(${n})">${label}<small>${sub}</small></button>`;
+  }).join('');
+  const disp=document.getElementById('b_k1_v');
+  if(disp) disp.textContent = nilai==null ? '–' : '+'+poinKeaktifan(nilai).toFixed(2).replace('.',',');
+}
+
 function rate5el(id, val, cv){
   const name=bizList[bizIdx]; if(!name)return;
   if(!allScores[name])allScores[name]={};
@@ -2835,6 +2889,7 @@ function loadBizCard(idx){
     restoreScale10('b_a1','b_a1_b','adaptive',sc.a||0);
     restoreScale10('b_b1','b_b1_b','collab',sc.b||0);
     restoreScale10('b_c1','b_c1_b','growth',sc.c||0);
+    gambarKeaktifan();
     document.getElementById('b_a1_v').textContent=sc.a||'–';
     document.getElementById('b_b1_v').textContent=sc.b||'–';
     document.getElementById('b_c1_v').textContent=sc.c||'–';
@@ -2945,9 +3000,10 @@ function buildReview(){
     const aRaw=sc.a||0, bRaw=sc.b||0, cRaw=sc.c||0;
     const max=isBuddy?10:5;
     const aN=(aRaw/max*100), bN=(bRaw/max*100), cN=(cRaw/max*100);
-    const weighted=isBuddy
+    const weighted=(isBuddy
       ?(aN*15+bN*20+cN*25)/60
-      :(aN*15+bN*15+cN*10)/40;
+      :(aN*15+bN*15+cN*10)/40)
+      + (isBuddy?poinKeaktifan(sc.k||0):0);
     return `<div class="review-item">
       <div class="review-name">${name}</div>
       <div class="review-scores">
@@ -3011,14 +3067,19 @@ async function doSubmit(){
   const rows=bizList.filter(name=>isComplete(name)).map(name=>{
     const sc=allScores[name];
     const aN=(sc.a/max*100), bN=(sc.b/max*100), cN=(sc.c/max*100);
-    const weighted=isBuddy?(aN*15+bN*20+cN*25)/60:(aN*15+bN*15+cN*10)/40;
+    const kpi=isBuddy?(aN*15+bN*20+cN*25)/60:(aN*15+bN*15+cN*10)/40;
+    // Poin keaktifan hanya dari buddy; skor akhir = KPI + poin (maks +1,0)
+    const nKeg=isBuddy?(sc.k||0):0;
+    const poin=isBuddy?poinKeaktifan(nKeg):0;
     return {
       timestamp:new Date().toISOString(),
       role:currentRole, penilai, dept_penilai:dept, milestone,
       nama_bizstar:name,
       skor_adaptive_raw:sc.a, skor_collab_raw:sc.b, skor_growth_raw:sc.c,
       skor_adaptive:aN.toFixed(1), skor_collab:bN.toFixed(1), skor_growth:cN.toFixed(1),
-      skor_weighted:weighted.toFixed(2),
+      skor_kpi:kpi.toFixed(2),
+      kegiatan_luar:nKeg, poin_keaktifan:poin.toFixed(2),
+      skor_weighted:(kpi+poin).toFixed(2),
       kelebihan:sc.catKel||'', perbaikan:sc.catPer||''
     };
   });
