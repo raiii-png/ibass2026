@@ -48,7 +48,8 @@ const PENILAIAN_SHEET = 'Penilaian';
 const HT_SHEET = 'HT'; // pesan suara/teks antar panitia saat kegiatan
 const PENILAIAN_HEADER = ['Waktu', 'Peran', 'Penilai', 'Dept Penilai', 'Milestone', 'Nama Bizstar',
   'Adaptive (raw)', 'Collaborative (raw)', 'Growth (raw)',
-  'Adaptive %', 'Collaborative %', 'Growth %', 'Skor Akhir', 'Kelebihan', 'Perlu Perbaikan'];
+  'Adaptive %', 'Collaborative %', 'Growth %', 'Skor KPI',
+  'Kegiatan Luar', 'Poin Keaktifan', 'Skor Akhir', 'Kelebihan', 'Perlu Perbaikan'];
 
 // ─── GET: baca data ──────────────────────────────────────────────
 function doGet(e) {
@@ -533,7 +534,7 @@ function ensurePenilaianSheet(ss) {
     .setBackground('#1e3a5f').setFontColor('#5bc4f5')
     .setFontWeight('bold').setFontSize(10);
   sheet.setFrozenRows(1);
-  const widths = [140, 70, 150, 110, 110, 150, 90, 110, 80, 80, 100, 70, 80, 220, 220];
+  const widths = [140, 70, 150, 110, 110, 150, 90, 110, 80, 80, 100, 70, 80, 95, 105, 85, 220, 220];
   widths.forEach((w, i) => sheet.setColumnWidth(i + 1, w));
   return sheet;
 }
@@ -552,6 +553,9 @@ function savePenilaian(ss, submissions) {
     s.nama_bizstar || '',
     s.skor_adaptive_raw, s.skor_collab_raw, s.skor_growth_raw,
     s.skor_adaptive, s.skor_collab, s.skor_growth,
+    s.skor_kpi !== undefined ? s.skor_kpi : s.skor_weighted,
+    s.kegiatan_luar !== undefined ? s.kegiatan_luar : '',
+    s.poin_keaktifan !== undefined ? s.poin_keaktifan : '',
     s.skor_weighted,
     s.kelebihan || '',
     s.perbaikan || ''
@@ -570,8 +574,9 @@ function readPenilaian(ss) {
     nama_bizstar: r[5],
     skor_adaptive_raw: r[6], skor_collab_raw: r[7], skor_growth_raw: r[8],
     skor_adaptive: r[9], skor_collab: r[10], skor_growth: r[11],
-    skor_weighted: r[12],
-    kelebihan: r[13], perbaikan: r[14]
+    skor_kpi: r[12], kegiatan_luar: r[13], poin_keaktifan: r[14],
+    skor_weighted: r[15],
+    kelebihan: r[16], perbaikan: r[17]
   }));
 }
 
