@@ -46,9 +46,6 @@ function geminiKey() {
 const PENILAIAN_TOKEN = 'ibass26-vGDnSmco7cBoju';
 const PENILAIAN_SHEET = 'Penilaian';
 const HT_SHEET = 'HT'; // pesan suara/teks antar panitia saat kegiatan
-const PROKER_SHEET = 'Proker'; // laporan Bizstar ikut kegiatan di luar IBASS
-const PROKER_POIN = 0.25;      // poin per kegiatan disetujui
-const PROKER_MAKS = 1.0;       // batas atas tambahan nilai
 const PENILAIAN_HEADER = ['Waktu', 'Peran', 'Penilai', 'Dept Penilai', 'Milestone', 'Nama Bizstar',
   'Adaptive (raw)', 'Collaborative (raw)', 'Growth (raw)',
   'Adaptive %', 'Collaborative %', 'Growth %', 'Skor Akhir', 'Kelebihan', 'Perlu Perbaikan'];
@@ -95,34 +92,6 @@ function doGet(e) {
     if (action === 'penilaian') {
       // Baca semua penilaian Bizstar yang sudah masuk
       return jsonOk({ penilaian: readPenilaian(ss) });
-    }
-
-    if (action === 'proker') {
-      // Daftar laporan kegiatan luar + rekap poin per Bizstar
-      const sh = ss.getSheetByName(PROKER_SHEET);
-      const daftar = [];
-      if (sh && sh.getLastRow() > 1) {
-        sh.getRange(2, 1, sh.getLastRow() - 1, 11).getValues().forEach(function (r) {
-          if (!r[0]) return;
-          daftar.push({
-            id: Number(r[0]), waktu: String(r[1] || ''), nama: String(r[2] || ''),
-            dept: String(r[3] || ''), kegiatan: String(r[4] || ''), tanggal: String(r[5] || ''),
-            peran: String(r[6] || ''), bukti: String(r[7] || ''),
-            status: String(r[8] || 'Menunggu'), oleh: String(r[9] || ''), waktuPutus: String(r[10] || '')
-          });
-        });
-      }
-      // Hanya yang Disetujui berpoin, dan dibatasi PROKER_MAKS
-      const poin = {};
-      daftar.forEach(function (d) {
-        if (d.status !== 'Disetujui') return;
-        const k = String(d.nama || '').toLowerCase().trim();
-        poin[k] = (poin[k] || 0) + PROKER_POIN;
-      });
-      Object.keys(poin).forEach(function (k) {
-        if (poin[k] > PROKER_MAKS) poin[k] = PROKER_MAKS;
-      });
-      return jsonOk({ daftar: daftar, poin: poin, perKegiatan: PROKER_POIN, maks: PROKER_MAKS });
     }
 
     if (action === 'laporanurl') {
@@ -401,51 +370,6 @@ function doPost(e) {
       const file = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       return jsonOk({ url: file.getUrl() });
-    }
-
-    // ── Bizstar melaporkan ikut kegiatan di luar IBASS ──
-    if (action === 'prokerlapor') {
-      if (!body.nama || !body.kegiatan) return jsonErr('Nama dan nama kegiatan wajib diisi');
-      const sh = prokerSheet(ss);
-      const nama = String(body.nama).trim();
-      const kegiatan = String(body.kegiatan).trim();
-
-      // Tandai kemungkinan laporan ganda: orang sama, nama kegiatan mirip
-      let ganda = false;
-      if (sh.getLastRow() > 1) {
-        const ringkas = function (s) { return String(s).toLowerCase().replace(/[^a-z0-9]/g, ''); };
-        const kBaru = ringkas(kegiatan), nBaru = ringkas(nama);
-        sh.getRange(2, 1, sh.getLastRow() - 1, 5).getValues().forEach(function (r) {
-          if (ringkas(r[2]) !== nBaru) return;
-          const kLama = ringkas(r[4]);
-          if (kLama === kBaru || kLama.indexOf(kBaru) > -1 || kBaru.indexOf(kLama) > -1) ganda = true;
-        });
-      }
-
-      const id = Date.now();
-      sh.appendRow([id, new Date().toISOString(), nama, String(body.dept || ''), kegiatan,
-        String(body.tanggal || ''), String(body.peran || ''), String(body.bukti || ''),
-        ganda ? 'Menunggu (cek ganda)' : 'Menunggu', '', '']);
-      return jsonOk({ id: id, ganda: ganda });
-    }
-
-    // ── Panitia menyetujui / menolak laporan ──
-    if (action === 'prokerputus') {
-      if (!body.id) return jsonErr('id kosong');
-      const sh = prokerSheet(ss);
-      const last = sh.getLastRow();
-      if (last < 2) return jsonErr('Belum ada laporan');
-      const ids = sh.getRange(2, 1, last - 1, 1).getValues();
-      for (let i = 0; i < ids.length; i++) {
-        if (Number(ids[i][0]) === Number(body.id)) {
-          sh.getRange(i + 2, 9, 1, 3).setValues([[
-            String(body.status || 'Disetujui'),
-            String(body.oleh || 'Panitia'),
-            new Date().toISOString()]]);
-          return jsonOk({ id: body.id, status: body.status });
-        }
-      }
-      return jsonErr('Laporan tidak ditemukan');
     }
 
     // ── Upload berkas Track File (Word/Sheet/PDF/gambar dll) → Google Drive ──
@@ -897,21 +821,6 @@ function htPresenceSheet(ss) {
     sh = ss.insertSheet(HT_SHEET + '_ON');
     sh.getRange(1, 1, 1, 4).setValues([['room', 'nama', 'terakhir', 'status']]);
     try { sh.hideSheet(); } catch (e) {}
-  }
-  return sh;
-}
-
-// Laporan Bizstar ikut kegiatan di luar IBASS
-function prokerSheet(ss) {
-  let sh = ss.getSheetByName(PROKER_SHEET);
-  if (!sh) {
-    sh = ss.insertSheet(PROKER_SHEET);
-    sh.getRange(1, 1, 1, 11).setValues([['id', 'waktu lapor', 'nama bizstar', 'departemen',
-      'kegiatan', 'tanggal', 'peran', 'bukti', 'status', 'diputus oleh', 'waktu putus']])
-      .setFontWeight('bold');
-    sh.setFrozenRows(1);
-    [90, 150, 170, 120, 220, 100, 130, 220, 150, 130, 150]
-      .forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
   }
   return sh;
 }

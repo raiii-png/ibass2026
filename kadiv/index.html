@@ -1961,7 +1961,6 @@ body::after {
     <div class="tabs">
       <div class="tab active" onclick="switchTab('ac','rundown',this)">Rundown</div>
       <div class="tab" onclick="switchTab('ac','penilaian',this);renderAcPenilaian()">Penilaian</div>
-      <div class="tab" onclick="switchTab('ac','proker',this);renderAcProker()">Poin Proker</div>
       <div class="tab" onclick="switchTab('ac','laporan',this)">Laporan</div>
       <div class="tab" onclick="switchTab('ac','tugas',this)">Track File</div>
       <div class="tab" onclick="switchTab('ac','ht',this);renderHT('ac')">HT</div>
@@ -1970,7 +1969,6 @@ body::after {
     <div class="main">
       <div class="ac-content" id="ac-rundown"></div>
       <div class="ac-content" id="ac-penilaian" style="display:none"></div>
-      <div class="ac-content" id="ac-proker" style="display:none"></div>
       <div class="ac-content" id="ac-trackfile" style="display:none"></div>
       <div class="ac-content" id="ac-laporan" style="display:none"></div>
       <div class="ac-content" id="ac-tugas" style="display:none"></div>
@@ -6748,190 +6746,6 @@ function acSaveBuddyRoster(){
 }
 
 function acPenNorm(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim(); }
-
-/* ══ POIN PROKER — kegiatan Bizstar di luar IBASS ══
-   Bizstar melapor lewat halaman /proker/, panitia menyetujui di sini.
-   Poin hanya dihitung setelah disetujui, dan dibatasi PROKER_MAKS. */
-const PROKER_POIN=0.25, PROKER_MAKS=1.0;
-let prokerData={daftar:[],poin:{}}, prokerSaring='Menunggu';
-
-function prokerLinkLapor(){
-  return location.origin+location.pathname.replace(/kadiv\/.*$/,'')+'proker/';
-}
-
-async function acProkerMuat(diam){
-  const btn=document.getElementById('proker-muat');
-  if(btn&&!diam){ btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Memuat...'; }
-  try{
-    const res=await fetch(GAS_URL+'?action=proker');
-    const js=await res.json();
-    if(!js.ok) throw new Error(js.error||'gagal');
-    prokerData={daftar:js.daftar||[],poin:js.poin||{}};
-    if(!diam) showToast(prokerData.daftar.length+' laporan termuat','success');
-  }catch(e){
-    if(!diam) showToast(/tidak dikenal/i.test(e.message||'')
-      ? 'Server belum diperbarui — deploy versi baru dulu' : 'Gagal memuat laporan','error');
-  }
-  renderAcProker();
-}
-
-async function acProkerPutus(id,status){
-  try{
-    await gasPost(GAS_URL,{action:'prokerputus',id,status,oleh:'Panitia Acara'});
-    const d=prokerData.daftar.find(x=>x.id===id);
-    if(d) d.status=status;
-    showToast(status==='Disetujui'?'Disetujui — poin bertambah':'Laporan ditolak','success');
-    renderAcProker();
-    acProkerMuat(true);
-  }catch(e){ showToast('Gagal menyimpan keputusan','error'); }
-}
-
-/* Nilai akhir = rata-rata KPI dari sheet Penilaian + poin proker (maks +1,0) */
-function acProkerPeringkat(){
-  const pen=acPenData().list||[];
-  const per={};
-  pen.forEach(p=>{
-    const n=String(p.nama_bizstar||'').trim();
-    if(!n) return;
-    const nilai=parseFloat(p.skor_weighted);
-    if(isNaN(nilai)) return;
-    const k=n.toLowerCase();
-    if(!per[k]) per[k]={nama:n,jml:0,total:0};
-    per[k].jml++; per[k].total+=nilai;
-  });
-  return Object.entries(per).map(([k,v])=>{
-    const kpi=v.total/v.jml;
-    const bonus=Math.min(prokerData.poin[k]||0,PROKER_MAKS);
-    return {nama:v.nama,kpi,bonus,akhir:kpi+bonus,milestone:v.jml};
-  }).sort((a,b)=>b.akhir-a.akhir);
-}
-
-function renderAcProker(){
-  const el=document.getElementById('ac-proker'); if(!el) return;
-  const semua=prokerData.daftar;
-  const nTunggu=semua.filter(d=>/Menunggu/.test(d.status)).length;
-  const nSetuju=semua.filter(d=>d.status==='Disetujui').length;
-  const nTolak=semua.filter(d=>d.status==='Ditolak').length;
-
-  const tampil=semua.filter(d=>{
-    if(prokerSaring==='Semua') return true;
-    if(prokerSaring==='Menunggu') return /Menunggu/.test(d.status);
-    return d.status===prokerSaring;
-  }).sort((a,b)=>b.id-a.id);
-
-  const kartu=tampil.length?tampil.map(d=>{
-    const ganda=/cek ganda/i.test(d.status);
-    const belum=/Menunggu/.test(d.status);
-    const warna=d.status==='Disetujui'?'var(--green)':(d.status==='Ditolak'?'var(--red)':'var(--amber)');
-    const gbr=d.bukti?`<a href="${esc(d.bukti)}" target="_blank" rel="noopener" style="flex-shrink:0">
-        <img src="${esc(fnDriveThumb(d.bukti)||d.bukti)}" alt="bukti" loading="lazy"
-          style="width:62px;height:62px;object-fit:cover;border-radius:6px;border:1px solid var(--bdr2);display:block"
-          onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'Bukti ↗',style:'font-size:0.6rem;color:var(--blue2)'}))">
-      </a>`:'<span style="font-size:0.6rem;color:var(--muted);flex-shrink:0">tanpa bukti</span>';
-    return `<div class="card" style="margin-bottom:0.5rem;padding:0.7rem 0.85rem">
-      <div style="display:flex;gap:0.7rem;align-items:flex-start">
-        ${gbr}
-        <div style="flex:1;min-width:0">
-          <div style="font-size:0.8rem;color:var(--text);line-height:1.4">${esc(d.kegiatan)}</div>
-          <div style="font-size:0.62rem;color:var(--gold2);margin-top:2px">${esc(d.nama)}${d.dept?' · '+esc(d.dept):''}</div>
-          <div style="font-size:0.58rem;color:var(--muted);margin-top:2px">
-            ${esc(d.tanggal||'tanpa tanggal')}${d.peran?' · '+esc(d.peran):''}
-          </div>
-          ${ganda?`<div style="font-size:0.58rem;color:var(--amber);margin-top:3px">Mungkin laporan ganda — periksa dulu</div>`:''}
-          ${!belum?`<div style="font-size:0.58rem;color:${warna};margin-top:3px">${esc(d.status)}${d.oleh?' oleh '+esc(d.oleh):''}</div>`:''}
-        </div>
-      </div>
-      ${belum?`<div class="btn-row" style="margin-top:0.55rem">
-        <button class="btn btn-ghost btn-sm" onclick="acProkerPutus(${d.id},'Ditolak')" style="flex:1">Tolak</button>
-        <button class="btn btn-sm" onclick="acProkerPutus(${d.id},'Disetujui')" style="flex:2">Setuju · +${String(PROKER_POIN).replace('.',',')}</button>
-      </div>`:''}
-    </div>`;
-  }).join(''):`<div class="tf-empty">Belum ada laporan${prokerSaring!=='Semua'?' berstatus '+prokerSaring.toLowerCase():''}.</div>`;
-
-  const rank=acProkerPeringkat();
-  const barisRank=rank.length?rank.map((r,i)=>`<tr>
-      <td style="text-align:center;color:${i<3?'var(--gold2)':'var(--muted)'};font-size:0.66rem">${i+1}</td>
-      <td style="line-height:1.35">${esc(r.nama)}<div style="font-size:0.56rem;color:var(--muted)">${r.milestone} penilaian</div></td>
-      <td class="num" style="text-align:right;color:var(--blue2)">${r.kpi.toFixed(2)}</td>
-      <td class="num" style="text-align:right;color:${r.bonus?'var(--green)':'var(--muted)'}">${r.bonus?'+'+r.bonus.toFixed(2):'—'}</td>
-      <td class="num" style="text-align:right;color:var(--gold2);font-weight:600">${r.akhir.toFixed(2)}</td>
-    </tr>`).join(''):`<tr><td colspan="5"><div class="tf-empty">Belum ada nilai penilaian.<br>Buka tab <strong>Penilaian</strong> lalu tekan Muat Data.</div></td></tr>`;
-
-  el.innerHTML=`
-    <div class="sec-head">
-      <div class="sec-eye">Acara · Poin Tambahan</div>
-      <div class="sec-title">Poin Proker Bizstar</div>
-      <div class="sec-desc">Bizstar melaporkan kegiatan di luar IBASS, panitia menyetujui, poinnya otomatis menambah nilai akhir.</div>
-    </div>
-
-    <div class="info-box" style="font-size:0.66rem;margin-bottom:0.65rem">
-      <strong style="color:var(--gold2)">Rubrikasi:</strong>
-      tiap kegiatan disetujui bernilai <strong>+${String(PROKER_POIN).replace('.',',')}</strong>, semua peran sama,
-      maksimal <strong>+${PROKER_MAKS.toFixed(1).replace('.',',')}</strong> (empat kegiatan).
-      Kegiatan IBASS sendiri dan laporan tanpa bukti tidak dihitung.
-    </div>
-
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.6rem">
-      <div style="font-size:0.62rem;color:var(--muted)">${semua.length} laporan masuk</div>
-      <div style="display:flex;gap:0.4rem">
-        <button class="btn btn-sm" id="proker-muat" onclick="acProkerMuat()">Muat Laporan</button>
-        <button class="btn btn-ghost btn-sm" onclick="acProkerSalinLink()">Salin Link untuk Bizstar</button>
-      </div>
-    </div>
-
-    <div class="mini-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0.65rem">
-      <div class="mini-stat"><div class="mini-val num" style="color:var(--amber)">${nTunggu}</div><div class="mini-lbl">Menunggu</div></div>
-      <div class="mini-stat"><div class="mini-val num" style="color:var(--green)">${nSetuju}</div><div class="mini-lbl">Disetujui</div></div>
-      <div class="mini-stat"><div class="mini-val num" style="color:var(--muted)">${nTolak}</div><div class="mini-lbl">Ditolak</div></div>
-    </div>
-
-    <div class="chip-row" style="margin-bottom:0.6rem">
-      ${['Menunggu','Disetujui','Ditolak','Semua'].map(s=>
-        `<button class="chip${prokerSaring===s?' on':''}" onclick="prokerSaring='${s}';renderAcProker()">${s}</button>`).join('')}
-    </div>
-
-    ${kartu}
-
-    <div class="list-title" style="margin-top:1rem">Peringkat Sementara</div>
-    <div style="font-size:0.6rem;color:var(--muted);margin-bottom:0.4rem">
-      Nilai akhir = rata-rata KPI dari seluruh milestone + poin proker.
-    </div>
-    <div style="overflow-x:auto">
-      <table class="tf-table" style="font-size:0.7rem">
-        <thead><tr>
-          <th style="width:28px;text-align:center">#</th><th>Bizstar</th>
-          <th style="text-align:right">KPI</th><th style="text-align:right">Proker</th>
-          <th style="text-align:right;color:var(--gold2)">Akhir</th>
-        </tr></thead>
-        <tbody>${barisRank}</tbody>
-      </table>
-    </div>
-    <button class="btn btn-ghost btn-sm" onclick="acProkerSalinPeringkat()" style="margin-top:0.5rem">Salin Peringkat</button>`;
-}
-
-function acProkerSalinLink(){
-  const t='Halo Bizstar IBASS 2026.\n\nKalau kamu ikut kegiatan di luar IBASS (proker HIMA lain, kepanitiaan, '
-    +'atau kegiatan UKM kampus), laporkan lewat link ini untuk dapat poin tambahan:\n'+prokerLinkLapor()
-    +'\n\nTiap kegiatan yang disetujui bernilai +'+String(PROKER_POIN).replace('.',',')
-    +' poin, maksimal +'+PROKER_MAKS.toFixed(1).replace('.',',')+'. Jangan lupa lampirkan buktinya.';
-  navigator.clipboard.writeText(t)
-    .then(()=>showToast('Link tersalin — sebar ke grup Bizstar','success'))
-    .catch(()=>showToast('Gagal menyalin','error'));
-}
-
-function acProkerSalinPeringkat(){
-  const rank=acProkerPeringkat();
-  if(!rank.length){ showToast('Belum ada nilai untuk disalin','warning'); return; }
-  let t='*PERINGKAT SEMENTARA BIZSTAR — IBASS 2026*\n';
-  t+='Nilai akhir = rata-rata KPI + poin proker (maks +'+PROKER_MAKS.toFixed(1).replace('.',',')+')\n\n';
-  rank.forEach((r,i)=>{
-    t+=(i+1)+'. '+r.nama+' — '+r.akhir.toFixed(2)
-      +' (KPI '+r.kpi.toFixed(2)+(r.bonus?' + proker '+r.bonus.toFixed(2):'')+')\n';
-  });
-  navigator.clipboard.writeText(t)
-    .then(()=>showToast('Peringkat tersalin','success'))
-    .catch(()=>showToast('Gagal menyalin','error'));
-}
 
 function renderAcPenilaian(){
   const el = document.getElementById('ac-penilaian'); if(!el) return;
