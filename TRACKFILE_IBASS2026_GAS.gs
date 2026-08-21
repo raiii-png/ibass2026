@@ -1,15 +1,15 @@
 /**
- * TRACK FILE I-BASS 2026 — Google Apps Script
+ * TRACK FILE IBASS 2026 — Google Apps Script
  * ============================================
  * Cara setup:
- * 1. Buka Google Sheets baru (beri nama: "Track File I-BASS 2026")
+ * 1. Buka Google Sheets baru (beri nama: "Track File IBASS 2026")
  * 2. Klik menu Extensions → Apps Script
  * 3. Hapus semua kode yang ada, paste seluruh kode ini
  * 4. Klik Run → pilih fungsi "setupSpreadsheet" → jalankan sekali
  * 5. Deploy → New deployment → Web app
  *    - Execute as: Me
  *    - Who has access: Anyone
- * 6. Copy URL deployment → paste ke Dashboard I-BASS (Track File tab)
+ * 6. Copy URL deployment → paste ke Dashboard IBASS (Track File tab)
  *
  * ── UPDATE KODE (kalau sudah pernah deploy) ──
  * 1. Paste kode baru ini menggantikan yang lama
@@ -23,7 +23,7 @@
  * - Track File per divisi + REKAP (sync otomatis dari Dashboard Kadiv)
  * - Sheet "Penilaian" (skor dari web Penilaian Bizstar)
  * - Sheet "LAPORAN" (laporan turunan ber-stempel waktu) — generate lewat
- *   menu "Laporan I-BASS → Perbarui Laporan" di bar menu spreadsheet ini
+ *   menu "Laporan IBASS → Perbarui Laporan" di bar menu spreadsheet ini
  * - ?action=dap (pembayaran form), ?action=penilaian, ?action=laporanurl
  */
 
@@ -55,6 +55,30 @@ const PENILAIAN_HEADER = ['Waktu', 'Peran', 'Penilai', 'Dept Penilai', 'Mileston
   'Adaptive (raw)', 'Collaborative (raw)', 'Growth (raw)',
   'Adaptive %', 'Collaborative %', 'Growth %', 'Skor KPI',
   'Skor Akhir', 'Kelebihan', 'Perlu Perbaikan'];
+
+/* Delapan buddy IBASS 2026, satu per departemen. Dipakai untuk menebak departemen
+   Bizstar dari buddy yang mengonfirmasi, dan untuk kolom "Buddy" di sheet Peringkat.
+   Daftar yang sama ada di index.html dan keaktifan/index.html — kalau ganti orang,
+   ganti di tiga tempat itu. */
+const BUDDY_2026 = [
+  { d: 'Secretary',        n: 'Ayu Diah Pramesti' },
+  { d: 'Finance',          n: 'Nursyfa Alawiyah Thoyibah' },
+  { d: 'HRD',              n: 'Eghina Salsabilla' },
+  { d: 'Advocacy',         n: 'Muhammad Akram Ziyad' },
+  { d: 'External Affairs', n: 'Razwa Zahara Maulidiya' },
+  { d: 'MEIN',             n: 'Tyara Nadira Putri' },
+  { d: 'Entrepreneurship', n: 'Marzya Zyalzyabila' },
+  { d: 'ACT',              n: 'Anggun Puti Maharani' }
+];
+
+/* Tabel peringkat Bizstar.
+   Nilai akhir = nilai KPI (0–100, dari sheet Penilaian) + poin keaktifan (maks +10).
+   Kalau satu Bizstar dinilai buddy DAN panitia, nilai buddy dipakai 70% dan panitia 30%
+   — buddy mengamati tiap hari, panitia cuma saat acara. Ubah angka di bawah kalau
+   pembagiannya mau lain; sisanya ikut otomatis. */
+const PERINGKAT_SHEET = 'Peringkat';
+const BOBOT_BUDDY = 0.7;
+const BOBOT_PANITIA = 0.3;
 
 // ─── GET: baca data ──────────────────────────────────────────────
 function doGet(e) {
@@ -123,6 +147,16 @@ function doGet(e) {
       return jsonOk({ daftar: daftar, poin: poin, perProker: KEAKTIFAN_POIN, maks: KEAKTIFAN_MAKS });
     }
 
+    if (action === 'peringkat') {
+      // Peringkat Bizstar: KPI + poin keaktifan, sudah terurut
+      const segar = String(e.parameter.segarkan || '') === '1';
+      const daftar = segar ? rebuildPeringkat() : hitungPeringkat();
+      return jsonOk({
+        peringkat: daftar, bobotBuddy: BOBOT_BUDDY, bobotPanitia: BOBOT_PANITIA,
+        perProker: KEAKTIFAN_POIN, maks: KEAKTIFAN_MAKS
+      });
+    }
+
     if (action === 'laporanurl') {
       // URL sheet LAPORAN + riwayat waktu update
       const props = PropertiesService.getScriptProperties();
@@ -171,7 +205,7 @@ function doGet(e) {
       return jsonOk({ file: JSON.parse(r.getContentText()) });
     }
 
-    return jsonOk({ ok: true, message: 'Track File I-BASS 2026 API aktif' });
+    return jsonOk({ ok: true, message: 'Track File IBASS 2026 API aktif' });
 
   } catch (err) {
     return jsonErr(err.message);
@@ -393,9 +427,7 @@ function doPost(e) {
         Utilities.base64Decode(body.data),
         body.mime || 'image/jpeg',
         body.nama || ('bukti-' + Date.now() + '.jpg'));
-      let folder;
-      const it = DriveApp.getFoldersByName('Bukti Pembayaran I-BASS 2026');
-      folder = it.hasNext() ? it.next() : DriveApp.createFolder('Bukti Pembayaran I-BASS 2026');
+      const folder = folderDrive('Bukti Pembayaran IBASS 2026', 'Bukti Pembayaran I-BASS 2026');
       const file = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       return jsonOk({ url: file.getUrl() });
@@ -428,8 +460,12 @@ function doPost(e) {
       const ids = sh.getRange(2, 1, last - 1, 1).getValues();
       for (let i = 0; i < ids.length; i++) {
         if (Number(ids[i][0]) === Number(body.id)) {
+          const st = String(body.status || 'Hadir');
+          // dikembalikan ke "Menunggu" berarti belum ada yang mengecek
           sh.getRange(i + 2, 8, 1, 2).setValues([[
-            String(body.status || 'Hadir'), String(body.oleh || 'Buddy')]]);
+            st, st === 'Menunggu' ? '' : String(body.oleh || 'Buddy')]]);
+          // poin berubah → peringkat ikut disegarkan, tapi jangan sampai menggagalkan simpan
+          try { rebuildPeringkat(); } catch (e2) {}
           return jsonOk({ id: body.id, status: body.status });
         }
       }
@@ -443,8 +479,7 @@ function doPost(e) {
         Utilities.base64Decode(body.data),
         body.mime || 'application/octet-stream',
         body.nama || ('berkas-' + Date.now()));
-      const it2 = DriveApp.getFoldersByName('Berkas Track File I-BASS 2026');
-      const folder2 = it2.hasNext() ? it2.next() : DriveApp.createFolder('Berkas Track File I-BASS 2026');
+      const folder2 = folderDrive('Berkas Track File IBASS 2026', 'Berkas Track File I-BASS 2026');
       const file2 = folder2.createFile(blob);
       file2.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       return jsonOk({ url: file2.getUrl(), nama: file2.getName() });
@@ -558,7 +593,7 @@ function doPost(e) {
 
     // Notulen rapat → Google Doc baru (tombol "Kirim ke Google Docs" di Sekretaris)
     if (action === 'createDoc') {
-      const doc = DocumentApp.create(body.title || ('Notulen I-BASS — ' + tglIndo(new Date())));
+      const doc = DocumentApp.create(body.title || ('Notulen IBASS — ' + tglIndo(new Date())));
       const b = doc.getBody();
       b.appendParagraph(body.title || 'Notulen Rapat').setHeading(DocumentApp.ParagraphHeading.TITLE);
       if (body.tanggal) b.appendParagraph('Tanggal: ' + body.tanggal);
@@ -585,6 +620,23 @@ function doPost(e) {
   } catch (err) {
     return jsonErr(err.message);
   }
+}
+
+/* Ambil folder Drive dengan nama baru. Kalau belum ada tapi folder nama lama masih ada,
+   folder lama itu yang diganti namanya — jadi bukti & berkas yang sudah terlanjur
+   diunggah tidak tertinggal di folder terpisah. */
+function folderDrive(nama, namaLama) {
+  const it = DriveApp.getFoldersByName(nama);
+  if (it.hasNext()) return it.next();
+  if (namaLama) {
+    const lama = DriveApp.getFoldersByName(namaLama);
+    if (lama.hasNext()) {
+      const f = lama.next();
+      f.setName(nama);
+      return f;
+    }
+  }
+  return DriveApp.createFolder(nama);
 }
 
 // ─── Penilaian Bizstar: simpan & baca ─────────────────────────────
@@ -636,36 +688,349 @@ function savePenilaian(ss, submissions) {
     return jsonErr('Tidak ada data penilaian');
   }
   const sheet = ensurePenilaianSheet(ss);
-  const rows = submissions.map(s => [
-    s.timestamp ? Utilities.formatDate(new Date(s.timestamp), 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss') : '',
-    s.role || '',
-    s.penilai || '',
-    s.dept_penilai || '',
-    s.milestone || '',
-    s.nama_bizstar || '',
-    s.skor_adaptive_raw, s.skor_collab_raw, s.skor_growth_raw,
-    s.skor_adaptive, s.skor_collab, s.skor_growth,
-    s.skor_weighted,
-    s.kelebihan || '',
-    s.perbaikan || ''
-  ]);
+  /* Poin keaktifan yang SUDAH dikonfirmasi buddy saat penilaian ini masuk.
+     Kolom "Skor Akhir" jadi terisi sejak awal; sheet Peringkat tetap menghitung
+     ulang dari data terbaru, jadi kalau ada konfirmasi susulan peringkatnya ikut. */
+  let poin = {};
+  try { poin = poinKeaktifan(); } catch (e) {}
+
+  const rows = submissions.map(s => {
+    const kpi = Number(s.skor_kpi != null ? s.skor_kpi : s.skor_weighted) || 0;
+    const tambahan = poin[normNama(s.nama_bizstar)] || 0;
+    return [
+      s.timestamp ? Utilities.formatDate(new Date(s.timestamp), 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss') : '',
+      s.role || '',
+      s.penilai || '',
+      s.dept_penilai || '',
+      s.milestone || '',
+      s.nama_bizstar || '',
+      s.skor_adaptive_raw, s.skor_collab_raw, s.skor_growth_raw,
+      s.skor_adaptive, s.skor_collab, s.skor_growth,
+      kpi,
+      Math.round((kpi + tambahan) * 100) / 100,
+      s.kelebihan || '',
+      s.perbaikan || ''
+    ];
+  });
+  // Lebar baris HARUS sama dengan lebar header, kalau tidak setValues menolak diam-diam
   sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, PENILAIAN_HEADER.length).setValues(rows);
+  try { rebuildPeringkat(); } catch (e) {}
   return jsonOk({ message: rows.length + ' penilaian tersimpan' });
 }
 
+/* Baca sheet Penilaian lewat NAMA kolom, bukan urutan tetap — baris lama yang
+   ditulis sebelum kolom "Skor Akhir" ada tetap kebaca dengan benar. */
 function readPenilaian(ssAbaikan) {
   const sheet = penilaianSS().getSheetByName(PENILAIAN_SHEET);
   if (!sheet || sheet.getLastRow() < 2) return [];
-  const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, PENILAIAN_HEADER.length).getValues();
-  return values.filter(r => r[5]).map(r => ({
-    waktu: r[0] instanceof Date ? Utilities.formatDate(r[0], 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss') : String(r[0]),
-    role: r[1], penilai: r[2], dept_penilai: r[3], milestone: r[4],
-    nama_bizstar: r[5],
-    skor_adaptive_raw: r[6], skor_collab_raw: r[7], skor_growth_raw: r[8],
-    skor_adaptive: r[9], skor_collab: r[10], skor_growth: r[11],
-    skor_weighted: r[12],
-    kelebihan: r[13], perbaikan: r[14]
-  }));
+  const lebar = Math.max(sheet.getLastColumn(), PENILAIAN_HEADER.length);
+  const semua = sheet.getRange(1, 1, sheet.getLastRow(), lebar).getValues();
+  const head = semua[0].map(h => String(h || '').trim().toLowerCase());
+  const kol = function (judul, cadangan) {
+    const i = head.indexOf(String(judul).toLowerCase());
+    return i > -1 ? i : cadangan;
+  };
+  const iNama = kol('nama bizstar', 5);
+  const iKel = kol('kelebihan', 13), iPer = kol('perlu perbaikan', 14);
+  const iKpi = kol('skor kpi', 12), iAkhir = kol('skor akhir', 13);
+  return semua.slice(1).filter(r => r[iNama]).map(r => {
+    /* Baris yang ditulis sebelum 20 Agustus 2026 belum punya kolom "Skor Akhir",
+       jadi catatannya bergeser satu kolom ke kiri. Dikenali dari: kolom terakhir
+       kosong dan kolom "Skor Akhir" berisi teks, bukan angka. */
+    let kelebihan = r[iKel], perbaikan = r[iPer], akhir = iAkhir === iKel ? '' : r[iAkhir];
+    const geser = iAkhir !== iKel && String(perbaikan || '') === ''
+      && String(akhir || '') !== '' && isNaN(Number(akhir));
+    if (geser) { perbaikan = kelebihan; kelebihan = akhir; akhir = ''; }
+    return {
+      waktu: r[0] instanceof Date ? Utilities.formatDate(r[0], 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss') : String(r[0]),
+      role: r[kol('peran', 1)], penilai: r[kol('penilai', 2)],
+      dept_penilai: r[kol('dept penilai', 3)], milestone: r[kol('milestone', 4)],
+      nama_bizstar: r[iNama],
+      skor_adaptive_raw: r[kol('adaptive (raw)', 6)],
+      skor_collab_raw: r[kol('collaborative (raw)', 7)],
+      skor_growth_raw: r[kol('growth (raw)', 8)],
+      skor_adaptive: r[kol('adaptive %', 9)],
+      skor_collab: r[kol('collaborative %', 10)],
+      skor_growth: r[kol('growth %', 11)],
+      skor_weighted: r[iKpi],
+      skor_akhir: akhir,
+      kelebihan: kelebihan, perbaikan: perbaikan
+    };
+  });
+}
+
+// ─── Peringkat Bizstar ────────────────────────────────────────────
+/* Satu nama bisa ditulis beda-beda ("Ayu Diah", "ayu  diah pramesti") — semua
+   dibandingkan dalam bentuk polos ini supaya tidak jadi dua baris peringkat. */
+function normNama(s) {
+  return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function deptBuddy(nama) {
+  const k = normNama(nama);
+  if (!k) return '';
+  for (let i = 0; i < BUDDY_2026.length; i++) {
+    const b = BUDDY_2026[i];
+    if (normNama(b.n) === k) return b.d;
+    // "Eghina" saja juga dianggap Eghina Salsabilla
+    if (k.length >= 4 && normNama(b.n).indexOf(k) === 0) return b.d;
+  }
+  return '';
+}
+
+function buddyDept(dept) {
+  const k = normNama(dept);
+  for (let i = 0; i < BUDDY_2026.length; i++) {
+    if (normNama(BUDDY_2026[i].d) === k) return BUDDY_2026[i].n;
+  }
+  return '';
+}
+
+/* Semua laporan kehadiran proker, dirangkum per Bizstar. */
+function keaktifanRingkas() {
+  const sh = penilaianSS().getSheetByName(KEAKTIFAN_SHEET);
+  const out = {};
+  if (!sh || sh.getLastRow() < 2) return out;
+  sh.getRange(2, 1, sh.getLastRow() - 1, 9).getValues().forEach(function (r) {
+    const nama = String(r[2] || '').trim();
+    if (!nama) return;
+    const k = normNama(nama);
+    if (!out[k]) out[k] = { nama: nama, dept: '', hadir: 0, menunggu: 0, ditolak: 0, proker: [], oleh: '' };
+    const o = out[k];
+    if (!o.dept && r[3]) o.dept = String(r[3]).trim();
+    const status = String(r[7] || 'Menunggu');
+    if (status === 'Hadir') { o.hadir++; o.proker.push(String(r[4] || '')); }
+    else if (status === 'Tidak Hadir') o.ditolak++;
+    else o.menunggu++;
+    if (!o.oleh && r[8]) o.oleh = String(r[8]).trim();
+  });
+  Object.keys(out).forEach(function (k) {
+    out[k].poin = Math.min(out[k].hadir * KEAKTIFAN_POIN, KEAKTIFAN_MAKS);
+  });
+  return out;
+}
+
+/* Peta ringkas nama → poin, dipakai saat menyimpan penilaian. */
+function poinKeaktifan() {
+  const r = keaktifanRingkas(), out = {};
+  Object.keys(r).forEach(function (k) { out[k] = r[k].poin; });
+  return out;
+}
+
+function predikat(n) {
+  if (n >= 90) return 'Istimewa';
+  if (n >= 80) return 'Sangat Baik';
+  if (n >= 70) return 'Baik';
+  if (n >= 60) return 'Cukup';
+  return 'Perlu Perhatian';
+}
+
+/* Gabungkan sheet Penilaian + sheet Keaktifan jadi satu daftar terurut. */
+function hitungPeringkat() {
+  const nilai = readPenilaian();
+  const aktif = keaktifanRingkas();
+  const orang = {};
+
+  function slot(nama) {
+    const k = normNama(nama);
+    if (!orang[k]) orang[k] = {
+      nama: String(nama).trim(), dept: '', buddy: '',
+      buddyNilai: [], panitiaNilai: [], milestone: {}, penilai: {},
+      hadir: 0, menunggu: 0, poin: 0
+    };
+    return orang[k];
+  }
+
+  nilai.forEach(function (p) {
+    if (!p.nama_bizstar) return;
+    const o = slot(p.nama_bizstar);
+    const skor = Number(p.skor_weighted);
+    if (!isNaN(skor) && skor > 0) {
+      if (String(p.role).toLowerCase() === 'buddy') {
+        o.buddyNilai.push(skor);
+        if (p.dept_penilai && String(p.dept_penilai) !== '—') o.dept = String(p.dept_penilai).trim();
+        if (p.penilai) o.buddy = String(p.penilai).trim();
+      } else {
+        o.panitiaNilai.push(skor);
+      }
+    }
+    if (p.milestone) o.milestone[String(p.milestone)] = true;
+    if (p.penilai) o.penilai[normNama(p.penilai)] = true;
+  });
+
+  Object.keys(aktif).forEach(function (k) {
+    const a = aktif[k];
+    const o = slot(a.nama);
+    o.hadir = a.hadir; o.menunggu = a.menunggu; o.poin = a.poin;
+    if (!o.dept && a.dept) o.dept = a.dept;
+    if (!o.dept && a.oleh) o.dept = deptBuddy(a.oleh);
+  });
+
+  const rata = function (arr) {
+    if (!arr.length) return null;
+    return arr.reduce(function (s, v) { return s + v; }, 0) / arr.length;
+  };
+
+  const daftar = Object.keys(orang).map(function (k) {
+    const o = orang[k];
+    const rb = rata(o.buddyNilai), rp = rata(o.panitiaNilai);
+    let kpi = null;
+    if (rb !== null && rp !== null) kpi = rb * BOBOT_BUDDY + rp * BOBOT_PANITIA;
+    else if (rb !== null) kpi = rb;
+    else if (rp !== null) kpi = rp;
+    const akhir = kpi === null ? null : kpi + o.poin;
+    if (!o.buddy && o.dept) o.buddy = buddyDept(o.dept);
+    return {
+      nama: o.nama, dept: o.dept || '', buddy: o.buddy || '',
+      kpi: kpi, poin: o.poin, akhir: akhir,
+      nBuddy: o.buddyNilai.length, nPanitia: o.panitiaNilai.length,
+      milestone: Object.keys(o.milestone).length,
+      hadir: o.hadir, menunggu: o.menunggu,
+      predikat: akhir === null ? '' : predikat(akhir)
+    };
+  });
+
+  // Yang sudah punya nilai KPI di atas; yang baru lapor proker saja menyusul di bawah
+  daftar.sort(function (a, b) {
+    if ((a.akhir === null) !== (b.akhir === null)) return a.akhir === null ? 1 : -1;
+    if (a.akhir !== null && b.akhir !== a.akhir) return b.akhir - a.akhir;
+    if (a.kpi !== null && b.kpi !== null && b.kpi !== a.kpi) return b.kpi - a.kpi;
+    return String(a.nama).localeCompare(String(b.nama), 'id');
+  });
+  daftar.forEach(function (d, i) { d.peringkat = d.akhir === null ? '' : i + 1; });
+  return daftar;
+}
+
+const PERINGKAT_HEADER = ['Peringkat', 'Nama Bizstar', 'Departemen', 'Buddy',
+  'Nilai KPI', 'Poin Keaktifan', 'Nilai Akhir', 'Predikat',
+  'Dinilai Buddy', 'Dinilai Panitia', 'Milestone Terisi', 'Proker Hadir', 'Menunggu Konfirmasi'];
+
+/* Tulis ulang sheet Peringkat dari nol. Dipanggil tiap penilaian masuk, tiap buddy
+   mengonfirmasi kehadiran, dan lewat menu di spreadsheet. */
+function rebuildPeringkat() {
+  const ss = penilaianSS();
+  let sh = ss.getSheetByName(PERINGKAT_SHEET);
+  if (!sh) sh = ss.insertSheet(PERINGKAT_SHEET);
+  sh.clear();
+
+  const daftar = hitungPeringkat();
+  const W = PERINGKAT_HEADER.length;
+
+  sh.getRange(1, 1, 1, W).merge().setValue('PERINGKAT BIZSTAR IBASS 2026')
+    .setFontSize(14).setFontWeight('bold').setHorizontalAlignment('center')
+    .setBackground('#1e3a5f').setFontColor('#ffffff');
+  sh.getRange(2, 1, 1, W).merge()
+    .setValue('Nilai Akhir = Nilai KPI + Poin Keaktifan (maks +' + KEAKTIFAN_MAKS + ')   ·   '
+      + 'Kalau dinilai buddy dan panitia sekaligus: buddy ' + Math.round(BOBOT_BUDDY * 100)
+      + '%, panitia ' + Math.round(BOBOT_PANITIA * 100) + '%   ·   '
+      + 'Diperbarui ' + tglIndo(new Date()))
+    .setFontSize(9).setFontColor('#666666').setHorizontalAlignment('center').setWrap(true);
+
+  const baris0 = 4;
+  sh.getRange(baris0, 1, 1, W).setValues([PERINGKAT_HEADER])
+    .setFontWeight('bold').setBackground('#e8eef7').setFontColor('#1e3a5f')
+    .setHorizontalAlignment('center').setWrap(true);
+  sh.setFrozenRows(baris0);
+
+  if (!daftar.length) {
+    sh.getRange(baris0 + 1, 1, 1, W).merge()
+      .setValue('Belum ada data. Peringkat terisi otomatis begitu buddy mengirim penilaian '
+        + 'atau mengonfirmasi laporan proker.')
+      .setFontColor('#888888').setHorizontalAlignment('center');
+    [70, 200, 140, 170, 80, 95, 85, 105, 95, 95, 105, 90, 120]
+      .forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
+    return daftar;
+  }
+
+  const rows = daftar.map(function (d) {
+    return [
+      d.peringkat === '' ? '—' : d.peringkat,
+      d.nama, d.dept || '—', d.buddy || '—',
+      d.kpi === null ? '' : Math.round(d.kpi * 100) / 100,
+      d.poin,
+      d.akhir === null ? '' : Math.round(d.akhir * 100) / 100,
+      d.akhir === null ? 'Belum dinilai' : d.predikat,
+      d.nBuddy, d.nPanitia, d.milestone, d.hadir, d.menunggu
+    ];
+  });
+  const r = sh.getRange(baris0 + 1, 1, rows.length, W);
+  r.setValues(rows);
+  r.setVerticalAlignment('middle');
+  sh.getRange(baris0 + 1, 1, rows.length, 1).setHorizontalAlignment('center').setFontWeight('bold');
+  sh.getRange(baris0 + 1, 5, rows.length, 3).setNumberFormat('0.00');
+  sh.getRange(baris0 + 1, 6, rows.length, 1).setNumberFormat('0');
+  sh.getRange(baris0 + 1, 9, rows.length, 5).setHorizontalAlignment('center');
+  sh.getRange(baris0, 1, rows.length + 1, W).setBorder(true, true, true, true, true, true,
+    '#c9d4e4', SpreadsheetApp.BorderStyle.SOLID);
+
+  // Juara 1–3 diberi warna supaya langsung kelihatan
+  const medali = ['#fff3cd', '#eef1f5', '#f7e5d3'];
+  for (let i = 0; i < Math.min(3, rows.length); i++) {
+    if (daftar[i].akhir === null) break;
+    sh.getRange(baris0 + 1 + i, 1, 1, W).setBackground(medali[i]);
+  }
+  // Baris "belum dinilai" dibuat kelabu
+  daftar.forEach(function (d, i) {
+    if (d.akhir === null) sh.getRange(baris0 + 1 + i, 1, 1, W).setFontColor('#999999');
+  });
+
+  // ── Blok kedua: yang teratas di tiap departemen ──
+  const perDept = {};
+  daftar.forEach(function (d) {
+    if (d.akhir === null || !d.dept) return;
+    if (!perDept[d.dept] || d.akhir > perDept[d.dept].akhir) perDept[d.dept] = d;
+  });
+  const deptUrut = BUDDY_2026.map(function (b) { return b.d; })
+    .filter(function (dp) { return perDept[dp]; });
+  Object.keys(perDept).forEach(function (dp) {
+    if (deptUrut.indexOf(dp) === -1) deptUrut.push(dp);
+  });
+
+  let baris = baris0 + rows.length + 2;
+  sh.getRange(baris, 1, 1, W).merge().setValue('TERBAIK DI TIAP DEPARTEMEN')
+    .setFontWeight('bold').setBackground('#1e3a5f').setFontColor('#ffffff')
+    .setHorizontalAlignment('center');
+  baris++;
+  const subHead = ['Departemen', 'Buddy', 'Nama Bizstar', 'Nilai Akhir', 'Predikat'];
+  sh.getRange(baris, 1, 1, 5).setValues([subHead])
+    .setFontWeight('bold').setBackground('#e8eef7').setFontColor('#1e3a5f');
+  baris++;
+  if (deptUrut.length) {
+    const isi = deptUrut.map(function (dp) {
+      const d = perDept[dp];
+      return [dp, d.buddy || buddyDept(dp) || '—', d.nama, Math.round(d.akhir * 100) / 100, d.predikat];
+    });
+    sh.getRange(baris, 1, isi.length, 5).setValues(isi)
+      .setBorder(true, true, true, true, true, true, '#c9d4e4', SpreadsheetApp.BorderStyle.SOLID);
+    sh.getRange(baris, 4, isi.length, 1).setNumberFormat('0.00');
+  } else {
+    sh.getRange(baris, 1, 1, 5).merge().setValue('Belum ada departemen yang nilainya masuk.')
+      .setFontColor('#888888');
+  }
+
+  [70, 200, 140, 170, 80, 95, 85, 105, 95, 95, 105, 90, 120]
+    .forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
+  sh.setRowHeight(1, 32);
+  return daftar;
+}
+
+function menuPerbaruiPeringkat() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const daftar = rebuildPeringkat();
+    const dinilai = daftar.filter(function (d) { return d.akhir !== null; });
+    const juara = dinilai.length
+      ? '\n\nTeratas saat ini: ' + dinilai[0].nama + ' (' + (Math.round(dinilai[0].akhir * 100) / 100) + ')'
+      : '';
+    const ss = penilaianSS();
+    const beda = ss.getId() !== SpreadsheetApp.getActiveSpreadsheet().getId();
+    ui.alert('Peringkat diperbarui',
+      daftar.length + ' Bizstar masuk daftar, ' + dinilai.length + ' sudah punya nilai.'
+      + juara + '\n\nSheet "Peringkat" ada di file '
+      + (beda ? '"' + ss.getName() + '":\n' + ss.getUrl() : 'ini.'), ui.ButtonSet.OK);
+  } catch (err) {
+    ui.alert('Gagal memperbarui peringkat', String(err.message || err), ui.ButtonSet.OK);
+  }
 }
 
 // ─── Laporan Perkembangan (sheet LAPORAN, untuk penerus) ──────────
@@ -686,9 +1051,10 @@ const LAPORAN_SHEET = 'LAPORAN';
 const LAP_W = 7; // lebar kolom laporan
 
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu('Laporan I-BASS')
-    .addItem('Perbarui Laporan', 'menuGenerateLaporan')
+  SpreadsheetApp.getUi().createMenu('Laporan IBASS')
+    .addItem('Perbarui Peringkat Bizstar', 'menuPerbaruiPeringkat')
     .addSeparator()
+    .addItem('Perbarui Laporan', 'menuGenerateLaporan')
     .addItem('Perbarui Grafik', 'menuPerbaruiGrafik')
     .addItem('Reset Data Track File', 'menuResetTrackFile')
     .addSeparator()
@@ -844,10 +1210,10 @@ function ensureLaporanSheet(ss) {
   if (sh) return sh;
   sh = ss.insertSheet(LAPORAN_SHEET);
   sh.getRange(1, 1, 1, LAP_W).merge();
-  sh.getRange(1, 1).setValue('LAPORAN PERKEMBANGAN — I-BASS 2026')
+  sh.getRange(1, 1).setValue('LAPORAN PERKEMBANGAN — IBASS 2026')
     .setBackground('#1e3a5f').setFontColor('#e8bf6a').setFontWeight('bold').setFontSize(13);
   sh.getRange(2, 1, 1, LAP_W).merge();
-  sh.getRange(2, 1).setValue('Dokumen turunan untuk kepengurusan berikutnya · setiap update ber-stempel waktu · dibuat dari tombol "Perbarui Laporan" di Dashboard Kadiv atau menu "Laporan I-BASS" di sheet ini')
+  sh.getRange(2, 1).setValue('Dokumen turunan untuk kepengurusan berikutnya · setiap update ber-stempel waktu · dibuat dari tombol "Perbarui Laporan" di Dashboard Kadiv atau menu "Laporan IBASS" di sheet ini')
     .setBackground('#13141f').setFontColor('#666688').setFontSize(9).setFontStyle('italic');
   sh.setFrozenRows(2);
   const widths = [130, 260, 110, 120, 95, 110, 220];
@@ -1133,7 +1499,7 @@ function updateGrafik(ss) {
 // ─── Setup awal: buat semua sheet ────────────────────────────────
 function setupSpreadsheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  ss.rename('Track File I-BASS 2026');
+  ss.rename('Track File IBASS 2026');
 
   // Sheet REKAP (di posisi pertama)
   let rekap = ss.getSheetByName('REKAP');
