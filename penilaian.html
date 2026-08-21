@@ -3148,21 +3148,23 @@ function bukaKonfirmasi(){
   muatKonfirmasi();
 }
 
+let konfGagal='';
+
 async function muatKonfirmasi(){
-  const wadah=document.getElementById('daftarKonfirmasi');
-  wadah.innerHTML='<div class="card" style="text-align:center;font-size:0.72rem;color:var(--muted)">Memuat laporan…</div>';
+  daftarProker=null; konfGagal='';
+  gambarKonfirmasi();
   try{
     const r=await fetch(APPS_URL+'?action=keaktifan');
     const js=await r.json();
     if(!js.ok) throw new Error(js.error||'gagal');
     daftarProker=js.daftar||[];
-    gambarKonfirmasi();
   }catch(e){
-    wadah.innerHTML='<div class="card" style="font-size:0.72rem;line-height:1.7;color:var(--text2)">'
-      +'Belum bisa memuat laporan. '
-      +(/tidak dikenal/i.test(e.message||'')?'Server belum diperbarui — hubungi Boss.':'Coba lagi sebentar.')
-      +'</div>';
+    daftarProker=[];
+    konfGagal=/tidak dikenal/i.test(e.message||'')
+      ? 'Server belum diperbarui — kabari Boss.'
+      : 'Periksa koneksimu, lalu coba lagi.';
   }
+  gambarKonfirmasi();
 }
 
 /* Satu kartu Bizstar: nama, poin sementara, dan daftar proker yang dia laporkan. */
@@ -3211,7 +3213,17 @@ function gambarKonfirmasi(){
       +'dan daftar laporan yang perlu kamu cek.</div></div>';
     return;
   }
-  if(!daftarProker || !daftarProker.length){
+  if(daftarProker===null){   // masih diambil dari server, jangan bilang kosong dulu
+    wadah.innerHTML='<div class="card" style="text-align:center;font-size:0.72rem;color:var(--muted)">Memuat laporan…</div>';
+    return;
+  }
+  if(konfGagal){
+    wadah.innerHTML='<div class="card"><div class="konf-kabar">Laporan belum bisa dimuat. '
+      +escHtml(konfGagal)+'</div>'
+      +'<div class="btn-sm-row"><button class="btn-sm" onclick="muatKonfirmasi()">Coba Lagi</button></div></div>';
+    return;
+  }
+  if(!daftarProker.length){
     wadah.innerHTML='<div class="card"><div class="konf-kabar">'
       +'Belum ada satu pun laporan yang masuk. Bagikan dulu link di atas ke grup '
       +escHtml(dept||'Bizstar-mu')+', nanti laporan mereka muncul di sini.</div></div>';
