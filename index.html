@@ -1949,31 +1949,6 @@ input:focus, select:focus, textarea:focus {
           </div>
         </div>
 
-        <!-- POIN TAMBAHAN: keaktifan di luar IBASS -->
-        <div class="card cv-block">
-          <div class="cv-header keaktifan">
-            <span class="cv-pill keaktifan">Keaktifan</span>
-            <span class="cv-weight">Poin Tambahan</span>
-          </div>
-          <div class="ind-row">
-            <div class="ind-meta">
-              <div><div class="ind-desc" style="font-size:0.72rem;line-height:1.6">
-                Seberapa dalam keterlibatannya di kegiatan <strong>luar IBASS</strong>?
-                Nilai dari kedalaman perannya, bukan dari banyaknya kegiatan.
-              </div></div>
-              <div class="ind-val keaktifan" id="b_k1_v">&ndash;</div>
-            </div>
-            <div id="b_k1_lapor" class="lapor-box"></div>
-            <div class="scale-t" id="b_k1"></div>
-            <div class="rubrik-k">
-              <div class="rk-baris"><span class="rk-p no">0</span><span><strong>Belum terlibat</strong> &mdash; belum ada kegiatan di luar IBASS.</span></div>
-              <div class="rk-baris"><span class="rk-p">+3</span><span><strong>Mulai terlibat</strong> &mdash; sudah ikut kegiatan, umumnya sebagai peserta.</span></div>
-              <div class="rk-baris"><span class="rk-p">+6</span><span><strong>Aktif berkontribusi</strong> &mdash; terlibat di beberapa kegiatan, minimal satu sebagai panitia.</span></div>
-              <div class="rk-baris"><span class="rk-p">+10</span><span><strong>Penggerak</strong> &mdash; konsisten aktif dan pernah memegang peran koordinator atau inti.</span></div>
-              <div class="rk-baris"><span class="rk-p no">&mdash;</span><span>Kosongkan kalau kamu tidak yakin. Tidak diisi <strong>tidak mengurangi</strong> nilai Bizstar.</span></div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- KPI PANITIA -->
@@ -2652,71 +2627,6 @@ function rate(id1, id2, val, cv){
 
 /* Keaktifan di luar IBASS — poin tambahan, bukan bagian KPI.
    Tiap kegiatan +0,25 dan dibatasi +1,0 supaya KPI tetap penentu utama. */
-/* Skor KPI berskala 0–100, jadi poin ditulis dalam skala yang sama:
-   +2,5 tiap kegiatan, maksimal +10 (setara 10% — batas yang disepakati). */
-
-/* Tingkat keaktifan — dinilai buddy dari kedalaman peran, bukan dari jumlah kegiatan.
-   Daftar angkanya harus sama persis dengan KEAKTIFAN_TINGKAT di Apps Script. */
-const TINGKAT=[
-  {kode:'tidak',     nama:'Belum terlibat',      poin:0},
-  {kode:'mulai',     nama:'Mulai terlibat',      poin:3},
-  {kode:'aktif',     nama:'Aktif berkontribusi', poin:6},
-  {kode:'penggerak', nama:'Penggerak',           poin:10}
-];
-function cariTingkat(kode){ return TINGKAT.find(t=>t.kode===kode)||null; }
-function poinTingkat(kode){ const t=cariTingkat(kode); return t?t.poin:0; }
-
-/* Laporan kegiatan dari Bizstar, dimuat sekali lalu dipakai untuk semua kartu */
-let laporanKeaktifan=null;
-async function muatLaporanKeaktifan(){
-  if(laporanKeaktifan) return laporanKeaktifan;
-  try{
-    const r=await fetch(APPS_URL+'?action=keaktifan');
-    const js=await r.json();
-    laporanKeaktifan=(js.ok&&js.orang)?js.orang:{};
-  }catch(e){ laporanKeaktifan={}; }
-  gambarKeaktifan();
-  return laporanKeaktifan;
-}
-
-function pilihTingkat(kode){
-  const name=bizList[bizIdx]; if(!name) return;
-  if(!allScores[name]) allScores[name]={};
-  // tekan lagi pilihan yang sama = batalkan
-  allScores[name].tingkat = (allScores[name].tingkat===kode) ? undefined : kode;
-  gambarKeaktifan(); updateLive(); checkCurrent();
-}
-
-function gambarKeaktifan(){
-  const wadah=document.getElementById('b_k1'); if(!wadah) return;
-  const name=bizList[bizIdx];
-  const dipilih=(allScores[name]||{}).tingkat;
-
-  wadah.innerHTML=TINGKAT.map(t=>
-    `<button type="button" class="st${dipilih===t.kode?' lit':''}" onclick="pilihTingkat('${t.kode}')">
-       <span class="nm">${t.nama}</span><span class="pn">${t.poin?'+'+t.poin:'0'}</span></button>`).join('');
-
-  const disp=document.getElementById('b_k1_v');
-  if(disp){ const p=poinTingkat(dipilih); disp.textContent = dipilih ? (p?'+'+p:'0') : '–'; }
-
-  // tampilkan apa yang dilaporkan Bizstar sebagai bahan pertimbangan
-  const kotak=document.getElementById('b_k1_lapor');
-  if(!kotak) return;
-  if(laporanKeaktifan===null){ kotak.innerHTML='<div class="lapor-kosong">Memuat laporan kegiatan…</div>'; return; }
-  const punya=laporanKeaktifan[String(name||'').toLowerCase().trim()];
-  if(!punya||!punya.kegiatan.length){
-    kotak.innerHTML='<div class="lapor-kosong">Belum ada kegiatan yang dilaporkan Bizstar ini. '
-      +'Kamu tetap boleh menilai dari yang kamu ketahui sendiri.</div>';
-    return;
-  }
-  kotak.innerHTML='<div class="lapor-judul">Dilaporkan Bizstar ('+punya.kegiatan.length+')</div>'
-    + punya.kegiatan.map(k=>`<div class="lapor-item">
-        <span class="pr">${(k.peran||'—').replace(/</g,'&lt;')}</span>
-        <span class="jd">${(k.judul||'').replace(/</g,'&lt;')}</span>
-        ${k.bukti?`<a class="bk" href="${k.bukti}" target="_blank" rel="noopener">bukti ↗</a>`:''}
-      </div>`).join('');
-}
-
 function rate5el(id, val, cv){
   const name=bizList[bizIdx]; if(!name)return;
   if(!allScores[name])allScores[name]={};
@@ -2943,9 +2853,6 @@ function loadBizCard(idx){
     restoreScale10('b_a1','b_a1_b','adaptive',sc.a||0);
     restoreScale10('b_b1','b_b1_b','collab',sc.b||0);
     restoreScale10('b_c1','b_c1_b','growth',sc.c||0);
-    gambarKeaktifan();
-    // laporan Bizstar dimuat sekali saja, lalu dipakai untuk semua kartu
-    if(laporanKeaktifan===null) muatLaporanKeaktifan();
     document.getElementById('b_a1_v').textContent=sc.a||'–';
     document.getElementById('b_b1_v').textContent=sc.b||'–';
     document.getElementById('b_c1_v').textContent=sc.c||'–';
@@ -3059,7 +2966,7 @@ function buildReview(){
     const weighted=(isBuddy
       ?(aN*15+bN*20+cN*25)/60
       :(aN*15+bN*15+cN*10)/40)
-      + (isBuddy?poinTingkat((allScores[name]||{}).tingkat):0);
+
     return `<div class="review-item">
       <div class="review-name">${name}</div>
       <div class="review-scores">
@@ -3634,7 +3541,7 @@ window.buildReview = function(){
     const max=isBuddy?10:5;
     const aN=(aRaw/max*100), bN=(bRaw/max*100), cN=(cRaw/max*100);
     const weighted=(isBuddy?(aN*15+bN*20+cN*25)/60:(aN*15+bN*15+cN*10)/40)
-      + (isBuddy?poinTingkat((allScores[name]||{}).tingkat):0);
+
     return `<div class="review-item">
       <div class="review-name">${name}</div>
       <div class="review-scores">
