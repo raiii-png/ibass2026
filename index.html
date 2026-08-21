@@ -3032,10 +3032,6 @@ async function doSubmit(){
     const aN=(sc.a/max*100), bN=(sc.b/max*100), cN=(sc.c/max*100);
     const kpi=isBuddy?(aN*15+bN*20+cN*25)/60:(aN*15+bN*15+cN*10)/40;
     // Poin keaktifan hanya dari buddy; skor akhir = KPI + poin (maks +1,0)
-    const tk=isBuddy?(sc.tingkat||''):'';
-    const info=isBuddy?cariTingkat(tk):null;
-    const poin=info?info.poin:0;
-    const lap=(laporanKeaktifan&&laporanKeaktifan[String(name).toLowerCase().trim()])||null;
     return {
       timestamp:new Date().toISOString(),
       role:currentRole, penilai, dept_penilai:dept, milestone,
@@ -3043,10 +3039,7 @@ async function doSubmit(){
       skor_adaptive_raw:sc.a, skor_collab_raw:sc.b, skor_growth_raw:sc.c,
       skor_adaptive:aN.toFixed(1), skor_collab:bN.toFixed(1), skor_growth:cN.toFixed(1),
       skor_kpi:kpi.toFixed(2),
-      tingkat_keaktifan:info?info.nama:'',
-      kegiatan_dilaporkan:lap?lap.kegiatan.map(k=>k.judul).join(' · '):'',
-      poin_keaktifan:poin.toFixed(2),
-      skor_weighted:(kpi+poin).toFixed(2),
+      skor_weighted:kpi.toFixed(2),
       kelebihan:sc.catKel||'', perbaikan:sc.catPer||''
     };
   });
@@ -3580,10 +3573,6 @@ window.doSubmit = async function(){
       const aN=(sc.a/max*100), bN=(sc.b/max*100), cN=(sc.c/max*100);
       const kpi=isBuddy?(aN*15+bN*20+cN*25)/60:(aN*15+bN*15+cN*10)/40;
       // Poin keaktifan hanya dari buddy; skor akhir = KPI + poin (dibatasi POIN_MAKS)
-      const tk=isBuddy?(sc.tingkat||''):'';
-      const info=isBuddy?cariTingkat(tk):null;
-      const poin=info?info.poin:0;
-      const lap=(laporanKeaktifan&&laporanKeaktifan[String(name).toLowerCase().trim()])||null;
       return {
         timestamp:new Date().toISOString(),
         role:currentRole, penilai, dept_penilai:dept, milestone,
@@ -3591,10 +3580,7 @@ window.doSubmit = async function(){
         skor_adaptive_raw:sc.a, skor_collab_raw:sc.b, skor_growth_raw:sc.c,
         skor_adaptive:aN.toFixed(1), skor_collab:bN.toFixed(1), skor_growth:cN.toFixed(1),
         skor_kpi:kpi.toFixed(2),
-        tingkat_keaktifan:info?info.nama:'',
-        kegiatan_dilaporkan:lap?lap.kegiatan.map(k=>k.judul).join(' · '):'',
-        poin_keaktifan:poin.toFixed(2),
-        skor_weighted:(kpi+poin).toFixed(2),
+        skor_weighted:kpi.toFixed(2),
         kelebihan:sc.catKel||'', perbaikan:sc.catPer||''
       };
     });
