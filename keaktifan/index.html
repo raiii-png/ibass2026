@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d1c3a">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+<title>Lapor Keaktifan — IBASS 2026</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230d1c3a'/><path d='M16 5.5l2.7 7.1L26 13.8l-5.7 4.7L22 26l-6-3.9L10 26l1.7-7.5L6 13.8l7.3-1.2z' fill='%23e8bf6a'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1c3a;--bg2:#122448;--bg3:#182e58;--bg4:#1f3866;--blue2:#86cff5;
+  --gold:#c8922a;--gold2:#e8bf6a;--text:#eaf4ff;--text2:#b4d0ec;--muted:#7e9cc0;
+  --bdr:rgba(120,190,240,0.26);--bdr2:rgba(120,190,240,0.13);
+  --green:#36c97a;--amber:#f0a820;--red:#e05260;--r:10px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:'Raleway',sans-serif;font-weight:300;
+  min-height:100dvh;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(165deg,#22406f 0%,#152c54 45%,#0b1c3c 100%)}
+.wrap{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:1rem .9rem 2rem;
+  display:flex;flex-direction:column;gap:.75rem}
+.kop{text-align:center;padding:.4rem 0 .9rem;border-bottom:1px solid var(--bdr2)}
+.kop h1{font-family:'Cinzel',serif;font-size:1.05rem;letter-spacing:.1em;font-weight:600}
+.kop p{font-size:.58rem;letter-spacing:.2em;color:var(--gold2);text-transform:uppercase;margin-top:4px;font-weight:500}
+.card{background:var(--bg2);border:1px solid var(--bdr2);border-radius:var(--r);padding:.95rem 1rem}
+.lbl{font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.2em;color:var(--gold2);
+  text-transform:uppercase;margin-bottom:.6rem;padding-bottom:.35rem;position:relative}
+.lbl::after{content:'';position:absolute;left:0;bottom:0;width:32px;height:1px;
+  background:linear-gradient(90deg,var(--gold2),transparent)}
+label.f{display:block;font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem}
+input,select{width:100%;background:var(--bg3);border:1px solid var(--bdr2);color:var(--text);
+  font-family:'Raleway',sans-serif;font-size:.92rem;padding:.7rem .8rem;border-radius:var(--r);outline:none}
+input:focus,select:focus{border-color:rgba(232,191,106,.55);box-shadow:0 0 0 2px rgba(232,191,106,.12)}
+.field{margin-bottom:.7rem}
+.btn{width:100%;background:transparent;border:1px solid var(--bdr);color:var(--text);
+  font-family:'Cinzel',serif;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;
+  padding:.8rem;border-radius:var(--r);cursor:pointer;min-height:46px}
+.btn.gold{border-color:rgba(232,191,106,.5);color:var(--gold2)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.note{font-size:.66rem;color:var(--muted);line-height:1.7}
+.tingkat{display:flex;flex-direction:column;gap:.45rem}
+.tk{display:flex;align-items:flex-start;gap:.6rem;font-size:.7rem;line-height:1.6;color:var(--text2)}
+.tk-p{flex-shrink:0;min-width:46px;text-align:center;font-family:'Cinzel',serif;font-size:.62rem;
+  color:var(--gold2);border:1px solid rgba(232,191,106,.35);border-radius:999px;padding:.12rem .35rem}
+.tk-p.no{color:var(--muted);border-color:var(--bdr2)}
+.tk b{color:var(--text);font-weight:500}
+.lap{display:flex;align-items:center;gap:.6rem;background:var(--bg3);border:1px solid var(--bdr2);
+  border-radius:8px;padding:.55rem .65rem;margin-bottom:.35rem}
+.lap-nm{font-size:.78rem;word-break:break-word}
+.lap-sub{font-size:.58rem;color:var(--muted);margin-top:2px}
+#pesan{font-size:.7rem;line-height:1.7;padding:.7rem .8rem;border-radius:var(--r);display:none;margin-top:.7rem}
+#pesan.ok{display:block;background:rgba(54,201,122,.1);border:1px solid rgba(54,201,122,.4);color:var(--text2)}
+#pesan.bad{display:block;background:rgba(224,82,96,.1);border:1px solid rgba(224,82,96,.45);color:var(--text2)}
+.spinner{display:inline-block;width:11px;height:11px;border:2px solid var(--bdr2);
+  border-top-color:var(--gold2);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kop">
+    <h1>Lapor Keaktifan</h1>
+    <p>IBASS 2026 · Kegiatan di Luar IBASS</p>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Cara Penilaiannya</div>
+    <div class="note" style="margin-bottom:.7rem">
+      Laporan ini dibaca buddy-mu. Buddy yang menentukan tingkat keaktifanmu &mdash;
+      bukan dihitung dari banyaknya kegiatan, tapi dari <strong>seberapa dalam kamu terlibat</strong>.
+    </div>
+    <div class="tingkat">
+      <div class="tk"><span class="tk-p no">0</span><span><b>Belum terlibat</b> &mdash; belum ada kegiatan di luar IBASS.</span></div>
+      <div class="tk"><span class="tk-p">+3</span><span><b>Mulai terlibat</b> &mdash; sudah ikut kegiatan, umumnya sebagai peserta.</span></div>
+      <div class="tk"><span class="tk-p">+6</span><span><b>Aktif berkontribusi</b> &mdash; terlibat di beberapa kegiatan, minimal satu sebagai panitia.</span></div>
+      <div class="tk"><span class="tk-p">+10</span><span><b>Penggerak</b> &mdash; konsisten aktif dan pernah memegang peran koordinator atau inti.</span></div>
+    </div>
+    <div class="note" style="margin-top:.7rem">
+      Jadi satu kepanitiaan yang kamu urus sungguh-sungguh bisa bernilai lebih tinggi
+      daripada lima kegiatan yang cuma hadir. Tulis peranmu sejujurnya.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Laporkan Kegiatan</div>
+    <div class="field">
+      <label class="f">Nama Lengkap</label>
+      <input type="text" id="nama" list="daftarNama" placeholder="Nama lengkapmu" autocomplete="name">
+      <datalist id="daftarNama"></datalist>
+    </div>
+    <div class="field">
+      <label class="f">Departemen</label>
+      <select id="dept"><option value="">— Pilih —</option>
+        <option>HRD</option><option>MEIN</option><option>ACT</option><option>Finance</option>
+        <option>Advocacy</option><option>Secretary</option><option>External Affairs</option>
+        <option>Entrepreneurship</option></select>
+    </div>
+    <div class="field">
+      <label class="f">Nama Kegiatan</label>
+      <input type="text" id="judul" placeholder="Contoh: Adbis Cup 2026">
+    </div>
+    <div class="field">
+      <label class="f">Peran Kamu</label>
+      <select id="peran">
+        <option>Peserta</option>
+        <option>Panitia</option>
+        <option>Koordinator / Kepala Divisi</option>
+        <option>Ketua / Inti</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="f">Tanggal</label>
+      <input type="date" id="tanggal">
+    </div>
+    <div class="field">
+      <label class="f">Bukti (opsional tapi disarankan)</label>
+      <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">
+        <label class="btn" style="width:auto;padding:.55rem .9rem;margin:0;cursor:pointer">Unggah Foto
+          <input type="file" accept="image/*" style="display:none" id="berkas"></label>
+        <span style="font-size:.6rem;color:var(--muted)">atau</span>
+        <input type="text" id="bukti" placeholder="tempel link" style="flex:1;min-width:120px">
+      </div>
+      <div id="statusUnggah" class="note" style="margin-top:.3rem;display:none"></div>
+    </div>
+    <button class="btn gold" id="kirim">Kirim Laporan →</button>
+    <div id="pesan"></div>
+  </div>
+
+  <div class="card" id="kartuSaya" style="display:none">
+    <div class="lbl">Kegiatan yang Sudah Kamu Laporkan</div>
+    <div id="daftarSaya"></div>
+  </div>
+
+  <div class="note" style="text-align:center;opacity:.5;font-size:.55rem;letter-spacing:.08em">Versi 20 Agu · 1</div>
+</div>
+
+<script>
+const GAS_URL='https://script.google.com/macros/s/AKfycbxCTCMFY1KEBuT6TeiBbMeDgB-JL2o3zOXtdvpDagd1E-tMScq45uxX-nwUqA9qf9Becg/exec';
+const $=id=>document.getElementById(id);
+const esc=s=>{const d=document.createElement('div');d.textContent=String(s==null?'':s);return d.innerHTML;};
+
+async function keServer(body){
+  const r=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+  const t=await r.text();
+  let js=null; try{js=JSON.parse(t);}catch(e){}
+  if(!js) throw new Error('Server sedang tidak bisa dihubungi');
+  if(!js.ok) throw new Error(/tidak dikenal/i.test(js.error||'')
+    ? 'Server belum diperbarui — hubungi panitia IBASS' : (js.error||'ditolak server'));
+  return js;
+}
+function pesan(t,baik){ const p=$('pesan'); p.className=baik?'ok':'bad'; p.innerHTML=t; }
+
+async function muatSaran(){
+  try{
+    const r=await fetch(GAS_URL+'?action=penilaian');
+    const js=await r.json();
+    if(!js.ok||!js.penilaian) return;
+    const unik=[...new Set(js.penilaian.map(p=>String(p.nama_bizstar||'').trim()).filter(Boolean))].sort();
+    $('daftarNama').innerHTML=unik.map(n=>`<option value="${esc(n)}">`).join('');
+  }catch(e){}
+}
+
+$('berkas').addEventListener('change',function(){
+  const f=this.files&&this.files[0]; if(!f) return;
+  this.value='';
+  if(f.size>6*1024*1024){ pesan('Foto terlalu besar (maksimal 6 MB).',false); return; }
+  const st=$('statusUnggah');
+  st.style.display='block'; st.innerHTML='<span class="spinner"></span> Mengunggah…';
+  const fr=new FileReader();
+  fr.onload=async()=>{
+    try{
+      const js=await keServer({action:'uploadfile',data:String(fr.result).split(',')[1],
+        mime:f.type||'image/jpeg',nama:f.name});
+      if(!js.url) throw new Error('gagal');
+      $('bukti').value=js.url; st.innerHTML='Bukti terunggah ✓';
+    }catch(e){ st.style.display='none'; pesan('Gagal mengunggah: '+esc(e.message),false); }
+  };
+  fr.readAsDataURL(f);
+});
+
+$('kirim').onclick=async()=>{
+  const nama=$('nama').value.trim(), judul=$('judul').value.trim();
+  if(!nama){ pesan('Nama lengkap wajib diisi.',false); $('nama').focus(); return; }
+  if(!judul){ pesan('Nama kegiatan wajib diisi.',false); $('judul').focus(); return; }
+  const b=$('kirim'); b.disabled=true; b.innerHTML='<span class="spinner"></span> Mengirim…';
+  try{
+    const js=await keServer({action:'keaktifanlapor',nama,dept:$('dept').value,judul,
+      peran:$('peran').value,tanggal:$('tanggal').value,bukti:$('bukti').value.trim()});
+    try{ localStorage.setItem('ibass_keaktifan_nama',nama); }catch(e){}
+    pesan(js.kembar
+      ? 'Kegiatan ini <b>sudah pernah kamu laporkan</b>, jadi tidak ditambahkan lagi.'
+      : 'Laporan tersimpan. Buddy-mu akan melihatnya saat menilai.',true);
+    ['judul','tanggal','bukti'].forEach(i=>$(i).value='');
+    $('statusUnggah').style.display='none';
+    muatPunyaku(nama);
+  }catch(e){ pesan('Gagal mengirim: '+esc(e.message),false); }
+  b.disabled=false; b.textContent='Kirim Laporan →';
+};
+
+async function muatPunyaku(nama){
+  if(!nama) return;
+  try{
+    const r=await fetch(GAS_URL+'?action=keaktifan');
+    const js=await r.json();
+    if(!js.ok) return;
+    const punya=(js.orang||{})[nama.toLowerCase().trim()];
+    if(!punya||!punya.kegiatan.length) return;
+    $('kartuSaya').style.display='block';
+    $('daftarSaya').innerHTML=punya.kegiatan.slice().reverse().map(k=>`
+      <div class="lap"><div style="flex:1;min-width:0">
+        <div class="lap-nm">${esc(k.judul)}</div>
+        <div class="lap-sub">${esc(k.peran||'—')}${k.tanggal?' · '+esc(k.tanggal):''}${k.bukti?' · ada bukti':''}</div>
+      </div></div>`).join('');
+  }catch(e){}
+}
+
+muatSaran();
+try{
+  const n=localStorage.getItem('ibass_keaktifan_nama');
+  if(n){ $('nama').value=n; muatPunyaku(n); }
+}catch(e){}
+$('nama').addEventListener('change',()=>muatPunyaku($('nama').value.trim()));
+</script>
+</body>
+</html>

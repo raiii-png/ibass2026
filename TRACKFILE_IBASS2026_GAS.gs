@@ -46,10 +46,19 @@ function geminiKey() {
 const PENILAIAN_TOKEN = 'ibass26-vGDnSmco7cBoju';
 const PENILAIAN_SHEET = 'Penilaian';
 const HT_SHEET = 'HT'; // pesan suara/teks antar panitia saat kegiatan
+const KEAKTIFAN_SHEET = 'Keaktifan'; // kegiatan luar IBASS yang dilaporkan Bizstar sendiri
+/* Tingkat keaktifan dinilai buddy, bukan dihitung per kegiatan. Angka poin
+   dipusatkan di sini supaya web penilaian dan sheet tidak pernah beda. */
+const KEAKTIFAN_TINGKAT = [
+  { kode: 'tidak',     nama: 'Belum terlibat',      poin: 0 },
+  { kode: 'mulai',     nama: 'Mulai terlibat',      poin: 3 },
+  { kode: 'aktif',     nama: 'Aktif berkontribusi', poin: 6 },
+  { kode: 'penggerak', nama: 'Penggerak',           poin: 10 }
+];
 const PENILAIAN_HEADER = ['Waktu', 'Peran', 'Penilai', 'Dept Penilai', 'Milestone', 'Nama Bizstar',
   'Adaptive (raw)', 'Collaborative (raw)', 'Growth (raw)',
   'Adaptive %', 'Collaborative %', 'Growth %', 'Skor KPI',
-  'Kegiatan Luar', 'Daftar Kegiatan', 'Poin Keaktifan', 'Skor Akhir', 'Kelebihan', 'Perlu Perbaikan'];
+  'Tingkat Keaktifan', 'Kegiatan Dilaporkan', 'Poin Keaktifan', 'Skor Akhir', 'Kelebihan', 'Perlu Perbaikan'];
 
 // ─── GET: baca data ──────────────────────────────────────────────
 function doGet(e) {
@@ -93,6 +102,26 @@ function doGet(e) {
     if (action === 'penilaian') {
       // Baca semua penilaian Bizstar yang sudah masuk
       return jsonOk({ penilaian: readPenilaian(ss) });
+    }
+
+    if (action === 'keaktifan') {
+      // Daftar kegiatan luar IBASS yang dilaporkan Bizstar, dikelompokkan per nama.
+      // Dipakai buddy sebagai bahan pertimbangan saat menentukan tingkat keaktifan.
+      const sh = penilaianSS().getSheetByName(KEAKTIFAN_SHEET);
+      const perOrang = {};
+      if (sh && sh.getLastRow() > 1) {
+        sh.getRange(2, 1, sh.getLastRow() - 1, 8).getValues().forEach(function (r) {
+          if (!r[0]) return;
+          const nama = String(r[2] || '').trim();
+          const kunci = nama.toLowerCase();
+          if (!perOrang[kunci]) perOrang[kunci] = { nama: nama, dept: String(r[3] || ''), kegiatan: [] };
+          perOrang[kunci].kegiatan.push({
+            id: Number(r[0]), waktu: String(r[1] || ''), judul: String(r[4] || ''),
+            peran: String(r[5] || ''), tanggal: String(r[6] || ''), bukti: String(r[7] || '')
+          });
+        });
+      }
+      return jsonOk({ orang: perOrang, tingkat: KEAKTIFAN_TINGKAT });
     }
 
     if (action === 'laporanurl') {
@@ -373,6 +402,32 @@ function doPost(e) {
       return jsonOk({ url: file.getUrl() });
     }
 
+    // ── Bizstar melaporkan sendiri kegiatan di luar IBASS ──
+    if (action === 'keaktifanlapor') {
+      if (!body.nama || !body.judul) return jsonErr('Nama dan nama kegiatan wajib diisi');
+      const ss2 = penilaianSS();
+      let sh = ss2.getSheetByName(KEAKTIFAN_SHEET);
+      if (!sh) {
+        sh = ss2.insertSheet(KEAKTIFAN_SHEET);
+        sh.getRange(1, 1, 1, 8).setValues([['id', 'waktu lapor', 'nama bizstar', 'departemen',
+          'kegiatan', 'peran', 'tanggal', 'bukti']]).setFontWeight('bold');
+        sh.setFrozenRows(1);
+        [90, 150, 170, 120, 230, 140, 100, 240].forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
+      }
+      const nama = String(body.nama).trim(), judul = String(body.judul).trim();
+      // Tolak laporan kembar dari orang yang sama
+      if (sh.getLastRow() > 1) {
+        const rapikan = function (s) { return String(s).toLowerCase().replace(/[^a-z0-9]/g, ''); };
+        const nb = rapikan(nama), jb = rapikan(judul);
+        const adaKembar = sh.getRange(2, 1, sh.getLastRow() - 1, 5).getValues()
+          .some(function (r) { return rapikan(r[2]) === nb && rapikan(r[4]) === jb; });
+        if (adaKembar) return jsonOk({ kembar: true });
+      }
+      sh.appendRow([Date.now(), new Date().toISOString(), nama, String(body.dept || ''),
+        judul, String(body.peran || ''), String(body.tanggal || ''), String(body.bukti || '')]);
+      return jsonOk({ tersimpan: true });
+    }
+
     // ── Upload berkas Track File (Word/Sheet/PDF/gambar dll) → Google Drive ──
     if (action === 'uploadfile') {
       if (!body.data) return jsonErr('Tidak ada berkas');
@@ -548,7 +603,7 @@ function ensurePenilaianSheet(ssAbaikan) {
     .setBackground('#1e3a5f').setFontColor('#5bc4f5')
     .setFontWeight('bold').setFontSize(10);
   sheet.setFrozenRows(1);
-  const widths = [140, 70, 150, 110, 110, 150, 90, 110, 80, 80, 100, 70, 80, 95, 230, 105, 85, 220, 220];
+  const widths = [140, 70, 150, 110, 110, 150, 90, 110, 80, 80, 100, 70, 80, 140, 250, 105, 85, 220, 220];
   widths.forEach((w, i) => sheet.setColumnWidth(i + 1, w));
   return sheet;
 }
@@ -568,8 +623,8 @@ function savePenilaian(ss, submissions) {
     s.skor_adaptive_raw, s.skor_collab_raw, s.skor_growth_raw,
     s.skor_adaptive, s.skor_collab, s.skor_growth,
     s.skor_kpi !== undefined ? s.skor_kpi : s.skor_weighted,
-    s.kegiatan_luar !== undefined ? s.kegiatan_luar : '',
-    s.daftar_kegiatan !== undefined ? s.daftar_kegiatan : '',
+    s.tingkat_keaktifan !== undefined ? s.tingkat_keaktifan : '',
+    s.kegiatan_dilaporkan !== undefined ? s.kegiatan_dilaporkan : '',
     s.poin_keaktifan !== undefined ? s.poin_keaktifan : '',
     s.skor_weighted,
     s.kelebihan || '',
@@ -589,7 +644,7 @@ function readPenilaian(ssAbaikan) {
     nama_bizstar: r[5],
     skor_adaptive_raw: r[6], skor_collab_raw: r[7], skor_growth_raw: r[8],
     skor_adaptive: r[9], skor_collab: r[10], skor_growth: r[11],
-    skor_kpi: r[12], kegiatan_luar: r[13], daftar_kegiatan: r[14], poin_keaktifan: r[15],
+    skor_kpi: r[12], tingkat_keaktifan: r[13], kegiatan_dilaporkan: r[14], poin_keaktifan: r[15],
     skor_weighted: r[16],
     kelebihan: r[17], perbaikan: r[18]
   }));
@@ -619,9 +674,45 @@ function onOpen() {
     .addItem('Perbarui Grafik', 'menuPerbaruiGrafik')
     .addItem('Reset Data Track File', 'menuResetTrackFile')
     .addSeparator()
-    .addItem('Pisahkan File Penilaian', 'menuPisahPenilaian')
+    .addItem('Pisahkan File Penilaian (buat baru)', 'menuPisahPenilaian')
+    .addItem('Pakai File Penilaian yang Sudah Ada', 'menuHubungkanPenilaian')
     .addItem('Lihat Lokasi File Penilaian', 'menuLokasiPenilaian')
     .addToUi();
+}
+
+/* Kalau file penilaian sudah dibuat sendiri, cukup hubungkan lewat link-nya.
+   TIDAK perlu memasang ulang kode Apps Script di file itu — satu script ini
+   sudah melayani semuanya. */
+function menuHubungkanPenilaian() {
+  const ui = SpreadsheetApp.getUi();
+  const resp = ui.prompt('Pakai File Penilaian yang Sudah Ada',
+    'Tempel LINK (URL) file spreadsheet penilaian yang sudah kamu buat:',
+    ui.ButtonSet.OK_CANCEL);
+  if (resp.getSelectedButton() !== ui.Button.OK) return;
+
+  const teks = String(resp.getResponseText() || '').trim();
+  const cocok = /\/d\/([a-zA-Z0-9_-]{20,})/.exec(teks);
+  const id = cocok ? cocok[1] : (/^[a-zA-Z0-9_-]{20,}$/.test(teks) ? teks : '');
+  if (!id) { ui.alert('Link tidak dikenali.\n\nSalin URL lengkap dari bilah alamat file penilaian, lalu coba lagi.'); return; }
+
+  let target;
+  try { target = SpreadsheetApp.openById(id); }
+  catch (e) { ui.alert('File tidak bisa dibuka. Pastikan kamu punya akses ke file itu.'); return; }
+
+  // Pindahkan data lama kalau ada, supaya tidak ada penilaian yang tertinggal
+  const asal = SpreadsheetApp.getActiveSpreadsheet();
+  const lama = asal.getSheetByName(PENILAIAN_SHEET);
+  let pindah = 0;
+  if (lama && lama.getLastRow() > 1 && !target.getSheetByName(PENILAIAN_SHEET)) {
+    const salinan = lama.copyTo(target);
+    salinan.setName(PENILAIAN_SHEET);
+    pindah = lama.getLastRow() - 1;
+    lama.setName('Penilaian (pindah)');
+  }
+  PropertiesService.getScriptProperties().setProperty(PENILAIAN_SS_KEY, id);
+  ui.alert('Terhubung ke: ' + target.getName() +
+    (pindah ? '\n\n' + pindah + ' baris penilaian lama ikut dipindahkan.' : '') +
+    '\n\nMulai sekarang semua penilaian masuk ke file itu.');
 }
 
 /* Pindahkan sheet Penilaian ke file spreadsheet sendiri.
