@@ -10,7 +10,55 @@ metadata:
 
 # Proyek IBASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
 
-## KEAKTIFAN JADI MENU TERPISAH (2026-08-21/22) — KONDISI TERAKHIR
+## PERINGKAT + KONFIRMASI PER BUDDY (2026-08-22, commit 827ae06) — KONDISI TERAKHIR
+- **Sheet `Peringkat`** dibangun `rebuildPeringkat()` di file penilaian (`penilaianSS()`),
+  BUKAN di Track File. Nilai Akhir = nilai KPI (0–100) + poin keaktifan (maks +10).
+  Kalau satu Bizstar dinilai buddy DAN panitia: `BOBOT_BUDDY` 0.7 / `BOBOT_PANITIA` 0.3.
+  Kolom: Peringkat, Nama, Departemen, Buddy, Nilai KPI, Poin, Nilai Akhir, Predikat,
+  jumlah penilai buddy/panitia, milestone terisi, proker hadir, menunggu konfirmasi.
+  Juara 1–3 diwarnai; baris "belum dinilai" kelabu di bawah; blok kedua
+  **"Terbaik di Tiap Departemen"**. Rebuild otomatis tiap `savePenilaian` &
+  `keaktifankonfirm` (dibungkus try/catch), plus menu `Perbarui Peringkat Bizstar`
+  dan endpoint `?action=peringkat` (`&segarkan=1` untuk sekalian menulis sheet).
+- **Konfirmasi Proker dirombak**: buddy pilih nama dari dropdown 8 buddy (`BUDDY_2026`),
+  departemen kebaca sendiri -> muncul kartu **link khusus** `keaktifan/?dept=X&buddy=Y`
+  + tombol Salin Link / Salin Pesan WA. Daftar laporan disaring per departemen; yang dari
+  departemen lain TETAP ditampilkan di bawah pemisah "Departemen lain" (biar tidak hilang
+  kalau Bizstar salah pilih dept). Opsi "Bukan salah satu di atas" -> ketik nama sendiri,
+  semua laporan ditampilkan.
+- `keaktifan/index.html` membaca `?dept=`/`?buddy=`, mengisi dropdown departemen, dan
+  menampilkan kartu "Buddy Kamu". Departemen sekarang WAJIB diisi.
+- Form penilaian: `namaPenilai` punya datalist 8 buddy; ketik nama buddy -> departemen terisi
+  otomatis (`namaPenilaiBerubah()`).
+- **`BUDDY_2026` ada di TIGA file** — `index.html`, `keaktifan/index.html`,
+  `TRACKFILE_IBASS2026_GAS.gs`. Ganti orang = ganti di ketiganya. Isinya sama persis dengan
+  `AC_BUDDY_SEED` di kadiv/index.html.
+- Ejaan **IBASS** (bukan I-BASS) di seluruh proyek. Folder Drive lama tidak ditinggal:
+  `folderDrive(namaBaru, namaLama)` me-rename folder lama kalau ketemu.
+- Skrip presentasi buddy: `PANDUAN_BUDDY_IBASS2026.md` + artefak
+  https://claude.ai/code/artifact/7af6146b-d4ad-4680-9788-75b61dd456ef
+
+## BUG KRITIS YANG SUDAH DIPERBAIKI (2026-08-22) — JANGAN DIULANG
+- `PENILAIAN_HEADER` ditambah kolom `'Skor KPI'` pada commit 621e626 (2026-08-20 19:24) tanpa
+  menambah nilainya di baris `savePenilaian` -> 15 nilai dimasukkan ke range 16 kolom ->
+  `setValues` selalu melempar. Web mengirim dengan `mode:'no-cors'` jadi errornya TIDAK
+  kelihatan: **semua penilaian yang dikirim 20–22 Agustus hilang**. Sudah dites ulang dengan
+  Sheets tiruan (44 assertion lolos, `scratchpad/test_peringkat.js`).
+- Aturan: kalau menambah kolom di `PENILAIAN_HEADER`, WAJIB menambah nilainya di `savePenilaian`.
+- `readPenilaian()` sekarang memetakan kolom lewat NAMA header + menambal baris pra-20-Agustus
+  yang catatannya bergeser satu kolom.
+
+## PENDING (per 2026-08-22 subuh) — TITIK RESUME
+1. **Boss harus Deploy -> Manage deployments -> New version** supaya `?action=peringkat`,
+   perbaikan `savePenilaian`, dan `keaktifan*` hidup. Lalu F5 spreadsheet biar menu
+   "Laporan IBASS -> Perbarui Peringkat Bizstar" muncul.
+2. **`BIZSTAR_DB` di index.html MASIH PLACEHOLDER** (`HRD-01 [Nama]` dst). Harus diisi nama
+   asli SEBELUM buddy mulai mengisi KPI — kalau tidak, nilai masuk atas nama placeholder.
+   Daftar nama Bizstar belum ada di mana pun di laptop (sudah dicari di Downloads).
+3. Peringkat belum ditampilkan di dashboard kadiv — Boss cuma minta "di sheet", jadi sengaja
+   tidak dibuat. Tawarkan kalau nanti diminta.
+
+## KEAKTIFAN JADI MENU TERPISAH (2026-08-21/22)
 - Halaman baru **`keaktifan/index.html`** -> `raiii-png.github.io/ibass2026/keaktifan/`. Sublink
   khusus **Bizstar**: isi Nama, Departemen, Nama Proker HIMA, Tanggal Kehadiran, Bukti
   (tempel link atau upload lewat `action:'uploadfile'`).
@@ -41,15 +89,6 @@ metadata:
   data terpecah tanpa kelihatan.
 - Menu Sheets: `Pisahkan File Penilaian (buat baru)` / `Pakai File Penilaian yang Sudah Ada`
   (tempel link sheet yang sudah terlanjur dibuat, data lama ikut pindah) / `Lihat Lokasi File Penilaian`.
-
-## PENDING (per 2026-08-22) — TITIK RESUME
-- **Belum ada layar "nilai akhir = KPI + poin keaktifan".** Dua nilai masih tersimpan terpisah
-  (sheet Penilaian vs sheet Keaktifan). Komentar `skor akhir = KPI + poin` di index.html
-  (~baris 3267 & 3808) itu catatan niat, BUKAN kode yang jalan — submit KPI tidak menambah poin.
-- Tawaran yang belum dijawab Boss: **tabel peringkat Best Bizstar di dashboard kadiv**
-  (KPI + poin keaktifan jadi satu, biar tak hitung manual).
-- Boss masih harus **Deploy -> Manage deployments -> New version** supaya action `keaktifan*`
-  hidup, lalu F5 spreadsheet biar menunya muncul, lalu sebarkan link `/keaktifan/` ke Bizstar.
 
 ## HT: PANGGILAN HANTU & MASUK CEPAT (2026-08-06, uji Boss ke-3)
 - **Bug**: buka HT → langsung "memanggil" + bergetar padahal belum ada yang dikasih link.
