@@ -519,20 +519,26 @@ body {
 .cv-header.keaktifan { background: rgba(232,191,106,0.08); border-bottom: 1px solid rgba(232,191,106,0.2); }
 .cv-pill.keaktifan { background: rgba(232,191,106,0.15); color: #e8bf6a; }
 .ind-val.keaktifan { color: #e8bf6a; text-shadow: 0 0 12px rgba(232,191,106,0.35); }
-.scale-k { display: grid; grid-template-columns: repeat(5,1fr); gap: 0.28rem; }
-.sk {
-  height: 46px; border: 1px solid var(--bdr2);
-  background: var(--bg3); color: var(--text2);
-  font-family: 'Cinzel Decorative', serif; font-size: 0.82rem;
-  cursor: pointer; transition: all 0.15s; border-radius: var(--r);
-  -webkit-tap-highlight-color: transparent; user-select: none;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15;
-}
-.sk small { font-family: 'Raleway',sans-serif; font-size: 0.5rem; letter-spacing: 0.06em; color: var(--muted); }
-.sk:active { transform: scale(0.94); }
-.sk:hover { border-color: var(--bdr); color: var(--text); background: var(--bg4); }
-.sk.lit { background: rgba(232,191,106,0.16); border-color: #c8922a; color: #e8bf6a; }
-.sk.lit small { color: #e8bf6a; }
+.keg-input { display: flex; gap: 0.35rem; }
+.keg-input input { flex: 1; min-width: 0; background: var(--bg3); border: 1px solid var(--bdr2);
+  color: var(--text); font-family: 'Raleway',sans-serif; font-size: 0.86rem;
+  padding: 0.6rem 0.7rem; border-radius: var(--r); outline: none; }
+.keg-input input:focus { border-color: rgba(232,191,106,0.55); box-shadow: 0 0 0 2px rgba(232,191,106,0.12); }
+.keg-input button { flex-shrink: 0; background: transparent; border: 1px solid rgba(232,191,106,0.45);
+  color: #e8bf6a; font-family: 'Cinzel',serif; font-size: 0.58rem; letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 0 0.85rem; border-radius: var(--r); cursor: pointer; }
+.keg-input button:active { background: var(--bg4); }
+.keg-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+.keg-chips:empty { display: none; }
+.kchip { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.7rem;
+  background: rgba(232,191,106,0.14); border: 1px solid rgba(232,191,106,0.4); color: #e8bf6a;
+  padding: 0.28rem 0.5rem 0.28rem 0.6rem; border-radius: 999px; max-width: 100%; }
+.kchip.lebih { background: var(--bg3); border-color: var(--bdr2); color: var(--muted); }
+.kchip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kchip b { font-weight: 500; font-size: 0.58rem; opacity: 0.75; }
+.kchip button { background: none; border: none; color: inherit; cursor: pointer;
+  font-size: 0.85rem; line-height: 1; padding: 0 0.1rem; opacity: 0.7; }
+.kchip button:hover { opacity: 1; }
 .rubrik-k { margin-top: 0.7rem; padding-top: 0.65rem; border-top: 1px solid var(--bdr2);
   display: flex; flex-direction: column; gap: 0.4rem; }
 .rk-baris { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.66rem;
@@ -1946,16 +1952,21 @@ input:focus, select:focus, textarea:focus {
           <div class="ind-row">
             <div class="ind-meta">
               <div><div class="ind-desc" style="font-size:0.72rem;line-height:1.6">
-                Sampai saat ini, berapa kegiatan <strong>di luar IBASS</strong> yang dia ikuti?
-                Isi jumlah totalnya, bukan tambahan sejak milestone lalu.
+                Tulis kegiatan <strong>di luar IBASS</strong> yang dia ikuti sampai saat ini.
+                Sebutkan namanya, bukan cuma jumlahnya &mdash; supaya poinnya bisa dipertanggungjawabkan.
               </div></div>
               <div class="ind-val keaktifan" id="b_k1_v">&ndash;</div>
             </div>
-            <div class="scale-k" id="b_k1"></div>
+            <div class="keg-input">
+              <input type="text" id="b_k1_in" placeholder="Contoh: Adbis Cup 2026" autocomplete="off">
+              <button type="button" onclick="tambahKegiatan()">Tambah</button>
+            </div>
+            <div class="keg-chips" id="b_k1"></div>
             <div class="rubrik-k">
-              <div class="rk-baris"><span class="rk-p">+2,5</span><span>Tiap kegiatan: proker HIMA lain, kepanitiaan, atau kegiatan UKM kampus.</span></div>
-              <div class="rk-baris"><span class="rk-p no">0</span><span>Kegiatan IBASS sendiri tidak dihitung &mdash; sudah masuk penilaian KPI di atas.</span></div>
-              <div class="rk-baris"><span class="rk-p no">maks</span><span>Tambahan dibatasi <strong>+10</strong> dari skor 100. Empat kegiatan sudah mentok.</span></div>
+              <div class="rk-baris"><span class="rk-p">+2,5</span><span>Tiap kegiatan di luar IBASS selama masa kepengurusan: proker HIMA lain, kepanitiaan, atau kegiatan UKM kampus.</span></div>
+              <div class="rk-baris"><span class="rk-p no">0</span><span>Kegiatan IBASS sendiri tidak dihitung &mdash; sudah dinilai lewat KPI di atas.</span></div>
+              <div class="rk-baris"><span class="rk-p no">maks</span><span>Dibatasi <strong>+10</strong> dari skor 100. Kegiatan kelima dan seterusnya tetap dicatat, tapi tidak menambah poin.</span></div>
+              <div class="rk-baris"><span class="rk-p no">&mdash;</span><span>Kosongkan saja kalau tidak ada atau kamu tidak yakin. Tidak diisi <strong>tidak mengurangi</strong> nilai Bizstar.</span></div>
             </div>
           </div>
         </div>
@@ -2642,31 +2653,48 @@ function rate(id1, id2, val, cv){
 const POIN_KEGIATAN = 2.5, POIN_MAKS = 10;
 function poinKeaktifan(n){ return Math.min((Number(n)||0)*POIN_KEGIATAN, POIN_MAKS); }
 
-function rateK(val){
-  const name=bizList[bizIdx]; if(!name)return;
-  if(!allScores[name])allScores[name]={};
-  // tekan ulang angka yang sama = batalkan
-  allScores[name].k = (allScores[name].k===val) ? undefined : val;
-  gambarKeaktifan();
-  updateLive(); checkCurrent();
+function daftarKegiatan(name){
+  const sc=allScores[name];
+  return (sc && Array.isArray(sc.keg)) ? sc.keg : [];
+}
+function fmtPoin(p){ return (p%1===0?p.toFixed(0):p.toFixed(1).replace('.',',')); }
+
+function tambahKegiatan(){
+  const name=bizList[bizIdx]; if(!name) return;
+  const inp=document.getElementById('b_k1_in'); if(!inp) return;
+  const teks=inp.value.trim();
+  if(!teks) return;
+  if(!allScores[name]) allScores[name]={};
+  if(!Array.isArray(allScores[name].keg)) allScores[name].keg=[];
+  const sudahAda=allScores[name].keg.some(k=>k.toLowerCase()===teks.toLowerCase());
+  if(sudahAda){ inp.value=''; return; }   // jangan dobel
+  allScores[name].keg.push(teks);
+  inp.value='';
+  gambarKeaktifan(); updateLive(); checkCurrent();
+}
+
+function hapusKegiatan(i){
+  const name=bizList[bizIdx]; if(!name) return;
+  const keg=daftarKegiatan(name);
+  keg.splice(i,1);
+  gambarKeaktifan(); updateLive(); checkCurrent();
 }
 
 function gambarKeaktifan(){
   const wadah=document.getElementById('b_k1'); if(!wadah) return;
-  const name=bizList[bizIdx];
-  const nilai=(allScores[name]||{}).k;
-  wadah.innerHTML=[0,1,2,3,4].map(n=>{
-    const lit=nilai===n?' lit':'';
-    const label=n===4?'4+':String(n);
-    const angka=poinKeaktifan(n);
-    const sub=n===0?'tidak ada'
-      :('+'+(angka%1===0?angka.toFixed(0):angka.toFixed(1).replace('.',',')));
-    return `<button class="sk${lit}" onclick="rateK(${n})">${label}<small>${sub}</small></button>`;
+  const keg=daftarKegiatan(bizList[bizIdx]);
+  const batas=Math.floor(POIN_MAKS/POIN_KEGIATAN);   // kegiatan ke berapa poinnya mentok
+  wadah.innerHTML=keg.map((k,i)=>{
+    const berpoin=i<batas;
+    return `<span class="kchip${berpoin?'':' lebih'}">
+      <span>${k.replace(/</g,'&lt;')}</span>
+      <b>${berpoin?'+'+fmtPoin(POIN_KEGIATAN):'0'}</b>
+      <button type="button" title="Hapus" onclick="hapusKegiatan(${i})">&times;</button></span>`;
   }).join('');
   const disp=document.getElementById('b_k1_v');
   if(disp){
-    const p=poinKeaktifan(nilai||0);
-    disp.textContent = nilai==null ? '–' : '+'+(p%1===0?p.toFixed(0):p.toFixed(1).replace('.',','));
+    const p=poinKeaktifan(keg.length);
+    disp.textContent = keg.length ? '+'+fmtPoin(p) : '–';
   }
 }
 
@@ -2897,6 +2925,13 @@ function loadBizCard(idx){
     restoreScale10('b_b1','b_b1_b','collab',sc.b||0);
     restoreScale10('b_c1','b_c1_b','growth',sc.c||0);
     gambarKeaktifan();
+    const kIn=document.getElementById('b_k1_in');
+    if(kIn && !kIn.dataset.siap){
+      kIn.dataset.siap='1';
+      kIn.addEventListener('keydown',e=>{
+        if(e.key==='Enter'){ e.preventDefault(); tambahKegiatan(); }
+      });
+    }
     document.getElementById('b_a1_v').textContent=sc.a||'–';
     document.getElementById('b_b1_v').textContent=sc.b||'–';
     document.getElementById('b_c1_v').textContent=sc.c||'–';
@@ -3010,7 +3045,7 @@ function buildReview(){
     const weighted=(isBuddy
       ?(aN*15+bN*20+cN*25)/60
       :(aN*15+bN*15+cN*10)/40)
-      + (isBuddy?poinKeaktifan(sc.k||0):0);
+      + (isBuddy?poinKeaktifan(daftarKegiatan(name).length):0);
     return `<div class="review-item">
       <div class="review-name">${name}</div>
       <div class="review-scores">
@@ -3076,7 +3111,8 @@ async function doSubmit(){
     const aN=(sc.a/max*100), bN=(sc.b/max*100), cN=(sc.c/max*100);
     const kpi=isBuddy?(aN*15+bN*20+cN*25)/60:(aN*15+bN*15+cN*10)/40;
     // Poin keaktifan hanya dari buddy; skor akhir = KPI + poin (maks +1,0)
-    const nKeg=isBuddy?(sc.k||0):0;
+    const keg=isBuddy?daftarKegiatan(name):[];
+    const nKeg=keg.length;
     const poin=isBuddy?poinKeaktifan(nKeg):0;
     return {
       timestamp:new Date().toISOString(),
@@ -3085,7 +3121,7 @@ async function doSubmit(){
       skor_adaptive_raw:sc.a, skor_collab_raw:sc.b, skor_growth_raw:sc.c,
       skor_adaptive:aN.toFixed(1), skor_collab:bN.toFixed(1), skor_growth:cN.toFixed(1),
       skor_kpi:kpi.toFixed(2),
-      kegiatan_luar:nKeg, poin_keaktifan:poin.toFixed(2),
+      kegiatan_luar:nKeg, daftar_kegiatan:keg.join(' · '), poin_keaktifan:poin.toFixed(2),
       skor_weighted:(kpi+poin).toFixed(2),
       kelebihan:sc.catKel||'', perbaikan:sc.catPer||''
     };
@@ -3580,7 +3616,8 @@ window.buildReview = function(){
     const aRaw=sc.a||0, bRaw=sc.b||0, cRaw=sc.c||0;
     const max=isBuddy?10:5;
     const aN=(aRaw/max*100), bN=(bRaw/max*100), cN=(cRaw/max*100);
-    const weighted=isBuddy?(aN*15+bN*20+cN*25)/60:(aN*15+bN*15+cN*10)/40;
+    const weighted=(isBuddy?(aN*15+bN*20+cN*25)/60:(aN*15+bN*15+cN*10)/40)
+      + (isBuddy?poinKeaktifan(daftarKegiatan(name).length):0);
     return `<div class="review-item">
       <div class="review-name">${name}</div>
       <div class="review-scores">
@@ -3617,14 +3654,20 @@ window.doSubmit = async function(){
     .map(name=>{
       const sc=allScores[name];
       const aN=(sc.a/max*100), bN=(sc.b/max*100), cN=(sc.c/max*100);
-      const weighted=isBuddy?(aN*15+bN*20+cN*25)/60:(aN*15+bN*15+cN*10)/40;
+      const kpi=isBuddy?(aN*15+bN*20+cN*25)/60:(aN*15+bN*15+cN*10)/40;
+      // Poin keaktifan hanya dari buddy; skor akhir = KPI + poin (dibatasi POIN_MAKS)
+      const keg=isBuddy?daftarKegiatan(name):[];
+      const poin=isBuddy?poinKeaktifan(keg.length):0;
       return {
         timestamp:new Date().toISOString(),
         role:currentRole, penilai, dept_penilai:dept, milestone,
         nama_bizstar:name,
         skor_adaptive_raw:sc.a, skor_collab_raw:sc.b, skor_growth_raw:sc.c,
         skor_adaptive:aN.toFixed(1), skor_collab:bN.toFixed(1), skor_growth:cN.toFixed(1),
-        skor_weighted:weighted.toFixed(2),
+        skor_kpi:kpi.toFixed(2),
+        kegiatan_luar:keg.length, daftar_kegiatan:keg.join(' · '),
+        poin_keaktifan:poin.toFixed(2),
+        skor_weighted:(kpi+poin).toFixed(2),
         kelebihan:sc.catKel||'', perbaikan:sc.catPer||''
       };
     });
