@@ -1,3 +1,3 @@
 # Memory Index — IBASS 2026
 
-- [IBASS Project State](ibass-project-state.md) — arsitektur, fitur 5 divisi, GAS, UI Royal Grandeur V8, keputusan produk, resume per 2026-07-05
+- [IBASS Project State](ibass-project-state.md) — arsitektur, 5 divisi, GAS, HT, sheet Peringkat, konfirmasi proker per buddy, resume per 2026-08-22
