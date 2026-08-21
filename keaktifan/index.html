@@ -51,6 +51,12 @@ input:focus,select:focus{border-color:rgba(232,191,106,.55);box-shadow:0 0 0 2px
   border-radius:8px;padding:.55rem .65rem;margin-bottom:.35rem}
 .lap-nm{font-size:.78rem;word-break:break-word}
 .lap-sub{font-size:.58rem;color:var(--muted);margin-top:2px}
+.tag{font-size:.55rem;letter-spacing:.06em;padding:.2rem .5rem;border-radius:999px;white-space:nowrap;flex-shrink:0}
+.tag.tunggu{color:var(--amber);border:1px solid rgba(240,168,32,.4)}
+.tag.setuju{color:var(--green);border:1px solid rgba(54,201,122,.4)}
+.tag.tolak{color:var(--red);border:1px solid rgba(224,82,96,.4)}
+.poin-besar{font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold2);text-align:center;margin:.2rem 0}
+.poin-ket{font-size:.62rem;color:var(--muted);text-align:center}
 #pesan{font-size:.7rem;line-height:1.7;padding:.7rem .8rem;border-radius:var(--r);display:none;margin-top:.7rem}
 #pesan.ok{display:block;background:rgba(54,201,122,.1);border:1px solid rgba(54,201,122,.4);color:var(--text2)}
 #pesan.bad{display:block;background:rgba(224,82,96,.1);border:1px solid rgba(224,82,96,.45);color:var(--text2)}
@@ -63,25 +69,21 @@ input:focus,select:focus{border-color:rgba(232,191,106,.55);box-shadow:0 0 0 2px
 <div class="wrap">
 
   <div class="kop">
-    <h1>Lapor Keaktifan</h1>
-    <p>IBASS 2026 · Kegiatan di Luar IBASS</p>
+    <h1>Lapor Kehadiran Proker</h1>
+    <p>IBASS 2026 · Proker HIMA di Luar IBASS</p>
   </div>
 
   <div class="card">
-    <div class="lbl">Cara Penilaiannya</div>
-    <div class="note" style="margin-bottom:.7rem">
-      Laporan ini dibaca buddy-mu. Buddy yang menentukan tingkat keaktifanmu &mdash;
-      bukan dihitung dari banyaknya kegiatan, tapi dari <strong>seberapa dalam kamu terlibat</strong>.
-    </div>
+    <div class="lbl">Cara Kerjanya</div>
     <div class="tingkat">
-      <div class="tk"><span class="tk-p no">0</span><span><b>Belum terlibat</b> &mdash; belum ada kegiatan di luar IBASS.</span></div>
-      <div class="tk"><span class="tk-p">+3</span><span><b>Mulai terlibat</b> &mdash; sudah ikut kegiatan, umumnya sebagai peserta.</span></div>
-      <div class="tk"><span class="tk-p">+6</span><span><b>Aktif berkontribusi</b> &mdash; terlibat di beberapa kegiatan, minimal satu sebagai panitia.</span></div>
-      <div class="tk"><span class="tk-p">+10</span><span><b>Penggerak</b> &mdash; konsisten aktif dan pernah memegang peran koordinator atau inti.</span></div>
+      <div class="tk"><span class="tk-p">+2</span><span>Tiap <b>proker HIMA di luar IBASS</b> yang kamu hadiri dan sudah dikonfirmasi buddy.</span></div>
+      <div class="tk"><span class="tk-p no">maks</span><span>Tambahan nilai dibatasi <b>+10</b>. Lima proker sudah mentok.</span></div>
+      <div class="tk"><span class="tk-p no">0</span><span>Kegiatan IBASS sendiri dan acara di luar HIMA tidak dihitung.</span></div>
     </div>
     <div class="note" style="margin-top:.7rem">
-      Jadi satu kepanitiaan yang kamu urus sungguh-sungguh bisa bernilai lebih tinggi
-      daripada lima kegiatan yang cuma hadir. Tulis peranmu sejujurnya.
+      Yang dinilai cuma <strong>hadir atau tidak</strong> &mdash; mau kamu jadi panitia atau
+      sekadar datang, poinnya sama. Laporanmu dicek buddy sebelum poinnya masuk,
+      jadi lampirkan bukti kalau ada.
     </div>
   </div>
 
@@ -100,20 +102,11 @@ input:focus,select:focus{border-color:rgba(232,191,106,.55);box-shadow:0 0 0 2px
         <option>Entrepreneurship</option></select>
     </div>
     <div class="field">
-      <label class="f">Nama Kegiatan</label>
-      <input type="text" id="judul" placeholder="Contoh: Adbis Cup 2026">
+      <label class="f">Nama Proker HIMA</label>
+      <input type="text" id="proker" placeholder="Contoh: Adbis Cup 2026">
     </div>
     <div class="field">
-      <label class="f">Peran Kamu</label>
-      <select id="peran">
-        <option>Peserta</option>
-        <option>Panitia</option>
-        <option>Koordinator / Kepala Divisi</option>
-        <option>Ketua / Inti</option>
-      </select>
-    </div>
-    <div class="field">
-      <label class="f">Tanggal</label>
+      <label class="f">Tanggal Kehadiran</label>
       <input type="date" id="tanggal">
     </div>
     <div class="field">
@@ -131,8 +124,10 @@ input:focus,select:focus{border-color:rgba(232,191,106,.55);box-shadow:0 0 0 2px
   </div>
 
   <div class="card" id="kartuSaya" style="display:none">
-    <div class="lbl">Kegiatan yang Sudah Kamu Laporkan</div>
-    <div id="daftarSaya"></div>
+    <div class="lbl">Laporan Kamu</div>
+    <div class="poin-besar" id="poinSaya">+0</div>
+    <div class="poin-ket" id="poinKet">belum ada yang dikonfirmasi buddy</div>
+    <div id="daftarSaya" style="margin-top:.8rem"></div>
   </div>
 
   <div class="note" style="text-align:center;opacity:.5;font-size:.55rem;letter-spacing:.08em">Versi 20 Agu · 1</div>
@@ -183,18 +178,18 @@ $('berkas').addEventListener('change',function(){
 });
 
 $('kirim').onclick=async()=>{
-  const nama=$('nama').value.trim(), judul=$('judul').value.trim();
+  const nama=$('nama').value.trim(), proker=$('proker').value.trim();
   if(!nama){ pesan('Nama lengkap wajib diisi.',false); $('nama').focus(); return; }
-  if(!judul){ pesan('Nama kegiatan wajib diisi.',false); $('judul').focus(); return; }
+  if(!proker){ pesan('Nama proker wajib diisi.',false); $('proker').focus(); return; }
   const b=$('kirim'); b.disabled=true; b.innerHTML='<span class="spinner"></span> Mengirim…';
   try{
-    const js=await keServer({action:'keaktifanlapor',nama,dept:$('dept').value,judul,
-      peran:$('peran').value,tanggal:$('tanggal').value,bukti:$('bukti').value.trim()});
+    const js=await keServer({action:'keaktifanlapor',nama,dept:$('dept').value,proker,
+      tanggal:$('tanggal').value,bukti:$('bukti').value.trim()});
     try{ localStorage.setItem('ibass_keaktifan_nama',nama); }catch(e){}
     pesan(js.kembar
-      ? 'Kegiatan ini <b>sudah pernah kamu laporkan</b>, jadi tidak ditambahkan lagi.'
-      : 'Laporan tersimpan. Buddy-mu akan melihatnya saat menilai.',true);
-    ['judul','tanggal','bukti'].forEach(i=>$(i).value='');
+      ? 'Proker ini <b>sudah pernah kamu laporkan</b>, jadi tidak ditambahkan lagi.'
+      : 'Laporan tersimpan. Menunggu konfirmasi buddy-mu.',true);
+    ['proker','tanggal','bukti'].forEach(i=>$(i).value='');
     $('statusUnggah').style.display='none';
     muatPunyaku(nama);
   }catch(e){ pesan('Gagal mengirim: '+esc(e.message),false); }
@@ -207,14 +202,25 @@ async function muatPunyaku(nama){
     const r=await fetch(GAS_URL+'?action=keaktifan');
     const js=await r.json();
     if(!js.ok) return;
-    const punya=(js.orang||{})[nama.toLowerCase().trim()];
-    if(!punya||!punya.kegiatan.length) return;
+    const kunci=nama.toLowerCase().trim();
+    const punya=(js.daftar||[]).filter(d=>String(d.nama).toLowerCase().trim()===kunci)
+      .sort((a,b)=>b.id-a.id);
+    if(!punya.length) return;
     $('kartuSaya').style.display='block';
-    $('daftarSaya').innerHTML=punya.kegiatan.slice().reverse().map(k=>`
-      <div class="lap"><div style="flex:1;min-width:0">
-        <div class="lap-nm">${esc(k.judul)}</div>
-        <div class="lap-sub">${esc(k.peran||'—')}${k.tanggal?' · '+esc(k.tanggal):''}${k.bukti?' · ada bukti':''}</div>
-      </div></div>`).join('');
+    const hadir=punya.filter(d=>d.status==='Hadir').length;
+    const poin=Math.min(hadir*(js.perProker||2), js.maks||10);
+    $('poinSaya').textContent='+'+poin;
+    $('poinKet').textContent=hadir
+      ? hadir+' proker terkonfirmasi'+(poin>=(js.maks||10)?' · sudah mentok':'')
+      : 'belum ada yang dikonfirmasi buddy';
+    $('daftarSaya').innerHTML=punya.map(d=>{
+      const s=d.status==='Hadir'?'setuju':(d.status==='Tidak Hadir'?'tolak':'tunggu');
+      const lbl=d.status==='Hadir'?'Hadir':(d.status==='Tidak Hadir'?'Tidak hadir':'Menunggu');
+      return `<div class="lap"><div style="flex:1;min-width:0">
+        <div class="lap-nm">${esc(d.proker)}</div>
+        <div class="lap-sub">${esc(d.tanggal||'tanpa tanggal')}${d.bukti?' · ada bukti':''}</div>
+      </div><span class="tag ${s}">${lbl}</span></div>`;
+    }).join('');
   }catch(e){}
 }
 
