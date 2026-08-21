@@ -2744,6 +2744,10 @@ function openRoleSelect(){
 function openApp(role){
   currentRole=role;
   document.getElementById('roleSelect').style.display='none';
+  // pastikan layar khusus buddy tidak tertinggal terbuka saat berganti peran
+  ['menuBuddy','konfirmasiView'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
   document.getElementById('app').classList.add('visible');
   document.getElementById('roleLabel').textContent=role==='buddy'?'Buddy':'Panitia';
 

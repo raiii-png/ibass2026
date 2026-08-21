@@ -553,6 +553,24 @@ body {
   color: #e8bf6a; border: 1px solid rgba(232,191,106,0.35); border-radius: 999px; padding: 0.1rem 0.3rem; }
 .rk-p.no { color: var(--muted); border-color: var(--bdr2); }
 
+/* baris konfirmasi kehadiran proker */
+.konf-baris { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.55rem;
+  background: var(--bg3); border: 1px solid var(--bdr2); border-radius: 8px; margin-bottom: 0.3rem; }
+.konf-kiri { flex: 1; min-width: 0; }
+.konf-nm { font-size: 0.76rem; color: var(--text); word-break: break-word; line-height: 1.4; }
+.konf-sub { font-size: 0.56rem; color: var(--muted); margin-top: 2px; }
+.konf-sub a { color: var(--blue2); text-decoration: none; }
+.konf-ya, .konf-tidak, .konf-ubah {
+  flex-shrink: 0; background: transparent; cursor: pointer; border-radius: 999px;
+  font-family: 'Cinzel', serif; font-size: 0.55rem; letter-spacing: 0.08em;
+  padding: 0.32rem 0.6rem; min-height: 30px; }
+.konf-ya { border: 1px solid rgba(54,201,122,0.5); color: #36c97a; }
+.konf-tidak { border: 1px solid rgba(224,82,96,0.45); color: #e05260; }
+.konf-ubah { border: 1px solid var(--bdr2); color: var(--muted); font-size: 0.5rem; }
+.konf-ya:active, .konf-tidak:active, .konf-ubah:active { transform: scale(0.95); }
+.konf-status { flex-shrink: 0; font-size: 0.55rem; letter-spacing: 0.05em;
+  border: 1px solid; border-radius: 999px; padding: 0.2rem 0.5rem; white-space: nowrap; }
+
 /* scale 1-5 (panitia) */
 .scale5 { display: flex; gap: 0.28rem; }
 .s5 {
@@ -1753,6 +1771,70 @@ input:focus, select:focus, textarea:focus {
   </div>
 </div>
 
+<!-- ══ MENU BUDDY: dua tugas terpisah ══ -->
+<div id="menuBuddy" style="display:none">
+  <div class="center-wrap">
+    <div class="page-head">
+      <p class="page-eye">IBASS 2026 &middot; BUDDY</p>
+      <h2 class="page-title">Mau Kerjakan Apa?</h2>
+      <p class="page-desc">Dua tugas ini terpisah &mdash; bisa dikerjakan kapan saja</p>
+    </div>
+    <div class="role-grid">
+      <div class="role-card" onclick="mulaiPenilaian()">
+        <div class="role-sigil">
+          <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="7" width="24" height="30" rx="2" stroke="#8ec5f8" stroke-width="1.3"/>
+            <path d="M16 16h12M16 22h12M16 28h7" stroke="#5ba3e8" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <div class="role-name">Isi Penilaian</div>
+        <div class="role-scale">Skala 1 &ndash; 10</div>
+        <div class="role-desc">Nilai Adaptive, Collaborate, dan Growth per Bizstar</div>
+      </div>
+      <div class="role-card" onclick="bukaKonfirmasi()">
+        <div class="role-sigil">
+          <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="22" cy="22" r="14" stroke="#8ec5f8" stroke-width="1.3"/>
+            <path d="M15 22.5l5 5 9-10" stroke="#dbb96e" stroke-width="1.6"/>
+          </svg>
+        </div>
+        <div class="role-name">Konfirmasi Proker</div>
+        <div class="role-scale">Hadir / Tidak</div>
+        <div class="role-desc">Cek laporan kehadiran Bizstar di proker HIMA lain</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ KONFIRMASI KEHADIRAN PROKER ══ -->
+<div id="konfirmasiView" style="display:none">
+  <div class="topbar">
+    <button class="topbar-back" onclick="kembaliKeMenu()">← Menu</button>
+    <div style="flex:1"></div>
+    <div class="topbar-role" style="padding-right:1rem">KONFIRMASI</div>
+  </div>
+  <div class="center-wrap" style="padding-top:1.2rem">
+    <div class="page-head">
+      <p class="page-eye">IBASS 2026 &middot; KEHADIRAN PROKER</p>
+      <h2 class="page-title">Konfirmasi Laporan</h2>
+      <p class="page-desc">Bizstar melapor sendiri &mdash; kamu tinggal membenarkan atau menolak</p>
+    </div>
+    <div class="card" style="margin-bottom:0.75rem">
+      <div class="card-label">Cara Menilainya</div>
+      <div style="font-size:0.7rem;color:var(--text2);line-height:1.75">
+        Yang dinilai hanya <strong>hadir atau tidak</strong> di proker HIMA selain IBASS.
+        Mau dia panitia atau sekadar datang, poinnya sama: <strong>+2</strong> tiap proker,
+        maksimal <strong>+10</strong>. Kegiatan IBASS sendiri tidak dihitung.
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:0.75rem">
+      <label>Nama Kamu (buddy)</label>
+      <input type="text" id="namaBuddyKonf" placeholder="Nama lengkapmu">
+    </div>
+    <div id="daftarKonfirmasi"></div>
+  </div>
+</div>
+
 <!-- ══ APP ══ -->
 <div id="app">
   <div class="topbar">
@@ -1949,31 +2031,6 @@ input:focus, select:focus, textarea:focus {
           </div>
         </div>
 
-        <!-- POIN TAMBAHAN: keaktifan di luar IBASS -->
-        <div class="card cv-block">
-          <div class="cv-header keaktifan">
-            <span class="cv-pill keaktifan">Keaktifan</span>
-            <span class="cv-weight">Poin Tambahan</span>
-          </div>
-          <div class="ind-row">
-            <div class="ind-meta">
-              <div><div class="ind-desc" style="font-size:0.72rem;line-height:1.6">
-                Seberapa dalam keterlibatannya di kegiatan <strong>luar IBASS</strong>?
-                Nilai dari kedalaman perannya, bukan dari banyaknya kegiatan.
-              </div></div>
-              <div class="ind-val keaktifan" id="b_k1_v">&ndash;</div>
-            </div>
-            <div id="b_k1_lapor" class="lapor-box"></div>
-            <div class="scale-t" id="b_k1"></div>
-            <div class="rubrik-k">
-              <div class="rk-baris"><span class="rk-p no">0</span><span><strong>Belum terlibat</strong> &mdash; belum ada kegiatan di luar IBASS.</span></div>
-              <div class="rk-baris"><span class="rk-p">+3</span><span><strong>Mulai terlibat</strong> &mdash; sudah ikut kegiatan, umumnya sebagai peserta.</span></div>
-              <div class="rk-baris"><span class="rk-p">+6</span><span><strong>Aktif berkontribusi</strong> &mdash; terlibat di beberapa kegiatan, minimal satu sebagai panitia.</span></div>
-              <div class="rk-baris"><span class="rk-p">+10</span><span><strong>Penggerak</strong> &mdash; konsisten aktif dan pernah memegang peran koordinator atau inti.</span></div>
-              <div class="rk-baris"><span class="rk-p no">&mdash;</span><span>Kosongkan kalau kamu tidak yakin. Tidak diisi <strong>tidak mengurangi</strong> nilai Bizstar.</span></div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- KPI PANITIA -->
@@ -2652,71 +2709,6 @@ function rate(id1, id2, val, cv){
 
 /* Keaktifan di luar IBASS — poin tambahan, bukan bagian KPI.
    Tiap kegiatan +0,25 dan dibatasi +1,0 supaya KPI tetap penentu utama. */
-/* Skor KPI berskala 0–100, jadi poin ditulis dalam skala yang sama:
-   +2,5 tiap kegiatan, maksimal +10 (setara 10% — batas yang disepakati). */
-
-/* Tingkat keaktifan — dinilai buddy dari kedalaman peran, bukan dari jumlah kegiatan.
-   Daftar angkanya harus sama persis dengan KEAKTIFAN_TINGKAT di Apps Script. */
-const TINGKAT=[
-  {kode:'tidak',     nama:'Belum terlibat',      poin:0},
-  {kode:'mulai',     nama:'Mulai terlibat',      poin:3},
-  {kode:'aktif',     nama:'Aktif berkontribusi', poin:6},
-  {kode:'penggerak', nama:'Penggerak',           poin:10}
-];
-function cariTingkat(kode){ return TINGKAT.find(t=>t.kode===kode)||null; }
-function poinTingkat(kode){ const t=cariTingkat(kode); return t?t.poin:0; }
-
-/* Laporan kegiatan dari Bizstar, dimuat sekali lalu dipakai untuk semua kartu */
-let laporanKeaktifan=null;
-async function muatLaporanKeaktifan(){
-  if(laporanKeaktifan) return laporanKeaktifan;
-  try{
-    const r=await fetch(APPS_URL+'?action=keaktifan');
-    const js=await r.json();
-    laporanKeaktifan=(js.ok&&js.orang)?js.orang:{};
-  }catch(e){ laporanKeaktifan={}; }
-  gambarKeaktifan();
-  return laporanKeaktifan;
-}
-
-function pilihTingkat(kode){
-  const name=bizList[bizIdx]; if(!name) return;
-  if(!allScores[name]) allScores[name]={};
-  // tekan lagi pilihan yang sama = batalkan
-  allScores[name].tingkat = (allScores[name].tingkat===kode) ? undefined : kode;
-  gambarKeaktifan(); updateLive(); checkCurrent();
-}
-
-function gambarKeaktifan(){
-  const wadah=document.getElementById('b_k1'); if(!wadah) return;
-  const name=bizList[bizIdx];
-  const dipilih=(allScores[name]||{}).tingkat;
-
-  wadah.innerHTML=TINGKAT.map(t=>
-    `<button type="button" class="st${dipilih===t.kode?' lit':''}" onclick="pilihTingkat('${t.kode}')">
-       <span class="nm">${t.nama}</span><span class="pn">${t.poin?'+'+t.poin:'0'}</span></button>`).join('');
-
-  const disp=document.getElementById('b_k1_v');
-  if(disp){ const p=poinTingkat(dipilih); disp.textContent = dipilih ? (p?'+'+p:'0') : '–'; }
-
-  // tampilkan apa yang dilaporkan Bizstar sebagai bahan pertimbangan
-  const kotak=document.getElementById('b_k1_lapor');
-  if(!kotak) return;
-  if(laporanKeaktifan===null){ kotak.innerHTML='<div class="lapor-kosong">Memuat laporan kegiatan…</div>'; return; }
-  const punya=laporanKeaktifan[String(name||'').toLowerCase().trim()];
-  if(!punya||!punya.kegiatan.length){
-    kotak.innerHTML='<div class="lapor-kosong">Belum ada kegiatan yang dilaporkan Bizstar ini. '
-      +'Kamu tetap boleh menilai dari yang kamu ketahui sendiri.</div>';
-    return;
-  }
-  kotak.innerHTML='<div class="lapor-judul">Dilaporkan Bizstar ('+punya.kegiatan.length+')</div>'
-    + punya.kegiatan.map(k=>`<div class="lapor-item">
-        <span class="pr">${(k.peran||'—').replace(/</g,'&lt;')}</span>
-        <span class="jd">${(k.judul||'').replace(/</g,'&lt;')}</span>
-        ${k.bukti?`<a class="bk" href="${k.bukti}" target="_blank" rel="noopener">bukti ↗</a>`:''}
-      </div>`).join('');
-}
-
 function rate5el(id, val, cv){
   const name=bizList[bizIdx]; if(!name)return;
   if(!allScores[name])allScores[name]={};
@@ -2752,6 +2744,10 @@ function openRoleSelect(){
 function openApp(role){
   currentRole=role;
   document.getElementById('roleSelect').style.display='none';
+  // pastikan layar khusus buddy tidak tertinggal terbuka saat berganti peran
+  ['menuBuddy','konfirmasiView'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
   document.getElementById('app').classList.add('visible');
   document.getElementById('roleLabel').textContent=role==='buddy'?'Buddy':'Panitia';
 
@@ -2772,9 +2768,25 @@ function openApp(role){
   // init panitia chip list (all dept shown by default)
   if(role==='panitia') renderPanitiaChips('');
 
+  // Buddy punya dua tugas terpisah — tampilkan menunya dulu.
+  // Panitia langsung ke form karena tugasnya cuma satu.
+  if(role==='buddy'){
+    document.getElementById('app').classList.remove('visible');
+    document.getElementById('menuBuddy').style.display='block';
+    window.scrollTo(0,0);
+    return;
+  }
   goPage(1);
 }
 function backToRole(){
+  // buddy kembali ke menu dua-tugasnya dulu, bukan langsung ke pilihan peran
+  if(currentRole==='buddy' && document.getElementById('menuBuddy')){
+    document.getElementById('app').classList.remove('visible');
+    document.getElementById('app').style.display='';
+    document.getElementById('menuBuddy').style.display='block';
+    window.scrollTo(0,0);
+    return;
+  }
   document.getElementById('app').classList.remove('visible');
   document.getElementById('app').style.display='';
   document.getElementById('roleSelect').style.display='block';
@@ -2903,6 +2915,137 @@ function onPanitiaDeptFilter(){
 }
 
 /* ══ PAGES ══ */
+/* ══ MENU BUDDY & KONFIRMASI KEHADIRAN PROKER ══
+   Dua tugas buddy dipisah: mengisi penilaian KPI, dan mengonfirmasi laporan
+   kehadiran proker dari Bizstar. Poin kehadiran TIDAK bercampur dengan nilai KPI
+   di form penilaian — digabung nanti saat rekap. */
+const POIN_PROKER = 2, POIN_PROKER_MAKS = 10;
+let daftarProker = null;
+
+function sembunyikanSemuaLayar(){
+  ['roleSelect','menuBuddy','konfirmasiView'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  document.getElementById('app').classList.remove('visible');
+}
+
+function mulaiPenilaian(){
+  sembunyikanSemuaLayar();
+  document.getElementById('app').classList.add('visible');
+  goPage(1);
+}
+
+function kembaliKeMenu(){
+  sembunyikanSemuaLayar();
+  document.getElementById('menuBuddy').style.display='block';
+  window.scrollTo(0,0);
+}
+
+function bukaKonfirmasi(){
+  sembunyikanSemuaLayar();
+  document.getElementById('konfirmasiView').style.display='block';
+  window.scrollTo(0,0);
+  try{
+    const n=localStorage.getItem('ibass_buddy_nama');
+    if(n) document.getElementById('namaBuddyKonf').value=n;
+  }catch(e){}
+  muatKonfirmasi();
+}
+
+async function muatKonfirmasi(){
+  const wadah=document.getElementById('daftarKonfirmasi');
+  wadah.innerHTML='<div class="card" style="text-align:center;font-size:0.72rem;color:var(--muted)">Memuat laporan…</div>';
+  try{
+    const r=await fetch(APPS_URL+'?action=keaktifan');
+    const js=await r.json();
+    if(!js.ok) throw new Error(js.error||'gagal');
+    daftarProker=js.daftar||[];
+    gambarKonfirmasi();
+  }catch(e){
+    wadah.innerHTML='<div class="card" style="font-size:0.72rem;line-height:1.7;color:var(--text2)">'
+      +'Belum bisa memuat laporan. '
+      +(/tidak dikenal/i.test(e.message||'')?'Server belum diperbarui — hubungi Boss.':'Coba lagi sebentar.')
+      +'</div>';
+  }
+}
+
+function gambarKonfirmasi(){
+  const wadah=document.getElementById('daftarKonfirmasi');
+  if(!daftarProker || !daftarProker.length){
+    wadah.innerHTML='<div class="card" style="font-size:0.72rem;line-height:1.7;color:var(--text2)">'
+      +'Belum ada Bizstar yang melapor. Bagikan link <strong>/keaktifan/</strong> ke mereka dulu.</div>';
+    return;
+  }
+  // kelompokkan per Bizstar, yang belum dikonfirmasi ditaruh di atas
+  const perOrang={};
+  daftarProker.forEach(d=>{
+    const k=String(d.nama).toLowerCase().trim();
+    if(!perOrang[k]) perOrang[k]={nama:d.nama, dept:d.dept, isi:[]};
+    perOrang[k].isi.push(d);
+  });
+  const urut=Object.values(perOrang).sort((a,b)=>{
+    const ta=a.isi.filter(x=>x.status==='Menunggu').length;
+    const tb=b.isi.filter(x=>x.status==='Menunggu').length;
+    if(ta!==tb) return tb-ta;
+    return a.nama.localeCompare(b.nama,'id');
+  });
+
+  wadah.innerHTML=urut.map(o=>{
+    const hadir=o.isi.filter(x=>x.status==='Hadir').length;
+    const poin=Math.min(hadir*POIN_PROKER, POIN_PROKER_MAKS);
+    const menunggu=o.isi.filter(x=>x.status==='Menunggu').length;
+    const baris=o.isi.map(d=>{
+      const sudah=d.status!=='Menunggu';
+      const warna=d.status==='Hadir'?'var(--green)':(d.status==='Tidak Hadir'?'var(--red)':'var(--muted)');
+      return `<div class="konf-baris">
+        <div class="konf-kiri">
+          <div class="konf-nm">${escHtml(d.proker)}</div>
+          <div class="konf-sub">${escHtml(d.tanggal||'tanpa tanggal')}
+            ${d.bukti?`&middot; <a href="${d.bukti}" target="_blank" rel="noopener">lihat bukti ↗</a>`:'&middot; tanpa bukti'}</div>
+        </div>
+        ${sudah
+          ? `<span class="konf-status" style="color:${warna};border-color:${warna}">${escHtml(d.status)}</span>
+             <button class="konf-ubah" onclick="putuskanHadir(${d.id},'Menunggu')">ubah</button>`
+          : `<button class="konf-ya" onclick="putuskanHadir(${d.id},'Hadir')">Hadir</button>
+             <button class="konf-tidak" onclick="putuskanHadir(${d.id},'Tidak Hadir')">Tidak</button>`}
+      </div>`;
+    }).join('');
+    return `<div class="card" style="margin-bottom:0.6rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem">
+        <div>
+          <div style="font-size:0.85rem;color:var(--text)">${escHtml(o.nama)}</div>
+          <div style="font-size:0.58rem;color:var(--muted)">${escHtml(o.dept||'—')}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'Cinzel',serif;font-size:0.95rem;color:#e8bf6a">+${poin}</div>
+          <div style="font-size:0.55rem;color:var(--muted)">${hadir} proker${menunggu?' · '+menunggu+' menunggu':''}</div>
+        </div>
+      </div>
+      ${baris}</div>`;
+  }).join('');
+}
+
+async function putuskanHadir(id, status){
+  const nama=document.getElementById('namaBuddyKonf').value.trim();
+  if(!nama){ alert('Isi namamu dulu di kolom atas.'); document.getElementById('namaBuddyKonf').focus(); return; }
+  try{ localStorage.setItem('ibass_buddy_nama',nama); }catch(e){}
+  // ubah tampilan dulu supaya terasa cepat, baru kirim ke server
+  const item=daftarProker.find(d=>d.id===id);
+  const sebelum=item?item.status:null;
+  if(item){ item.status=status; item.oleh=nama; gambarKonfirmasi(); }
+  try{
+    const r=await fetch(APPS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'keaktifankonfirm',id,status,oleh:nama})});
+    const js=await r.json();
+    if(!js.ok) throw new Error(js.error||'ditolak');
+  }catch(e){
+    if(item){ item.status=sebelum; gambarKonfirmasi(); }
+    alert('Gagal menyimpan. Periksa koneksi lalu coba lagi.');
+  }
+}
+
+function escHtml(s){ const d=document.createElement('div'); d.textContent=String(s==null?'':s); return d.innerHTML; }
+
 function goPage(n){
   [1,2,3].forEach(i=>{
     document.getElementById('page'+i).style.display=i===n?'block':'none';
@@ -2943,9 +3086,6 @@ function loadBizCard(idx){
     restoreScale10('b_a1','b_a1_b','adaptive',sc.a||0);
     restoreScale10('b_b1','b_b1_b','collab',sc.b||0);
     restoreScale10('b_c1','b_c1_b','growth',sc.c||0);
-    gambarKeaktifan();
-    // laporan Bizstar dimuat sekali saja, lalu dipakai untuk semua kartu
-    if(laporanKeaktifan===null) muatLaporanKeaktifan();
     document.getElementById('b_a1_v').textContent=sc.a||'–';
     document.getElementById('b_b1_v').textContent=sc.b||'–';
     document.getElementById('b_c1_v').textContent=sc.c||'–';
@@ -3059,7 +3199,7 @@ function buildReview(){
     const weighted=(isBuddy
       ?(aN*15+bN*20+cN*25)/60
       :(aN*15+bN*15+cN*10)/40)
-      + (isBuddy?poinTingkat((allScores[name]||{}).tingkat):0);
+
     return `<div class="review-item">
       <div class="review-name">${name}</div>
       <div class="review-scores">
@@ -3125,10 +3265,6 @@ async function doSubmit(){
     const aN=(sc.a/max*100), bN=(sc.b/max*100), cN=(sc.c/max*100);
     const kpi=isBuddy?(aN*15+bN*20+cN*25)/60:(aN*15+bN*15+cN*10)/40;
     // Poin keaktifan hanya dari buddy; skor akhir = KPI + poin (maks +1,0)
-    const tk=isBuddy?(sc.tingkat||''):'';
-    const info=isBuddy?cariTingkat(tk):null;
-    const poin=info?info.poin:0;
-    const lap=(laporanKeaktifan&&laporanKeaktifan[String(name).toLowerCase().trim()])||null;
     return {
       timestamp:new Date().toISOString(),
       role:currentRole, penilai, dept_penilai:dept, milestone,
@@ -3136,10 +3272,7 @@ async function doSubmit(){
       skor_adaptive_raw:sc.a, skor_collab_raw:sc.b, skor_growth_raw:sc.c,
       skor_adaptive:aN.toFixed(1), skor_collab:bN.toFixed(1), skor_growth:cN.toFixed(1),
       skor_kpi:kpi.toFixed(2),
-      tingkat_keaktifan:info?info.nama:'',
-      kegiatan_dilaporkan:lap?lap.kegiatan.map(k=>k.judul).join(' · '):'',
-      poin_keaktifan:poin.toFixed(2),
-      skor_weighted:(kpi+poin).toFixed(2),
+      skor_weighted:kpi.toFixed(2),
       kelebihan:sc.catKel||'', perbaikan:sc.catPer||''
     };
   });
@@ -3634,7 +3767,7 @@ window.buildReview = function(){
     const max=isBuddy?10:5;
     const aN=(aRaw/max*100), bN=(bRaw/max*100), cN=(cRaw/max*100);
     const weighted=(isBuddy?(aN*15+bN*20+cN*25)/60:(aN*15+bN*15+cN*10)/40)
-      + (isBuddy?poinTingkat((allScores[name]||{}).tingkat):0);
+
     return `<div class="review-item">
       <div class="review-name">${name}</div>
       <div class="review-scores">
@@ -3673,10 +3806,6 @@ window.doSubmit = async function(){
       const aN=(sc.a/max*100), bN=(sc.b/max*100), cN=(sc.c/max*100);
       const kpi=isBuddy?(aN*15+bN*20+cN*25)/60:(aN*15+bN*15+cN*10)/40;
       // Poin keaktifan hanya dari buddy; skor akhir = KPI + poin (dibatasi POIN_MAKS)
-      const tk=isBuddy?(sc.tingkat||''):'';
-      const info=isBuddy?cariTingkat(tk):null;
-      const poin=info?info.poin:0;
-      const lap=(laporanKeaktifan&&laporanKeaktifan[String(name).toLowerCase().trim()])||null;
       return {
         timestamp:new Date().toISOString(),
         role:currentRole, penilai, dept_penilai:dept, milestone,
@@ -3684,10 +3813,7 @@ window.doSubmit = async function(){
         skor_adaptive_raw:sc.a, skor_collab_raw:sc.b, skor_growth_raw:sc.c,
         skor_adaptive:aN.toFixed(1), skor_collab:bN.toFixed(1), skor_growth:cN.toFixed(1),
         skor_kpi:kpi.toFixed(2),
-        tingkat_keaktifan:info?info.nama:'',
-        kegiatan_dilaporkan:lap?lap.kegiatan.map(k=>k.judul).join(' · '):'',
-        poin_keaktifan:poin.toFixed(2),
-        skor_weighted:(kpi+poin).toFixed(2),
+        skor_weighted:kpi.toFixed(2),
         kelebihan:sc.catKel||'', perbaikan:sc.catPer||''
       };
     });
