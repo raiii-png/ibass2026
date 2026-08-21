@@ -1,6 +1,6 @@
 ---
 name: ibass-project-state
-description: "State lengkap proyek IBASS 2026 — arsitektur, fitur, file, GAS, keputusan produk, dan titik resume (per 2026-07-05)"
+description: "State lengkap proyek IBASS 2026 — arsitektur, fitur, file, GAS, keputusan produk, dan titik resume (per 2026-08-22)"
 metadata: 
   node_type: memory
   type: project
@@ -9,6 +9,47 @@ metadata:
 ---
 
 # Proyek IBASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
+
+## KEAKTIFAN JADI MENU TERPISAH (2026-08-21/22) — KONDISI TERAKHIR
+- Halaman baru **`keaktifan/index.html`** -> `raiii-png.github.io/ibass2026/keaktifan/`. Sublink
+  khusus **Bizstar**: isi Nama, Departemen, Nama Proker HIMA, Tanggal Kehadiran, Bukti
+  (tempel link atau upload lewat `action:'uploadfile'`).
+- **Buddy punya 2 kartu menu** di web penilaian: **Isi Penilaian** (KPI murni — Adaptive,
+  Collaborate, Growth; tidak ada lagi kartu keaktifan nempel di situ) dan **Konfirmasi Proker**
+  (laporan Bizstar dikelompokkan per orang, yang belum dicek di atas, tombol Hadir / Tidak).
+- **Rubrik keaktifan = hadir atau tidak saja.** +2 tiap proker HIMA yang dikonfirmasi hadir,
+  maksimal +10 (`KEAKTIFAN_POIN` / `KEAKTIFAN_MAKS` di GAS). Panitia atau sekadar datang, sama.
+- Hanya **proker HIMA**. Acara UKM / di luar HIMA tidak dihitung, kegiatan IBASS sendiri juga tidak.
+- GAS: sheet **`Keaktifan`** terpisah dari sheet Penilaian + 3 action — `keaktifanlapor`
+  (Bizstar setor), `keaktifankonfirm` (buddy Hadir/Tidak), `keaktifan` (daftar + rekap poin).
+- Tombol Hadir/Tidak optimistic UI tapi **di-rollback kalau simpan gagal**, supaya buddy tidak
+  mengira sudah tersimpan padahal koneksi putus.
+
+## MODEL YANG SUDAH DITOLAK BOSS — JANGAN DIULANG
+- **"Kedalaman peran"** / "seberapa dalam keterlibatan di kegiatan luar" -> dibuang total.
+- **Skala 2,5** -> tidak dipakai.
+- **Kartu keaktifan di dalam form penilaian KPI** -> harus menu sendiri.
+- **Halaman lapor proker untuk panitia** (sempat dibuat lalu di-revert, commit 3026d1e) ->
+  yang lapor itu Bizstar, yang menilai/konfirmasi itu buddy.
+
+## FILE PENILAIAN DIPISAH DARI TRACK FILE (2026-08-21)
+- Nilai pindah ke **spreadsheet sendiri** (biar yang bisa lihat cuma inti + sebagian kadiv);
+  Track File kadiv tetap di spreadsheet lama.
+- **TETAP SATU Apps Script**, tetap di spreadsheet Track File. `penilaianSS()` baca Script
+  Property `PENILAIAN_SS_KEY`; kalau kosong -> pakai spreadsheet aktif. **JANGAN pasang salinan
+  script di sheet baru** — alamat deployment jadi beda sementara web masih menunjuk alamat lama,
+  data terpecah tanpa kelihatan.
+- Menu Sheets: `Pisahkan File Penilaian (buat baru)` / `Pakai File Penilaian yang Sudah Ada`
+  (tempel link sheet yang sudah terlanjur dibuat, data lama ikut pindah) / `Lihat Lokasi File Penilaian`.
+
+## PENDING (per 2026-08-22) — TITIK RESUME
+- **Belum ada layar "nilai akhir = KPI + poin keaktifan".** Dua nilai masih tersimpan terpisah
+  (sheet Penilaian vs sheet Keaktifan). Komentar `skor akhir = KPI + poin` di index.html
+  (~baris 3267 & 3808) itu catatan niat, BUKAN kode yang jalan — submit KPI tidak menambah poin.
+- Tawaran yang belum dijawab Boss: **tabel peringkat Best Bizstar di dashboard kadiv**
+  (KPI + poin keaktifan jadi satu, biar tak hitung manual).
+- Boss masih harus **Deploy -> Manage deployments -> New version** supaya action `keaktifan*`
+  hidup, lalu F5 spreadsheet biar menunya muncul, lalu sebarkan link `/keaktifan/` ke Bizstar.
 
 ## HT: PANGGILAN HANTU & MASUK CEPAT (2026-08-06, uji Boss ke-3)
 - **Bug**: buka HT → langsung "memanggil" + bergetar padahal belum ada yang dikasih link.
