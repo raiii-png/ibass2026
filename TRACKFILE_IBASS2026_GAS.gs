@@ -525,7 +525,21 @@ function doPost(e) {
 }
 
 // ─── Penilaian Bizstar: simpan & baca ─────────────────────────────
-function ensurePenilaianSheet(ss) {
+/* Penilaian boleh tinggal di file spreadsheet TERPISAH supaya nilai Bizstar tidak
+   ikut terbaca saat file Track File dibagikan ke kadiv. ID file penilaian disimpan
+   di Script Properties — kalau belum ada, penilaian tetap di file yang sama
+   (jadi tidak ada yang rusak sebelum pemisahan dijalankan). */
+const PENILAIAN_SS_KEY = 'penilaian_ss_id';
+function penilaianSS() {
+  const id = PropertiesService.getScriptProperties().getProperty(PENILAIAN_SS_KEY);
+  if (id) {
+    try { return SpreadsheetApp.openById(id); } catch (e) {}
+  }
+  return SpreadsheetApp.getActiveSpreadsheet();
+}
+
+function ensurePenilaianSheet(ssAbaikan) {
+  const ss = penilaianSS();
   let sheet = ss.getSheetByName(PENILAIAN_SHEET);
   if (sheet) return sheet;
   sheet = ss.insertSheet(PENILAIAN_SHEET);
@@ -564,8 +578,8 @@ function savePenilaian(ss, submissions) {
   return jsonOk({ message: rows.length + ' penilaian tersimpan' });
 }
 
-function readPenilaian(ss) {
-  const sheet = ss.getSheetByName(PENILAIAN_SHEET);
+function readPenilaian(ssAbaikan) {
+  const sheet = penilaianSS().getSheetByName(PENILAIAN_SHEET);
   if (!sheet || sheet.getLastRow() < 2) return [];
   const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, PENILAIAN_HEADER.length).getValues();
   return values.filter(r => r[5]).map(r => ({
@@ -603,7 +617,62 @@ function onOpen() {
     .addSeparator()
     .addItem('Perbarui Grafik', 'menuPerbaruiGrafik')
     .addItem('Reset Data Track File', 'menuResetTrackFile')
+    .addSeparator()
+    .addItem('Pisahkan File Penilaian', 'menuPisahPenilaian')
+    .addItem('Lihat Lokasi File Penilaian', 'menuLokasiPenilaian')
     .addToUi();
+}
+
+/* Pindahkan sheet Penilaian ke file spreadsheet sendiri.
+   Tujuannya: file Track File boleh dibagikan ke kadiv tanpa ikut membocorkan
+   nilai Bizstar. Setelah dipisah, semua penilaian baru langsung masuk ke file baru. */
+function menuPisahPenilaian() {
+  const ui = SpreadsheetApp.getUi();
+  const props = PropertiesService.getScriptProperties();
+  if (props.getProperty(PENILAIAN_SS_KEY)) {
+    ui.alert('Penilaian sudah berada di file terpisah.\n\n' +
+      'Pakai menu "Lihat Lokasi File Penilaian" untuk membuka atau membagikannya.');
+    return;
+  }
+  const jawab = ui.alert('Pisahkan File Penilaian',
+    'Sheet "Penilaian" akan dipindahkan ke file spreadsheet baru beserta seluruh isinya.\n\n' +
+    'Setelah ini, file Track File aman dibagikan ke kadiv tanpa memperlihatkan nilai Bizstar. ' +
+    'Akses ke file penilaian kamu atur sendiri (untuk inti dan kadiv tertentu).\n\nLanjutkan?',
+    ui.ButtonSet.YES_NO);
+  if (jawab !== ui.Button.YES) return;
+
+  const asal = SpreadsheetApp.getActiveSpreadsheet();
+  const baru = SpreadsheetApp.create('Penilaian Bizstar IBASS 2026');
+  const lama = asal.getSheetByName(PENILAIAN_SHEET);
+
+  if (lama) {
+    // salin isi apa adanya ke file baru
+    const salinan = lama.copyTo(baru);
+    salinan.setName(PENILAIAN_SHEET);
+    const bawaan = baru.getSheets()[0];
+    if (bawaan.getName() !== PENILAIAN_SHEET) baru.deleteSheet(bawaan);
+    // sisakan penanda di file lama supaya tidak membingungkan
+    lama.setName('Penilaian (pindah)');
+    lama.getRange(1, 1).setNote('Data penilaian sudah pindah ke file "Penilaian Bizstar IBASS 2026".');
+  }
+  props.setProperty(PENILAIAN_SS_KEY, baru.getId());
+
+  ui.alert('Berhasil dipisah.\n\nFile baru: Penilaian Bizstar IBASS 2026\n' + baru.getUrl() +
+    '\n\nBagikan file ini HANYA ke inti dan kadiv yang berhak. ' +
+    'Sheet lama di file ini sudah dinonaktifkan dan boleh dihapus.');
+}
+
+function menuLokasiPenilaian() {
+  const ui = SpreadsheetApp.getUi();
+  const id = PropertiesService.getScriptProperties().getProperty(PENILAIAN_SS_KEY);
+  if (!id) { ui.alert('Penilaian masih menyatu dengan file ini.\n\nJalankan "Pisahkan File Penilaian" kalau mau dipisah.'); return; }
+  try {
+    const ss = SpreadsheetApp.openById(id);
+    ui.alert('File penilaian:\n' + ss.getName() + '\n' + ss.getUrl());
+  } catch (e) {
+    ui.alert('File penilaian tidak bisa dibuka — mungkin terhapus.\n\n' +
+      'Hapus properti "' + PENILAIAN_SS_KEY + '" di Project Settings supaya kembali menyatu.');
+  }
 }
 
 // Hitung ulang REKAP + grafik dari isi sheet saat ini —
