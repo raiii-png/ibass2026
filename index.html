@@ -571,6 +571,22 @@ body {
 .konf-status { flex-shrink: 0; font-size: 0.55rem; letter-spacing: 0.05em;
   border: 1px solid; border-radius: 999px; padding: 0.2rem 0.5rem; white-space: nowrap; }
 
+/* kartu link yang dibagikan buddy ke Bizstar-nya */
+.tautan { background: var(--bg3); border: 1px solid var(--bdr2); border-radius: 8px;
+  padding: 0.6rem 0.7rem; font-size: 0.63rem; color: var(--blue2);
+  word-break: break-all; line-height: 1.55; }
+.konf-kepala { display: flex; justify-content: space-between; align-items: center;
+  gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.konf-nama { font-size: 0.85rem; color: var(--text); line-height: 1.35; }
+.konf-dept { font-size: 0.56rem; color: var(--muted); letter-spacing: 0.06em; margin-top: 2px; }
+.konf-poin { font-family: 'Cinzel', serif; font-size: 0.95rem; color: #e8bf6a; }
+.konf-poinket { font-size: 0.55rem; color: var(--muted); }
+.konf-kabar { font-size: 0.7rem; line-height: 1.75; color: var(--text2); }
+.konf-pisah { display: flex; align-items: center; gap: 0.6rem; margin: 1.1rem 0 0.6rem;
+  font-family: 'Cinzel', serif; font-size: 0.55rem; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--muted); }
+.konf-pisah::after { content: ''; flex: 1; height: 1px; background: var(--bdr2); }
+
 /* scale 1-5 (panitia) */
 .scale5 { display: flex; gap: 0.28rem; }
 .s5 {
@@ -1800,7 +1816,7 @@ input:focus, select:focus, textarea:focus {
         </div>
         <div class="role-name">Konfirmasi Proker</div>
         <div class="role-scale">Hadir / Tidak</div>
-        <div class="role-desc">Cek laporan kehadiran Bizstar di proker HIMA lain</div>
+        <div class="role-desc">Ambil link buat Bizstar-mu, lalu cek laporan proker mereka</div>
       </div>
     </div>
   </div>
@@ -1817,20 +1833,49 @@ input:focus, select:focus, textarea:focus {
     <div class="page-head">
       <p class="page-eye">IBASS 2026 &middot; KEHADIRAN PROKER</p>
       <h2 class="page-title">Konfirmasi Laporan</h2>
-      <p class="page-desc">Bizstar melapor sendiri &mdash; kamu tinggal membenarkan atau menolak</p>
+      <p class="page-desc">Bizstar yang lapor, kamu yang membenarkan</p>
     </div>
+
     <div class="card" style="margin-bottom:0.75rem">
-      <div class="card-label">Cara Menilainya</div>
-      <div style="font-size:0.7rem;color:var(--text2);line-height:1.75">
-        Yang dinilai hanya <strong>hadir atau tidak</strong> di proker HIMA selain IBASS.
-        Mau dia panitia atau sekadar datang, poinnya sama: <strong>+2</strong> tiap proker,
-        maksimal <strong>+10</strong>. Kegiatan IBASS sendiri tidak dihitung.
+      <div class="card-label">Kamu Buddy Siapa?</div>
+      <div class="field" style="margin-bottom:0">
+        <select id="pilihBuddy" onchange="pilihBuddyBerubah()">
+          <option value="">Pilih namamu</option>
+        </select>
+      </div>
+      <div id="buddyLain" style="display:none;margin-top:0.6rem">
+        <div class="field" style="margin-bottom:0">
+          <label>Tulis namamu</label>
+          <input type="text" id="namaBuddyKonf" placeholder="Nama lengkap"
+            oninput="simpanNamaBuddy()">
+        </div>
       </div>
     </div>
-    <div class="field" style="margin-bottom:0.75rem">
-      <label>Nama Kamu (buddy)</label>
-      <input type="text" id="namaBuddyKonf" placeholder="Nama lengkapmu">
+
+    <div class="card" id="kartuTautan" style="display:none;margin-bottom:0.75rem">
+      <div class="card-label">Link untuk Bizstar-mu</div>
+      <div style="font-size:0.7rem;color:var(--text2);line-height:1.7;margin-bottom:0.55rem">
+        Kirim link ini sekali saja ke grup <strong id="tautanDept">departemenmu</strong>.
+        Bizstar pakai link ini tiap habis ikut proker HIMA, lalu laporannya muncul di bawah
+        untuk kamu cek.
+      </div>
+      <div class="tautan" id="tautanBizstar">&mdash;</div>
+      <div class="btn-sm-row">
+        <button class="btn-sm" onclick="salinTautan()">Salin Link</button>
+        <button class="btn-sm" onclick="salinPesanWA()">Salin Pesan WA</button>
+      </div>
     </div>
+
+    <div class="card" style="margin-bottom:0.75rem">
+      <div class="card-label">Yang Dihitung</div>
+      <div class="konf-kabar">
+        Cuma <strong>proker HIMA di luar IBASS</strong>, dan cuma soal <strong>hadir atau
+        tidak</strong>. Jadi panitia atau sekadar datang nilainya sama: <strong>+2</strong>
+        per proker, mentok di <strong>+10</strong>. Acara IBASS sendiri dan acara di luar
+        HIMA tidak masuk hitungan.
+      </div>
+    </div>
+
     <div id="daftarKonfirmasi"></div>
   </div>
 </div>
@@ -1840,7 +1885,7 @@ input:focus, select:focus, textarea:focus {
   <div class="topbar">
     <button class="topbar-back" onclick="backToRole()">← Peran</button>
     <div class="topbar-center">
-      <div class="topbar-brand">I&#8209;BASS 2026<span class="topbar-brand-sub">Penilaian Bizstar &middot; NEXUS</span></div>
+      <div class="topbar-brand">IBASS 2026<span class="topbar-brand-sub">Penilaian Bizstar &middot; NEXUS</span></div>
     </div>
     <button class="topbar-guide-btn" onclick="openGuide()">Panduan</button>
     <div class="topbar-role" id="roleLabel">&mdash;</div>
@@ -1869,7 +1914,9 @@ input:focus, select:focus, textarea:focus {
       <div class="card">
         <div class="card-label">Penilai</div>
         <div class="field"><label>Nama Lengkap <span class="req">*</span></label>
-          <input type="text" id="namaPenilai" placeholder="Nama kamu" oninput="updateP1();if(currentRole==='panitia')checkResumeForPanitia()">
+          <input type="text" id="namaPenilai" placeholder="Nama kamu" list="daftarBuddy"
+            oninput="namaPenilaiBerubah()">
+          <datalist id="daftarBuddy"></datalist>
         </div>
 
         <!-- Buddy: pilih department sendiri -->
@@ -2159,61 +2206,67 @@ input:focus, select:focus, textarea:focus {
   <div class="guide-sheet">
     <div class="guide-handle"></div>
     <h2 class="guide-title">Panduan Penilaian</h2>
-    <p class="guide-sub">Baca sebelum mulai mengisi form</p>
+    <p class="guide-sub">Secukupnya saja, biar tidak salah isi</p>
 
     <div class="guide-section">
-      <div class="guide-sec-title">Cara Mengisi</div>
-      <div class="guide-row"><span class="guide-num">1</span><p class="guide-text">Pilih peranmu — <strong>Buddy</strong> atau <strong>Panitia</strong> — di halaman awal.</p></div>
-      <div class="guide-row"><span class="guide-num">2</span><p class="guide-text">Isi nama, pilih department (jika Buddy), dan pilih <strong>milestone</strong> yang sedang dievaluasi.</p></div>
-      <div class="guide-row"><span class="guide-num">3</span><p class="guide-text">Nilai setiap Bizstar satu per satu. Gunakan <strong>dot navigasi</strong> di atas untuk berpindah atau melihat progress.</p></div>
-      <div class="guide-row"><span class="guide-num">4</span><p class="guide-text">Isi <strong>catatan kualitatif</strong> jika ada hal penting yang perlu dicatat — opsional tapi sangat membantu.</p></div>
-      <div class="guide-row"><span class="guide-num">5</span><p class="guide-text">Di halaman Review, periksa semua skor sebelum klik <strong>Kirim</strong>. Data langsung masuk ke Google Sheets.</p></div>
+      <div class="guide-sec-title">Urutan Mengisi</div>
+      <div class="guide-row"><span class="guide-num">1</span><p class="guide-text">Di halaman awal, pilih kamu <strong>Buddy</strong> atau <strong>Panitia</strong>.</p></div>
+      <div class="guide-row"><span class="guide-num">2</span><p class="guide-text">Tulis namamu. Kalau kamu buddy, departemenmu terisi sendiri dan Bizstar-mu langsung muncul. Lalu pilih <strong>milestone</strong> yang mau dinilai.</p></div>
+      <div class="guide-row"><span class="guide-num">3</span><p class="guide-text">Nilai satu per satu. Titik-titik di atas kartu untuk lompat ke Bizstar lain sekaligus melihat mana yang belum kelar.</p></div>
+      <div class="guide-row"><span class="guide-num">4</span><p class="guide-text">Kolom catatan boleh dilewat, tapi isi kalau ada yang perlu diingat. Angka cepat lupa, kalimat tidak.</p></div>
+      <div class="guide-row"><span class="guide-num">5</span><p class="guide-text">Di halaman Review, baca ulang sekali sebelum <strong>Kirim</strong>. Setelah terkirim, nilainya langsung masuk ke sheet.</p></div>
     </div>
 
     <div class="guide-section">
-      <div class="guide-sec-title">Skala Penilaian</div>
-      <div class="guide-row"><span class="guide-num"></span><p class="guide-text"><strong>Buddy</strong> menggunakan skala <strong>1–10</strong> karena observasi lebih dalam dan personal.</p></div>
-      <div class="guide-row"><span class="guide-num"></span><p class="guide-text"><strong>Panitia</strong> menggunakan skala <strong>1–5</strong> karena penilaian berdasarkan interaksi saat event.</p></div>
+      <div class="guide-sec-title">Kenapa Skalanya Beda</div>
+      <div class="guide-row"><span class="guide-num"></span><p class="guide-text"><strong>Buddy</strong> pakai <strong>1&ndash;10</strong> karena kamu yang paling sering bareng mereka, jadi bisa membedakan hal kecil.</p></div>
+      <div class="guide-row"><span class="guide-num"></span><p class="guide-text"><strong>Panitia</strong> pakai <strong>1&ndash;5</strong> karena ketemunya cuma pas acara &mdash; tidak perlu terlalu detail.</p></div>
       <table class="guide-table" style="margin-top:0.75rem">
-        <thead><tr><th>Skor</th><th>Makna</th></tr></thead>
+        <thead><tr><th>Nilai</th><th>Artinya</th></tr></thead>
         <tbody>
-          <tr><td>10 / 5</td><td>Luar biasa — jauh melampaui ekspektasi</td></tr>
-          <tr><td>8–9 / 4</td><td>Sangat Baik — konsisten memenuhi ekspektasi</td></tr>
-          <tr><td>6–7 / 3</td><td>Cukup — memenuhi standar minimum</td></tr>
-          <tr><td>4–5 / 2</td><td>Kurang — perlu perhatian khusus</td></tr>
-          <tr><td>1–3 / 1</td><td>Sangat Kurang — tidak memenuhi ekspektasi</td></tr>
+          <tr><td>10 / 5</td><td>Menonjol, sampai orang lain ikut kebantu</td></tr>
+          <tr><td>8&ndash;9 / 4</td><td>Bagus dan bisa diandalkan terus</td></tr>
+          <tr><td>6&ndash;7 / 3</td><td>Aman, sesuai yang diminta</td></tr>
+          <tr><td>4&ndash;5 / 2</td><td>Masih perlu diingatkan</td></tr>
+          <tr><td>1&ndash;3 / 1</td><td>Belum jalan, perlu diobrolkan</td></tr>
         </tbody>
       </table>
     </div>
 
     <div class="guide-section">
-      <div class="guide-sec-title">Tiga Dimensi Penilaian</div>
-      <div class="guide-row"><span class="guide-num" style="color:var(--adaptive)">A</span><p class="guide-text"><strong style="color:var(--adaptive)">Adaptive</strong> — Inisiatif, proaktif, dan responsif terhadap instruksi maupun perubahan situasi.</p></div>
-      <div class="guide-row"><span class="guide-num" style="color:var(--collab)">C</span><p class="guide-text"><strong style="color:var(--collab)">Collaborate</strong> — Kualitas komunikasi, kolaborasi, dan kontribusi dalam kelompok.</p></div>
-      <div class="guide-row"><span class="guide-num" style="color:var(--growth)">G</span><p class="guide-text"><strong style="color:var(--growth)">Growth</strong> — Leadership, attitude, dan perkembangan yang terlihat dari waktu ke waktu.</p></div>
+      <div class="guide-sec-title">Tiga Hal yang Dinilai</div>
+      <div class="guide-row"><span class="guide-num" style="color:var(--adaptive)">A</span><p class="guide-text"><strong style="color:var(--adaptive)">Adaptive</strong> &mdash; cepat tanggap, mau gerak duluan, tidak kaku waktu rencana berubah.</p></div>
+      <div class="guide-row"><span class="guide-num" style="color:var(--collab)">C</span><p class="guide-text"><strong style="color:var(--collab)">Collaborate</strong> &mdash; enak diajak kerja bareng, kabarnya jelas, mau bantu tim.</p></div>
+      <div class="guide-row"><span class="guide-num" style="color:var(--growth)">G</span><p class="guide-text"><strong style="color:var(--growth)">Growth</strong> &mdash; sikapnya, keberaniannya memimpin, dan bedanya dari pertemuan pertama sampai sekarang.</p></div>
     </div>
 
     <div class="guide-section">
-      <div class="guide-sec-title">Penting</div>
-      <div class="guide-row"><span class="guide-num">!</span><p class="guide-text">Nilai berdasarkan <strong>pengamatan langsung</strong> selama milestone yang dipilih — bukan kesan keseluruhan.</p></div>
-      <div class="guide-row"><span class="guide-num">!</span><p class="guide-text">Jika ada Bizstar yang belum sempat dinilai, mereka tetap bisa di-skip — tidak akan menghambat submit.</p></div>
-      <div class="guide-row"><span class="guide-num" style="color:var(--amber)">!</span><p class="guide-text"><strong style="color:var(--amber)">Tidak Hadir</strong> — jika Bizstar tidak hadir di Townhall atau Pematerian ini, klik tombol <strong>"Tidak Hadir"</strong> di halaman penilaian mereka. Mereka akan dikecualikan dari kalkulasi skor milestone ini, namun tetap muncul di daftar. Klik <strong>"Tandai Hadir"</strong> untuk membatalkan.</p></div>
+      <div class="guide-sec-title">Poin Proker HIMA</div>
+      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Ini terpisah dari nilai di form ini. Bizstar melapor sendiri lewat link, buddy tinggal mengecek di menu <strong>Konfirmasi Proker</strong>.</p></div>
+      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Tiap proker HIMA yang dicek benar menambah <strong>+2</strong>, mentok <strong>+10</strong>. Acara IBASS sendiri dan acara di luar HIMA tidak dihitung.</p></div>
+      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Nilai KPI dan poin ini digabung otomatis di sheet <strong>Peringkat</strong>, jadi tidak perlu dihitung manual.</p></div>
     </div>
 
     <div class="guide-section">
-      <div class="guide-sec-title">Shortcut Keyboard</div>
-      <div class="guide-row"><span class="guide-num" style="font-size:0.7rem">1–9</span><p class="guide-text">Input nilai untuk KPI yang sedang aktif (ditentukan oleh <strong>Tab</strong>).</p></div>
-      <div class="guide-row"><span class="guide-num" style="font-size:0.7rem">0</span><p class="guide-text">Input nilai <strong>10</strong> (khusus Buddy, skala 1–10).</p></div>
-      <div class="guide-row"><span class="guide-num" style="font-size:0.7rem">← →</span><p class="guide-text">Pindah ke Bizstar sebelumnya / berikutnya.</p></div>
-      <div class="guide-row"><span class="guide-num" style="font-size:0.7rem">Tab</span><p class="guide-text">Ganti KPI aktif: Adaptive → Collaborate → Growth → Adaptive.</p></div>
+      <div class="guide-sec-title">Yang Sering Ditanya</div>
+      <div class="guide-row"><span class="guide-num">!</span><p class="guide-text">Nilai dari apa yang kamu <strong>lihat sendiri di milestone itu</strong>, bukan kesan umum selama ini.</p></div>
+      <div class="guide-row"><span class="guide-num">!</span><p class="guide-text">Ada yang belum sempat dinilai? Lewati saja, tidak menghalangi kirim.</p></div>
+      <div class="guide-row"><span class="guide-num" style="color:var(--amber)">!</span><p class="guide-text"><strong style="color:var(--amber)">Kalau orangnya tidak datang</strong> &mdash; tekan tombol <strong>"Tidak Hadir"</strong> di kartunya. Dia tetap ada di daftar, tapi tidak ikut dihitung di milestone ini. Tekan <strong>"Tandai Hadir"</strong> kalau salah pencet.</p></div>
     </div>
 
     <div class="guide-section">
-      <div class="guide-sec-title">Fitur Otomatis</div>
-      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text"><strong>Auto-save</strong> — progress tersimpan otomatis di browser. Jika halaman di-refresh, data tidak hilang.</p></div>
-      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text"><strong>Download CSV</strong> — unduh rekap penilaian sebagai file CSV langsung dari halaman Review.</p></div>
-      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text"><strong>Print / PDF</strong> — klik tombol Print di Review untuk cetak atau simpan sebagai PDF.</p></div>
-      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text"><strong>Offline mode</strong> — banner muncul jika tidak ada koneksi. Penilaian tetap bisa diisi dan diunduh sebagai CSV.</p></div>
+      <div class="guide-sec-title">Kalau Pakai Laptop</div>
+      <div class="guide-row"><span class="guide-num" style="font-size:0.7rem">1&ndash;9</span><p class="guide-text">Langsung memberi nilai untuk kolom yang sedang aktif.</p></div>
+      <div class="guide-row"><span class="guide-num" style="font-size:0.7rem">0</span><p class="guide-text">Nilai <strong>10</strong> (buddy saja).</p></div>
+      <div class="guide-row"><span class="guide-num" style="font-size:0.7rem">&larr; &rarr;</span><p class="guide-text">Pindah Bizstar sebelumnya / berikutnya.</p></div>
+      <div class="guide-row"><span class="guide-num" style="font-size:0.7rem">Tab</span><p class="guide-text">Pindah kolom: Adaptive &rarr; Collaborate &rarr; Growth.</p></div>
+    </div>
+
+    <div class="guide-section">
+      <div class="guide-sec-title">Tenang, Sudah Diamankan</div>
+      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Isian tersimpan sendiri di HP-mu. Ke-refresh atau HP mati, isinya masih ada.</p></div>
+      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Sinyal hilang? Ada pemberitahuan di atas. Kamu tetap bisa mengisi, dan hasilnya bisa diunduh dulu.</p></div>
+      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Butuh salinan? Di halaman Review ada tombol unduh dan cetak.</p></div>
     </div>
 
     <button class="guide-close" onclick="closeGuide()">Tutup Panduan</button>
@@ -2771,6 +2824,10 @@ function openApp(role){
   // Buddy punya dua tugas terpisah — tampilkan menunya dulu.
   // Panitia langsung ke form karena tugasnya cuma satu.
   if(role==='buddy'){
+    const dl=document.getElementById('daftarBuddy');
+    if(dl && !dl.children.length){
+      dl.innerHTML=BUDDY_2026.map(b=>`<option value="${esc(b.n)}">${esc(b.d)}</option>`).join('');
+    }
     document.getElementById('app').classList.remove('visible');
     document.getElementById('menuBuddy').style.display='block';
     window.scrollTo(0,0);
@@ -2794,6 +2851,19 @@ function backToRole(){
 }
 
 /* ══ DEPT CHANGE ══ */
+/* Kalau yang mengisi salah satu dari 8 buddy, departemennya diisikan sendiri —
+   panitia tetap bebas mengetik nama apa pun. */
+function namaPenilaiBerubah(){
+  if(currentRole==='buddy'){
+    const nama=document.getElementById('namaPenilai').value;
+    const b=BUDDY_2026.find(x=>normNama(x.n)===normNama(nama));
+    const sel=document.getElementById('deptPenilai');
+    if(b && sel && sel.value!==b.d){ sel.value=b.d; onDeptChange(); return; }
+  }
+  updateP1();
+  if(currentRole==='panitia') checkResumeForPanitia();
+}
+
 function onDeptChange(){
   const dept=document.getElementById('deptPenilai').value;
   if(dept && currentRole==='buddy'){
@@ -2922,6 +2992,122 @@ function onPanitiaDeptFilter(){
 const POIN_PROKER = 2, POIN_PROKER_MAKS = 10;
 let daftarProker = null;
 
+/* Delapan buddy IBASS 2026 — satu per departemen. Nama yang sama juga dipakai di
+   keaktifan/index.html dan di TRACKFILE_IBASS2026_GAS.gs. */
+const BUDDY_2026 = [
+  { d:'Secretary',        n:'Ayu Diah Pramesti' },
+  { d:'Finance',          n:'Nursyfa Alawiyah Thoyibah' },
+  { d:'HRD',              n:'Eghina Salsabilla' },
+  { d:'Advocacy',         n:'Muhammad Akram Ziyad' },
+  { d:'External Affairs', n:'Razwa Zahara Maulidiya' },
+  { d:'MEIN',             n:'Tyara Nadira Putri' },
+  { d:'Entrepreneurship', n:'Marzya Zyalzyabila' },
+  { d:'ACT',              n:'Anggun Puti Maharani' }
+];
+const LINK_PUBLIK = 'https://raiii-png.github.io/ibass2026/';
+
+function normNama(s){ return String(s==null?'':s).toLowerCase().replace(/[^a-z0-9]/g,''); }
+
+/* Alamat halaman lapor Bizstar, sudah membawa departemen + nama buddy-nya
+   supaya Bizstar tidak perlu memilih apa-apa lagi. */
+function tautanKeaktifan(dept, buddy){
+  let dasar;
+  try{
+    dasar = (location.protocol==='file:' || location.origin==='null')
+      ? LINK_PUBLIK
+      : location.origin + location.pathname.replace(/[^/]*$/,'');
+  }catch(e){ dasar = LINK_PUBLIK; }
+  const u = new URL('keaktifan/', dasar);
+  if(dept)  u.searchParams.set('dept', dept);
+  if(buddy) u.searchParams.set('buddy', buddy);
+  return u.href;
+}
+
+/* Nama buddy yang sedang dipakai — dari daftar, atau ketikan sendiri kalau pilih "Lainnya". */
+function buddySekarang(){
+  const s = document.getElementById('pilihBuddy');
+  if(s && s.value && s.value!=='lain') return s.value;
+  const t = document.getElementById('namaBuddyKonf');
+  return t ? t.value.trim() : '';
+}
+function deptSekarang(){
+  const nama = buddySekarang();
+  const b = BUDDY_2026.find(x=>normNama(x.n)===normNama(nama));
+  return b ? b.d : '';
+}
+
+function isiPilihanBuddy(){
+  const s = document.getElementById('pilihBuddy');
+  if(!s || s.dataset.terisi) return;
+  s.innerHTML = '<option value="">Pilih namamu</option>'
+    + BUDDY_2026.map(b=>`<option value="${esc(b.n)}">${esc(b.n)} &mdash; ${esc(b.d)}</option>`).join('')
+    + '<option value="lain">Bukan salah satu di atas</option>';
+  s.dataset.terisi = '1';
+}
+
+function pilihBuddyBerubah(){
+  const s = document.getElementById('pilihBuddy');
+  const lain = s.value === 'lain';
+  document.getElementById('buddyLain').style.display = lain ? 'block' : 'none';
+  if(!lain && s.value){
+    try{ localStorage.setItem('ibass_buddy_nama', s.value); }catch(e){}
+  }
+  if(lain){ const t=document.getElementById('namaBuddyKonf'); if(t) t.focus(); }
+  segarkanTautan();
+  gambarKonfirmasi();
+}
+function simpanNamaBuddy(){
+  try{ localStorage.setItem('ibass_buddy_nama', buddySekarang()); }catch(e){}
+  segarkanTautan();
+  gambarKonfirmasi();
+}
+
+function segarkanTautan(){
+  const kartu = document.getElementById('kartuTautan');
+  const dept = deptSekarang();
+  const nama = buddySekarang();
+  if(!nama){ kartu.style.display='none'; return; }
+  kartu.style.display='block';
+  document.getElementById('tautanDept').textContent = dept ? dept : 'Bizstar-mu';
+  document.getElementById('tautanBizstar').textContent = tautanKeaktifan(dept, nama);
+}
+
+function pesanUntukBizstar(){
+  const dept = deptSekarang(), nama = buddySekarang();
+  return 'Halo Bizstar ' + (dept||'IBASS') + '!\n\n'
+    + 'Kalau kamu ikut proker HIMA di luar IBASS, lapor lewat link ini ya:\n'
+    + tautanKeaktifan(dept, nama) + '\n\n'
+    + 'Isi nama proker, tanggal, sama bukti kalau ada (foto/dokumentasi). '
+    + 'Nanti aku yang konfirmasi.\n\n'
+    + 'Tiap proker yang terkonfirmasi nambah +' + POIN_PROKER + ' nilai, '
+    + 'maksimal +' + POIN_PROKER_MAKS + '. Yang dihitung cuma proker HIMA — '
+    + 'acara IBASS sendiri sama acara di luar HIMA nggak masuk.\n\n'
+    + 'Datang doang atau jadi panitia sama aja nilainya, yang penting hadir.';
+}
+
+async function salinKe(teks, kabar){
+  try{
+    await navigator.clipboard.writeText(teks);
+    showToast(kabar);
+  }catch(e){
+    // browser lama / izin ditolak — pakai cara jadul
+    const ta=document.createElement('textarea');
+    ta.value=teks; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); showToast(kabar); }
+    catch(e2){ showToast('Salin manual: teksnya ada di layar'); }
+    ta.remove();
+  }
+}
+function salinTautan(){
+  if(!buddySekarang()) return showToast('Pilih namamu dulu');
+  salinKe(tautanKeaktifan(deptSekarang(), buddySekarang()), 'Link tersalin');
+}
+function salinPesanWA(){
+  if(!buddySekarang()) return showToast('Pilih namamu dulu');
+  salinKe(pesanUntukBizstar(), 'Pesan tersalin — tinggal tempel di WA');
+}
+
 function sembunyikanSemuaLayar(){
   ['roleSelect','menuBuddy','konfirmasiView'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.style.display='none';
@@ -2945,101 +3131,172 @@ function bukaKonfirmasi(){
   sembunyikanSemuaLayar();
   document.getElementById('konfirmasiView').style.display='block';
   window.scrollTo(0,0);
-  try{
-    const n=localStorage.getItem('ibass_buddy_nama');
-    if(n) document.getElementById('namaBuddyKonf').value=n;
-  }catch(e){}
+  isiPilihanBuddy();
+  let n='';
+  try{ n=localStorage.getItem('ibass_buddy_nama')||''; }catch(e){}
+  if(n){
+    const s=document.getElementById('pilihBuddy');
+    const kenal=BUDDY_2026.some(b=>b.n===n);
+    if(kenal){ s.value=n; }
+    else{
+      s.value='lain';
+      document.getElementById('buddyLain').style.display='block';
+      document.getElementById('namaBuddyKonf').value=n;
+    }
+  }
+  segarkanTautan();
   muatKonfirmasi();
 }
 
+let konfGagal='';
+
 async function muatKonfirmasi(){
-  const wadah=document.getElementById('daftarKonfirmasi');
-  wadah.innerHTML='<div class="card" style="text-align:center;font-size:0.72rem;color:var(--muted)">Memuat laporan…</div>';
+  daftarProker=null; konfGagal='';
+  gambarKonfirmasi();
   try{
     const r=await fetch(APPS_URL+'?action=keaktifan');
     const js=await r.json();
     if(!js.ok) throw new Error(js.error||'gagal');
     daftarProker=js.daftar||[];
-    gambarKonfirmasi();
   }catch(e){
-    wadah.innerHTML='<div class="card" style="font-size:0.72rem;line-height:1.7;color:var(--text2)">'
-      +'Belum bisa memuat laporan. '
-      +(/tidak dikenal/i.test(e.message||'')?'Server belum diperbarui — hubungi Boss.':'Coba lagi sebentar.')
-      +'</div>';
+    daftarProker=[];
+    konfGagal=/tidak dikenal/i.test(e.message||'')
+      ? 'Server belum diperbarui — kabari Boss.'
+      : 'Periksa koneksimu, lalu coba lagi.';
   }
+  gambarKonfirmasi();
+}
+
+/* Satu kartu Bizstar: nama, poin sementara, dan daftar proker yang dia laporkan. */
+function kartuBizstar(o){
+  const hadir=o.isi.filter(x=>x.status==='Hadir').length;
+  const poin=Math.min(hadir*POIN_PROKER, POIN_PROKER_MAKS);
+  const menunggu=o.isi.filter(x=>x.status==='Menunggu').length;
+  const baris=o.isi.map(d=>{
+    const sudah=d.status!=='Menunggu';
+    const warna=d.status==='Hadir'?'var(--green)':(d.status==='Tidak Hadir'?'var(--red)':'var(--muted)');
+    return `<div class="konf-baris">
+      <div class="konf-kiri">
+        <div class="konf-nm">${escHtml(d.proker)}</div>
+        <div class="konf-sub">${escHtml(d.tanggal||'tanpa tanggal')}
+          ${d.bukti?`&middot; <a href="${escHtml(d.bukti)}" target="_blank" rel="noopener">lihat bukti ↗</a>`:'&middot; tanpa bukti'}
+          ${d.oleh?'&middot; dicek '+escHtml(d.oleh):''}</div>
+      </div>
+      ${sudah
+        ? `<span class="konf-status" style="color:${warna};border-color:${warna}">${escHtml(d.status)}</span>
+           <button class="konf-ubah" onclick="putuskanHadir(${d.id},'Menunggu')">ubah</button>`
+        : `<button class="konf-ya" onclick="putuskanHadir(${d.id},'Hadir')">Hadir</button>
+           <button class="konf-tidak" onclick="putuskanHadir(${d.id},'Tidak Hadir')">Tidak</button>`}
+    </div>`;
+  }).join('');
+  return `<div class="card" style="margin-bottom:0.6rem">
+    <div class="konf-kepala">
+      <div>
+        <div class="konf-nama">${escHtml(o.nama)}</div>
+        <div class="konf-dept">${escHtml(o.dept||'departemen belum diisi')}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="konf-poin">+${poin}</div>
+        <div class="konf-poinket">${hadir} proker${menunggu?' &middot; '+menunggu+' menunggu':''}</div>
+      </div>
+    </div>
+    ${baris}</div>`;
 }
 
 function gambarKonfirmasi(){
   const wadah=document.getElementById('daftarKonfirmasi');
-  if(!daftarProker || !daftarProker.length){
-    wadah.innerHTML='<div class="card" style="font-size:0.72rem;line-height:1.7;color:var(--text2)">'
-      +'Belum ada Bizstar yang melapor. Bagikan link <strong>/keaktifan/</strong> ke mereka dulu.</div>';
+  const nama=buddySekarang(), dept=deptSekarang();
+
+  if(!nama){
+    wadah.innerHTML='<div class="card"><div class="konf-kabar">'
+      +'Pilih namamu dulu di atas. Setelah itu keluar link untuk dibagikan ke Bizstar '
+      +'dan daftar laporan yang perlu kamu cek.</div></div>';
     return;
   }
-  // kelompokkan per Bizstar, yang belum dikonfirmasi ditaruh di atas
+  if(daftarProker===null){   // masih diambil dari server, jangan bilang kosong dulu
+    wadah.innerHTML='<div class="card" style="text-align:center;font-size:0.72rem;color:var(--muted)">Memuat laporan…</div>';
+    return;
+  }
+  if(konfGagal){
+    wadah.innerHTML='<div class="card"><div class="konf-kabar">Laporan belum bisa dimuat. '
+      +escHtml(konfGagal)+'</div>'
+      +'<div class="btn-sm-row"><button class="btn-sm" onclick="muatKonfirmasi()">Coba Lagi</button></div></div>';
+    return;
+  }
+  if(!daftarProker.length){
+    wadah.innerHTML='<div class="card"><div class="konf-kabar">'
+      +'Belum ada satu pun laporan yang masuk. Bagikan dulu link di atas ke grup '
+      +escHtml(dept||'Bizstar-mu')+', nanti laporan mereka muncul di sini.</div></div>';
+    return;
+  }
+
+  // kelompokkan per Bizstar
   const perOrang={};
   daftarProker.forEach(d=>{
-    const k=String(d.nama).toLowerCase().trim();
+    const k=normNama(d.nama);
     if(!perOrang[k]) perOrang[k]={nama:d.nama, dept:d.dept, isi:[]};
+    if(!perOrang[k].dept && d.dept) perOrang[k].dept=d.dept;
     perOrang[k].isi.push(d);
   });
-  const urut=Object.values(perOrang).sort((a,b)=>{
+  const semua=Object.values(perOrang).sort((a,b)=>{
     const ta=a.isi.filter(x=>x.status==='Menunggu').length;
     const tb=b.isi.filter(x=>x.status==='Menunggu').length;
-    if(ta!==tb) return tb-ta;
+    if(ta!==tb) return tb-ta;            // yang butuh dicek naik ke atas
     return a.nama.localeCompare(b.nama,'id');
   });
 
-  wadah.innerHTML=urut.map(o=>{
-    const hadir=o.isi.filter(x=>x.status==='Hadir').length;
-    const poin=Math.min(hadir*POIN_PROKER, POIN_PROKER_MAKS);
-    const menunggu=o.isi.filter(x=>x.status==='Menunggu').length;
-    const baris=o.isi.map(d=>{
-      const sudah=d.status!=='Menunggu';
-      const warna=d.status==='Hadir'?'var(--green)':(d.status==='Tidak Hadir'?'var(--red)':'var(--muted)');
-      return `<div class="konf-baris">
-        <div class="konf-kiri">
-          <div class="konf-nm">${escHtml(d.proker)}</div>
-          <div class="konf-sub">${escHtml(d.tanggal||'tanpa tanggal')}
-            ${d.bukti?`&middot; <a href="${d.bukti}" target="_blank" rel="noopener">lihat bukti ↗</a>`:'&middot; tanpa bukti'}</div>
-        </div>
-        ${sudah
-          ? `<span class="konf-status" style="color:${warna};border-color:${warna}">${escHtml(d.status)}</span>
-             <button class="konf-ubah" onclick="putuskanHadir(${d.id},'Menunggu')">ubah</button>`
-          : `<button class="konf-ya" onclick="putuskanHadir(${d.id},'Hadir')">Hadir</button>
-             <button class="konf-tidak" onclick="putuskanHadir(${d.id},'Tidak Hadir')">Tidak</button>`}
-      </div>`;
-    }).join('');
-    return `<div class="card" style="margin-bottom:0.6rem">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem">
-        <div>
-          <div style="font-size:0.85rem;color:var(--text)">${escHtml(o.nama)}</div>
-          <div style="font-size:0.58rem;color:var(--muted)">${escHtml(o.dept||'—')}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:'Cinzel',serif;font-size:0.95rem;color:#e8bf6a">+${poin}</div>
-          <div style="font-size:0.55rem;color:var(--muted)">${hadir} proker${menunggu?' · '+menunggu+' menunggu':''}</div>
-        </div>
-      </div>
-      ${baris}</div>`;
-  }).join('');
+  // Bizstar departemenmu vs sisanya. Kalau namamu tidak ada di daftar buddy resmi,
+  // tampilkan semua supaya tidak ada laporan yang tersembunyi.
+  const punyaku = dept ? semua.filter(o=>normNama(o.dept)===normNama(dept)) : semua;
+  const lain    = dept ? semua.filter(o=>normNama(o.dept)!==normNama(dept)) : [];
+  const belumDicek = punyaku.reduce((n,o)=>n+o.isi.filter(x=>x.status==='Menunggu').length,0);
+
+  let html='';
+  if(dept){
+    html+='<div class="konf-pisah">Bizstar '+escHtml(dept)+'</div>';
+    html+= punyaku.length
+      ? (belumDicek
+          ? `<div class="card" style="margin-bottom:0.6rem"><div class="konf-kabar">`
+            +`<strong>${belumDicek}</strong> laporan menunggu kamu cek.</div></div>`
+          : `<div class="card" style="margin-bottom:0.6rem"><div class="konf-kabar">`
+            +`Semua laporan sudah kamu cek. Aman.</div></div>`)
+      : `<div class="card" style="margin-bottom:0.6rem"><div class="konf-kabar">`
+        +`Belum ada Bizstar ${escHtml(dept)} yang melapor. Coba sebar lagi link di atas.</div></div>`;
+  }
+  html+=punyaku.map(kartuBizstar).join('');
+
+  if(lain.length){
+    html+='<div class="konf-pisah">Departemen lain</div>'
+      +'<div class="card" style="margin-bottom:0.6rem"><div class="konf-kabar">'
+      +'Laporan ini bukan dari departemenmu &mdash; biar buddy mereka yang cek. '
+      +'Ditampilkan supaya tidak ada yang terlewat kalau ada yang salah pilih departemen.'
+      +'</div></div>'
+      +lain.map(kartuBizstar).join('');
+  }
+  wadah.innerHTML=html;
 }
 
 async function putuskanHadir(id, status){
-  const nama=document.getElementById('namaBuddyKonf').value.trim();
-  if(!nama){ alert('Isi namamu dulu di kolom atas.'); document.getElementById('namaBuddyKonf').focus(); return; }
+  const nama=buddySekarang();
+  if(!nama){
+    showToast('Pilih namamu dulu di atas');
+    const s=document.getElementById('pilihBuddy'); if(s){ s.focus(); }
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
   try{ localStorage.setItem('ibass_buddy_nama',nama); }catch(e){}
   // ubah tampilan dulu supaya terasa cepat, baru kirim ke server
   const item=daftarProker.find(d=>d.id===id);
   const sebelum=item?item.status:null;
-  if(item){ item.status=status; item.oleh=nama; gambarKonfirmasi(); }
+  const olehSebelum=item?item.oleh:'';
+  if(item){ item.status=status; item.oleh=(status==='Menunggu'?'':nama); gambarKonfirmasi(); }
   try{
     const r=await fetch(APPS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'keaktifankonfirm',id,status,oleh:nama})});
     const js=await r.json();
     if(!js.ok) throw new Error(js.error||'ditolak');
   }catch(e){
-    if(item){ item.status=sebelum; gambarKonfirmasi(); }
+    if(item){ item.status=sebelum; item.oleh=olehSebelum; gambarKonfirmasi(); }
     alert('Gagal menyimpan. Periksa koneksi lalu coba lagi.');
   }
 }

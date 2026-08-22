@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0d1c3a">
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
-<title>Lapor Keaktifan — IBASS 2026</title>
+<title>Lapor Proker HIMA — IBASS 2026</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230d1c3a'/><path d='M16 5.5l2.7 7.1L26 13.8l-5.7 4.7L22 26l-6-3.9L10 26l1.7-7.5L6 13.8l7.3-1.2z' fill='%23e8bf6a'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -69,21 +69,27 @@ input:focus,select:focus{border-color:rgba(232,191,106,.55);box-shadow:0 0 0 2px
 <div class="wrap">
 
   <div class="kop">
-    <h1>Lapor Kehadiran Proker</h1>
-    <p>IBASS 2026 · Proker HIMA di Luar IBASS</p>
+    <h1>Lapor Proker HIMA</h1>
+    <p>IBASS 2026 · Kegiatan HIMA di Luar IBASS</p>
+  </div>
+
+  <div class="card" id="kartuBuddy" style="display:none">
+    <div class="lbl">Buddy Kamu</div>
+    <div style="font-size:.9rem" id="namaBuddyKu">&mdash;</div>
+    <div class="note" style="margin-top:.25rem">Dia yang nanti mengecek laporanmu.</div>
   </div>
 
   <div class="card">
-    <div class="lbl">Cara Kerjanya</div>
+    <div class="lbl">Hitungannya</div>
     <div class="tingkat">
-      <div class="tk"><span class="tk-p">+2</span><span>Tiap <b>proker HIMA di luar IBASS</b> yang kamu hadiri dan sudah dikonfirmasi buddy.</span></div>
-      <div class="tk"><span class="tk-p no">maks</span><span>Tambahan nilai dibatasi <b>+10</b>. Lima proker sudah mentok.</span></div>
-      <div class="tk"><span class="tk-p no">0</span><span>Kegiatan IBASS sendiri dan acara di luar HIMA tidak dihitung.</span></div>
+      <div class="tk"><span class="tk-p">+2</span><span>Tiap <b>proker HIMA di luar IBASS</b> yang kamu datangi, setelah dicek buddy.</span></div>
+      <div class="tk"><span class="tk-p no">maks</span><span>Mentok di <b>+10</b>. Jadi lima proker sudah penuh.</span></div>
+      <div class="tk"><span class="tk-p no">0</span><span>Acara IBASS sendiri dan acara di luar HIMA tidak dihitung.</span></div>
     </div>
     <div class="note" style="margin-top:.7rem">
-      Yang dinilai cuma <strong>hadir atau tidak</strong> &mdash; mau kamu jadi panitia atau
-      sekadar datang, poinnya sama. Laporanmu dicek buddy sebelum poinnya masuk,
-      jadi lampirkan bukti kalau ada.
+      Yang dilihat cuma <strong>datang atau tidak</strong>. Jadi panitia atau cuma ikut
+      duduk di belakang, poinnya sama. Buddy-mu perlu mengecek dulu sebelum poinnya masuk,
+      jadi lampirkan foto atau apa pun yang menunjukkan kamu di sana.
     </div>
   </div>
 
@@ -96,10 +102,10 @@ input:focus,select:focus{border-color:rgba(232,191,106,.55);box-shadow:0 0 0 2px
     </div>
     <div class="field">
       <label class="f">Departemen</label>
-      <select id="dept"><option value="">— Pilih —</option>
-        <option>HRD</option><option>MEIN</option><option>ACT</option><option>Finance</option>
-        <option>Advocacy</option><option>Secretary</option><option>External Affairs</option>
-        <option>Entrepreneurship</option></select>
+      <select id="dept" onchange="deptBerubah()"><option value="">— Pilih —</option>
+        <option>Secretary</option><option>Finance</option><option>HRD</option>
+        <option>Advocacy</option><option>External Affairs</option><option>MEIN</option>
+        <option>Entrepreneurship</option><option>ACT</option></select>
     </div>
     <div class="field">
       <label class="f">Nama Proker HIMA</label>
@@ -110,7 +116,7 @@ input:focus,select:focus{border-color:rgba(232,191,106,.55);box-shadow:0 0 0 2px
       <input type="date" id="tanggal">
     </div>
     <div class="field">
-      <label class="f">Bukti (opsional tapi disarankan)</label>
+      <label class="f">Bukti — boleh dilewat, tapi lebih cepat dicek kalau ada</label>
       <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">
         <label class="btn" style="width:auto;padding:.55rem .9rem;margin:0;cursor:pointer">Unggah Foto
           <input type="file" accept="image/*" style="display:none" id="berkas"></label>
@@ -130,13 +136,40 @@ input:focus,select:focus{border-color:rgba(232,191,106,.55);box-shadow:0 0 0 2px
     <div id="daftarSaya" style="margin-top:.8rem"></div>
   </div>
 
-  <div class="note" style="text-align:center;opacity:.5;font-size:.55rem;letter-spacing:.08em">Versi 20 Agu · 1</div>
+  <div class="note" style="text-align:center;opacity:.5;font-size:.55rem;letter-spacing:.08em">Versi 22 Agu</div>
 </div>
 
 <script>
 const GAS_URL='https://script.google.com/macros/s/AKfycbxCTCMFY1KEBuT6TeiBbMeDgB-JL2o3zOXtdvpDagd1E-tMScq45uxX-nwUqA9qf9Becg/exec';
 const $=id=>document.getElementById(id);
 const esc=s=>{const d=document.createElement('div');d.textContent=String(s==null?'':s);return d.innerHTML;};
+
+/* Delapan buddy IBASS 2026. Daftar yang sama ada di index.html dan di file Apps Script. */
+const BUDDY_2026=[
+  {d:'Secretary',        n:'Ayu Diah Pramesti'},
+  {d:'Finance',          n:'Nursyfa Alawiyah Thoyibah'},
+  {d:'HRD',              n:'Eghina Salsabilla'},
+  {d:'Advocacy',         n:'Muhammad Akram Ziyad'},
+  {d:'External Affairs', n:'Razwa Zahara Maulidiya'},
+  {d:'MEIN',             n:'Tyara Nadira Putri'},
+  {d:'Entrepreneurship', n:'Marzya Zyalzyabila'},
+  {d:'ACT',              n:'Anggun Puti Maharani'}
+];
+const norm=s=>String(s==null?'':s).toLowerCase().replace(/[^a-z0-9]/g,'');
+function buddyDept(dept){
+  const b=BUDDY_2026.find(x=>norm(x.d)===norm(dept));
+  return b?b.n:'';
+}
+
+/* Link dari buddy sudah membawa ?dept= dan ?buddy=, jadi Bizstar tinggal isi prokernya. */
+function deptBerubah(){
+  const dept=$('dept').value;
+  const nama=buddyDept(dept);
+  const kartu=$('kartuBuddy');
+  if(nama){ kartu.style.display='block'; $('namaBuddyKu').textContent=nama+' · '+dept; }
+  else kartu.style.display='none';
+  try{ if(dept) localStorage.setItem('ibass_keaktifan_dept',dept); }catch(e){}
+}
 
 async function keServer(body){
   const r=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
@@ -179,16 +212,18 @@ $('berkas').addEventListener('change',function(){
 
 $('kirim').onclick=async()=>{
   const nama=$('nama').value.trim(), proker=$('proker').value.trim();
-  if(!nama){ pesan('Nama lengkap wajib diisi.',false); $('nama').focus(); return; }
-  if(!proker){ pesan('Nama proker wajib diisi.',false); $('proker').focus(); return; }
+  if(!nama){ pesan('Isi nama lengkapmu dulu.',false); $('nama').focus(); return; }
+  if(!$('dept').value){ pesan('Pilih departemenmu dulu — biar laporannya sampai ke buddy yang benar.',false); $('dept').focus(); return; }
+  if(!proker){ pesan('Nama prokernya belum diisi.',false); $('proker').focus(); return; }
   const b=$('kirim'); b.disabled=true; b.innerHTML='<span class="spinner"></span> Mengirim…';
   try{
     const js=await keServer({action:'keaktifanlapor',nama,dept:$('dept').value,proker,
       tanggal:$('tanggal').value,bukti:$('bukti').value.trim()});
     try{ localStorage.setItem('ibass_keaktifan_nama',nama); }catch(e){}
+    const bd=buddyDept($('dept').value);
     pesan(js.kembar
-      ? 'Proker ini <b>sudah pernah kamu laporkan</b>, jadi tidak ditambahkan lagi.'
-      : 'Laporan tersimpan. Menunggu konfirmasi buddy-mu.',true);
+      ? 'Proker ini <b>sudah pernah kamu laporkan</b>, jadi tidak dihitung dua kali.'
+      : 'Laporan masuk. Tinggal tunggu '+(bd?esc(bd):'buddy-mu')+' mengecek.',true);
     ['proker','tanggal','bukti'].forEach(i=>$(i).value='');
     $('statusUnggah').style.display='none';
     muatPunyaku(nama);
@@ -225,10 +260,32 @@ async function muatPunyaku(nama){
 }
 
 muatSaran();
-try{
-  const n=localStorage.getItem('ibass_keaktifan_nama');
-  if(n){ $('nama').value=n; muatPunyaku(n); }
-}catch(e){}
+
+/* Ambil departemen dari link buddy dulu, baru dari ingatan browser. */
+(function mulai(){
+  let dept='';
+  try{
+    const p=new URLSearchParams(location.search);
+    dept=p.get('dept')||'';
+    const b=p.get('buddy')||'';
+    if(!dept && b){
+      const cocok=BUDDY_2026.find(x=>norm(x.n)===norm(b));
+      if(cocok) dept=cocok.d;
+    }
+  }catch(e){}
+  if(!dept){ try{ dept=localStorage.getItem('ibass_keaktifan_dept')||''; }catch(e){} }
+  if(dept){
+    const pilihan=[...$('dept').options].find(o=>norm(o.value)===norm(dept));
+    if(pilihan) $('dept').value=pilihan.value;
+  }
+  deptBerubah();
+
+  try{
+    const n=localStorage.getItem('ibass_keaktifan_nama');
+    if(n){ $('nama').value=n; muatPunyaku(n); }
+  }catch(e){}
+})();
+
 $('nama').addEventListener('change',()=>muatPunyaku($('nama').value.trim()));
 </script>
 </body>
