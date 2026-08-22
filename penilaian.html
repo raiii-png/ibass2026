@@ -473,9 +473,9 @@ body {
 .biz-counter strong { color: var(--blue2); font-size: 1.1rem; }
 
 /* progress dots */
-.biz-dots { display: flex; gap: 0.32rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.biz-dots { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .biz-dot {
-  width: 8px; height: 8px; flex-shrink: 0; cursor: pointer;
+  width: 9px; height: 9px; flex-shrink: 0; cursor: pointer; position: relative;
   background: var(--bdr3); border: 1px solid var(--bdr2);
   border-radius: 50%;
   transition: all 0.22s;
@@ -627,7 +627,7 @@ body {
 /* scale 1-5 (panitia) */
 .scale5 { display: flex; gap: 0.28rem; }
 .s5 {
-  flex: 1; height: 52px; border: 1px solid var(--bdr2);
+  flex: 1; height: 52px; border: 1px solid var(--bdr2); position: relative;
   background: var(--bg3); color: var(--text2);
   font-family: 'Cinzel Decorative', serif; font-size: 1.1rem;
   cursor: pointer; transition: all 0.15s;
@@ -970,6 +970,14 @@ body {
   display: flex; flex-wrap: wrap; gap: 0.35rem;
   margin-bottom: 0.65rem; align-items: center;
 }
+@media (hover: none) and (pointer: coarse) { .kb-hint { display: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .biz-card-wrap.slide-left, .biz-card-wrap.slide-right { animation: none; }
+  .s10.denyut::after, .s5.denyut::after { animation: none; display: none; }
+  #lanjutBar { transition-duration: 0.15s; }
+  #lanjutBar.naik .lanjut-cek { animation: none; }
+}
 .kb-hint-label {
   font-family: 'Cinzel', serif; font-size: 0.44rem;
   color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;
@@ -1019,8 +1027,68 @@ body {
    ENHANCED — CARD TRANSITION
 ═══════════════════════════════════ */
 .biz-card-wrap { position: relative; }
-.biz-card-wrap.slide-left  { animation: slideLeft  0.22s ease; }
-.biz-card-wrap.slide-right { animation: slideRight 0.22s ease; }
+.biz-card-wrap.slide-left  { animation: slideLeft  0.28s cubic-bezier(0.22,0.61,0.36,1); }
+.biz-card-wrap.slide-right { animation: slideRight 0.28s cubic-bezier(0.22,0.61,0.36,1); }
+
+/* ── denyut kecil di tombol yang barusan ditekan ──
+   Angka yang dipilih ikut menyala bersama angka di bawahnya, jadi tanpa penanda
+   khusus mata susah memastikan angka mana yang tadi disentuh. */
+.s10.denyut::after, .s5.denyut::after {
+  content: ''; position: absolute; inset: -1px; border-radius: var(--r);
+  border: 1px solid currentColor; pointer-events: none;
+  animation: denyut 0.42s cubic-bezier(0.22,0.61,0.36,1) forwards;
+}
+@keyframes denyut { from { opacity: 0.85; transform: scale(1); }
+                    to   { opacity: 0;    transform: scale(1.32); } }
+
+/* ── bar "satu orang selesai" ──
+   Naik dari bawah layar begitu tiga nilai terisi, lalu pindah sendiri. Buddy tidak
+   perlu menggulung ke bawah mencari tombol lanjut — gerakan itu yang paling sering
+   diulang sepanjang acara. */
+#lanjutBar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
+  transform: translateY(110%);
+  transition: transform 0.42s cubic-bezier(0.22,0.61,0.36,1);
+  background: linear-gradient(180deg, rgba(18,36,72,0.97), rgba(13,28,58,0.99));
+  border-top: 1px solid rgba(232,191,106,0.4);
+  box-shadow: 0 -14px 34px rgba(5,12,28,0.55);
+  padding: 0.8rem 1rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
+}
+#lanjutBar.naik { transform: translateY(0); }
+.lanjut-isi { max-width: 460px; margin: 0 auto; display: flex; align-items: center; gap: 0.7rem; }
+.lanjut-cek {
+  width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%;
+  border: 1px solid var(--growth); display: flex; align-items: center; justify-content: center;
+}
+#lanjutBar.naik .lanjut-cek { animation: cekMuncul 0.45s cubic-bezier(0.22,0.61,0.36,1) both; }
+@keyframes cekMuncul { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.lanjut-teks { flex: 1; min-width: 0; }
+.lanjut-judul {
+  font-family: 'Cinzel', serif; font-size: 0.52rem; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--growth); margin-bottom: 0.12rem;
+}
+.lanjut-nama {
+  font-size: 0.76rem; color: var(--text); line-height: 1.4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lanjut-tahan {
+  background: transparent; border: 1px solid var(--bdr2); color: var(--muted);
+  font-family: 'Cinzel', serif; font-size: 0.5rem; letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 0.55rem 0.75rem; border-radius: var(--r);
+  cursor: pointer; flex-shrink: 0; transition: all 0.18s;
+  min-height: 44px;   /* sasaran sentuh, bukan sekadar tinggi teks */
+}
+.lanjut-tahan:hover { color: var(--text2); border-color: var(--bdr); }
+.lanjut-garis {
+  height: 2px; background: rgba(232,191,106,0.16); overflow: hidden;
+  margin: 0.6rem auto 0; max-width: 460px;
+}
+.lanjut-garis i { display: block; height: 100%; background: var(--gold2); transform-origin: left; }
+#lanjutBar.naik .lanjut-garis i { animation: susut 2.2s linear forwards; }
+@keyframes susut { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* titik progres: sasaran sentuh diperlebar tanpa mengubah tampilannya */
+.biz-dot::after { content: ''; position: absolute; inset: -6px; }
 
 /* ═══════════════════════════════════
    ENHANCED — TOOLTIP ON SCALE BUTTON
@@ -1297,7 +1365,7 @@ input:focus, select:focus, textarea:focus {
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
     viewBox="0 0 800 800"
-    style="position:fixed; top:0; left:50%; transform:translateX(-50%); width:100vw; height:100vw; max-height:100vh; z-index:2; opacity:0; animation:castleRise 1.8s 4.2s cubic-bezier(0.16,1,0.3,1) forwards;"
+    style="position:fixed; top:0; left:50%; transform:translateX(-50%); width:100%; height:100vw; max-height:100vh; max-width:100%; z-index:2; opacity:0; animation:castleRise 1.8s 4.2s cubic-bezier(0.16,1,0.3,1) forwards;"
     preserveAspectRatio="xMidYMid meet">
 <defs><filter id="wg" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="4"/></filter></defs>
 <polygon points="400,300.0 840,520.0 400,740.0 -40,520.0" fill="#06091a" stroke="rgba(91,159,214,0.3)" stroke-width="0.5"/>
@@ -2331,6 +2399,23 @@ input:focus, select:focus, textarea:focus {
   </div>
 </div>
 
+<!-- ══ BAR SELESAI SATU BIZSTAR ══ -->
+<div id="lanjutBar">
+  <div class="lanjut-isi">
+    <div class="lanjut-cek">
+      <svg viewBox="0 0 22 22" width="13" height="13" fill="none" stroke="#44c98a" stroke-width="2.2">
+        <polyline points="4,11 9,16 18,6"/>
+      </svg>
+    </div>
+    <div class="lanjut-teks">
+      <div class="lanjut-judul" id="lanjutJudul">Selesai</div>
+      <div class="lanjut-nama" id="lanjutNama">&ndash;</div>
+    </div>
+    <button class="lanjut-tahan" onclick="tutupLanjut(true)">Tetap di sini</button>
+  </div>
+  <div class="lanjut-garis"><i></i></div>
+</div>
+
 <!-- ══ CONFIRM MODAL ══ -->
 <div id="confirmModal">
   <div class="confirm-backdrop"></div>
@@ -2783,6 +2868,98 @@ const allScores = {};
   setTimeout(()=>{addS();setTimeout(addS,500);},1000);
 })();
 
+/* ══ RASA PAKAI ══
+   Tiga hal kecil yang menentukan nyaman atau tidaknya menilai sambil berdiri di
+   tengah acara: getaran tipis sebagai tanda sentuhan masuk, kartu yang bergeser
+   sendiri saat pindah orang, dan layar yang kembali ke atas supaya tidak perlu
+   menggulung dua kali. */
+function kurangiGerak(){
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+function getar(pola){
+  try{ if(navigator.vibrate) navigator.vibrate(pola); }catch(e){}
+}
+function gulungKeKartu(){
+  const nav=document.querySelector('.biz-nav');
+  if(!nav) return;
+  const y=nav.getBoundingClientRect().top+window.scrollY-72;
+  window.scrollTo({ top: Math.max(y,0), behavior: kurangiGerak()?'auto':'smooth' });
+}
+function geserKartu(arah){
+  const w=document.getElementById('bizCardWrap');
+  if(!w || kurangiGerak()) return;
+  const kelas = arah<0 ? 'slide-left' : 'slide-right';
+  w.classList.remove('slide-left','slide-right');
+  void w.offsetWidth;
+  w.classList.add(kelas);
+  setTimeout(()=>w.classList.remove(kelas), 300);
+}
+
+/* ── Momen selesai satu Bizstar ──
+   Begitu tiga nilai terisi, bar naik dari bawah menyebut siapa berikutnya lalu
+   pindah sendiri. Yang belum mau pindah tinggal menahan, dan orang itu tidak akan
+   ditawari lagi. Menggulung layar atau mulai mengetik catatan juga membatalkan —
+   tandanya buddy masih ingin di halaman ini. */
+let lanjutTimer = null;
+let lanjutUntuk = '';
+const lanjutDitahan = new Set();
+
+function bukaLanjut(){
+  const nama = bizList[bizIdx];
+  if(!nama || lanjutDitahan.has(nama)) return;
+  const bar = document.getElementById('lanjutBar');
+  if(!bar) return;
+  const akhir = bizIdx === bizList.length-1;
+  document.getElementById('lanjutJudul').textContent = akhir ? 'Semua Beres' : 'Selesai';
+  document.getElementById('lanjutNama').textContent =
+    akhir ? 'Semua Bizstar sudah dinilai — lanjut ke review'
+          : 'Lanjut ke ' + bizList[bizIdx+1];
+  lanjutUntuk = nama;
+  bar.classList.remove('naik'); void bar.offsetWidth;
+  bar.classList.add('naik');
+  getar([8,45,14]);
+  clearTimeout(lanjutTimer);
+  lanjutTimer = setTimeout(()=>{ tutupLanjut(); nextBiz(); }, 2200);
+}
+
+function tutupLanjut(ditahan){
+  clearTimeout(lanjutTimer); lanjutTimer=null;
+  const bar=document.getElementById('lanjutBar');
+  if(bar) bar.classList.remove('naik');
+  if(ditahan && lanjutUntuk) lanjutDitahan.add(lanjutUntuk);
+}
+
+(function pasangRasaPakai(){
+  window.addEventListener('scroll', ()=>{ if(lanjutTimer) tutupLanjut(true); }, {passive:true});
+  ['catKelebihan','catPerbaikan'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('focus', ()=>{ if(lanjutTimer) tutupLanjut(true); });
+  });
+
+  /* Geser kiri-kanan untuk pindah Bizstar. Ambang 34px dan perbandingan terhadap
+     gerak vertikal supaya tidak bentrok dengan menggulung layar. */
+  const w=document.getElementById('bizCardWrap');
+  if(!w) return;
+  let x0=null, y0=null, geser=false;
+  w.addEventListener('touchstart', e=>{
+    if(e.touches.length!==1){ x0=null; return; }
+    x0=e.touches[0].clientX; y0=e.touches[0].clientY; geser=false;
+  }, {passive:true});
+  w.addEventListener('touchmove', e=>{
+    if(x0===null) return;
+    const dx=e.touches[0].clientX-x0, dy=e.touches[0].clientY-y0;
+    if(!geser && Math.abs(dx)>34 && Math.abs(dx)>Math.abs(dy)*1.6) geser=true;
+  }, {passive:true});
+  w.addEventListener('touchend', e=>{
+    if(x0===null || !geser){ x0=null; return; }
+    const dx=e.changedTouches[0].clientX-x0;
+    x0=null;
+    tutupLanjut();
+    if(dx<0 && bizIdx<bizList.length-1) nextBiz();
+    else if(dx>0 && bizIdx>0) prevBiz();
+  }, {passive:true});
+})();
+
 /* ══ BUILD SCALE BUTTONS ══ */
 function buildButtons(){
   if(currentRole==='buddy'){
@@ -2816,20 +2993,32 @@ const PANITIA_KEY_MAP= {p_a1:'a', p_b1:'b', p_c1:'c'};
 
 function rate(id1, id2, val, cv){
   const name=bizList[bizIdx]; if(!name)return;
+  const lengkapSebelumnya=isComplete(name);
   if(!allScores[name])allScores[name]={};
   const key=BUDDY_KEY_MAP[id1]||'a';
   allScores[name][key]=val;
   // re-render both rows
   const r1=document.getElementById(id1).querySelectorAll('.s10');
   const r2=document.getElementById(id2).querySelectorAll('.s10');
-  [...r1,...r2].forEach((b,i)=>{
+  const semua=[...r1,...r2];
+  semua.forEach((b,i)=>{
     b.classList.toggle('lit',i+1<=val);
     if(i+1<=val)b.classList.add(cv); else b.classList.remove(cv);
   });
+  denyutkan(semua[val-1]);
   // update display value — id1 is e.g. "b_a1", display el is "b_a1_v"
   const dispEl=document.getElementById(id1+'_v');
   if(dispEl) dispEl.textContent=val;
   updateLive(); checkCurrent();
+  if(!lengkapSebelumnya && isComplete(name)) bukaLanjut();
+  else getar(8);
+}
+
+function denyutkan(tombol){
+  if(!tombol || kurangiGerak()) return;
+  tombol.classList.remove('denyut'); void tombol.offsetWidth;
+  tombol.classList.add('denyut');
+  setTimeout(()=>tombol.classList.remove('denyut'), 460);
 }
 
 /* Keaktifan di luar IBASS — poin tambahan, bukan bagian KPI.
@@ -2839,10 +3028,12 @@ function rate5el(id, val, cv){
   if(!allScores[name])allScores[name]={};
   const key=PANITIA_KEY_MAP[id]||'a';
   allScores[name][key]=val;
-  document.getElementById(id).querySelectorAll('.s5').forEach((b,i)=>{
+  const tombol5=document.getElementById(id).querySelectorAll('.s5');
+  tombol5.forEach((b,i)=>{
     b.classList.toggle('lit',i+1<=val);
     if(i+1<=val)b.classList.add(cv); else b.classList.remove(cv);
   });
+  denyutkan(tombol5[val-1]);
   // display el is e.g. "p_a1_v"
   const dispEl=document.getElementById(id+'_v');
   if(dispEl) dispEl.textContent=val;
@@ -3580,7 +3771,10 @@ function renderDots(){
     const sc=allScores[name]||{};
     const filled=isComplete(name);
     d.className='biz-dot'+(i===bizIdx?' active':filled?' done':'');
-    d.onclick=()=>saveCurrent(()=>loadBizCard(i));
+    d.onclick=()=>saveCurrent(()=>{
+      const arah = i>bizIdx ? -1 : 1;
+      tutupLanjut(); loadBizCard(i); geserKartu(arah); gulungKeKartu();
+    });
     container.appendChild(d);
   });
 }
@@ -3603,11 +3797,16 @@ function saveCurrent(cb){
 
 function nextBiz(){
   saveCurrent(()=>{
-    if(bizIdx<bizList.length-1){loadBizCard(bizIdx+1);}
-    else{goPage(3);}
+    if(bizIdx<bizList.length-1){
+      loadBizCard(bizIdx+1); geserKartu(-1); gulungKeKartu();
+    } else { goPage(3); }
   });
 }
-function prevBiz(){saveCurrent(()=>{if(bizIdx>0)loadBizCard(bizIdx-1);});}
+function prevBiz(){
+  saveCurrent(()=>{
+    if(bizIdx>0){ loadBizCard(bizIdx-1); geserKartu(1); gulungKeKartu(); }
+  });
+}
 
 function toggleCat(){
   const body=document.getElementById('catBody');
@@ -4335,6 +4534,7 @@ window.buildStats = function(){
 
 /* ══ RESET ══ */
 function resetAll(){
+  tutupLanjut(); lanjutDitahan.clear();
   currentRole=''; milestone=''; bizList=[]; bizIdx=0;
   Object.keys(allScores).forEach(k=>delete allScores[k]);
   panitiaSelected.clear();
