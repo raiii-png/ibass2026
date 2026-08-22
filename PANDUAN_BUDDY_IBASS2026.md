@@ -110,8 +110,9 @@ Ini bagian yang paling sering ditanya. Jawabannya sederhana:
 > ngeramein. Jadi pas kalian di sana, sekalian aja liat Bizstar kalian dateng apa nggak.
 > Gampang, orangnya kalian dampingi terus.
 >
-> Kalau kebetulan kalian nggak bisa dateng — tinggal list aja di grup departemen. 'Siapa
-> yang ikut IEFBA besok?' Sesimpel itu. Atau tanya fungsio lain yang dateng.
+> Kalau kebetulan kalian nggak bisa dateng — tinggal bikin list di grup departemen.
+> 'Siapa yang ikut Aspire besok?' Biar mereka sendiri yang nulis namanya di situ, terus
+> kalian tinggal mindahin ke web. Atau tanya fungsio lain yang dateng.
 >
 > Tahun lalu Fakhri juga gitu. Nggak usah dibikin ribet."
 
@@ -133,7 +134,7 @@ Ini bagian yang paling sering ditanya. Jawabannya sederhana:
 >
 > "Ini yang harus kalian hafal, karena Bizstar pasti nanya.
 >
-> **Yang dihitung: proker HIMA, di luar IBASS.** Adbis Cup, Bizfest, proker departemen lain
+> **Yang dihitung: proker HIMA, di luar IBASS.** Aspire, IEFBA, proker departemen lain
 > — masuk.
 >
 > **Yang nggak dihitung:** acara IBASS sendiri — ya iyalah, itu emang kerjaan mereka. Terus

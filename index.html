@@ -89,9 +89,12 @@ body {
   display: flex; flex-direction: column;
   align-items: center; justify-content: flex-end;
   overflow: hidden;
-  transition: opacity 0.9s ease, transform 0.9s ease;
+  transition: opacity 0.85s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 1.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: opacity, transform;
+  backface-visibility: hidden;
 }
-#intro.out { opacity: 0; transform: scale(1.03); pointer-events: none; }
+#intro.out { opacity: 0; transform: scale(1.05); pointer-events: none; }
 
 .castle-wrap { display: none; }
 .castle-fog {
@@ -167,8 +170,22 @@ body {
 /* ═══════════════════════════════════
    ROLE SELECT
 ═══════════════════════════════════ */
-#roleSelect { display: none; min-height: 100vh; position: relative; z-index: 1; }
+#roleSelect {
+  display: none; min-height: 100vh; position: relative; z-index: 1;
+  opacity: 0; transform: translateY(18px);
+  transition: opacity 0.8s cubic-bezier(0.22, 0.61, 0.36, 1),
+              transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: opacity, transform;
+}
 #roleSelect.visible { display: block; }
+#roleSelect.masuk   { opacity: 1; transform: none; }
+
+/* Kalau HP-nya disetel mengurangi gerakan, cukup muncul tanpa geser. */
+@media (prefers-reduced-motion: reduce) {
+  #intro, #roleSelect { transition-duration: 0.25s; }
+  #intro.out { transform: none; }
+  #roleSelect { transform: none; }
+}
 
 .center-wrap {
   max-width: 460px; margin: 0 auto;
@@ -848,6 +865,8 @@ body {
    KEYFRAMES
 ═══════════════════════════════════ */
 @keyframes fadeUp    { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+/* teks intro naik dengan perlambatan, bukan tempo rata */
+.i-eye, .i-wrap, .i-rule, .i-meta, .i-cta { animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1) !important; }
 @keyframes castleRise{ from { opacity:0; transform:translateX(-50%) translateY(60px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
 @keyframes slideUp   { from { transform:translateY(36px); opacity:0; } to { transform:translateY(0); opacity:1; } }
 @keyframes spin      { to { transform:rotate(360deg); } }
@@ -1887,7 +1906,8 @@ input:focus, select:focus, textarea:focus {
       <div class="card-label">Catat Kehadiran</div>
       <div style="font-size:0.7rem;color:var(--text2);line-height:1.7;margin-bottom:0.7rem">
         Bizstar-mu ikut proker HIMA? catat di sini. Kalau kamu tidak ikut acaranya,
-        tanya saja di grup departemen siapa yang datang.
+        bikin list di grup departemen &mdash; biar mereka sendiri yang menulis siapa yang
+        ikut, lalu kamu yang catat di sini.
       </div>
       <div class="field">
         <label>Bizstar</label>
@@ -1899,7 +1919,7 @@ input:focus, select:focus, textarea:focus {
       </div>
       <div class="field">
         <label>Nama Proker HIMA</label>
-        <input type="text" id="catatProker" placeholder="Contoh: Adbis Cup 2026" autocomplete="off">
+        <input type="text" id="catatProker" placeholder="Contoh: Aspire 2026" autocomplete="off">
       </div>
       <div class="field" style="margin-bottom:0">
         <label>Tanggal Kehadiran</label>
@@ -2843,8 +2863,16 @@ function updateLive(){
 
 /* ══ NAV ══ */
 function openRoleSelect(){
-  document.getElementById('intro').classList.add('out');
-  setTimeout(()=>{document.getElementById('intro').style.display='none';document.getElementById('roleSelect').classList.add('visible');},1000);
+  const intro = document.getElementById('intro');
+  const pilih = document.getElementById('roleSelect');
+  intro.classList.add('out');
+  // Layar peran dinaikkan lebih dulu di belakang intro yang sedang memudar, jadi
+  // keduanya bersilangan halus dan tidak ada satu kedipan kosong di tengah.
+  pilih.classList.add('visible');
+  const naik = ()=>pilih.classList.add('masuk');
+  requestAnimationFrame(()=>requestAnimationFrame(naik));
+  setTimeout(naik, 120);   // jaring pengaman kalau tab dibuka di belakang
+  setTimeout(()=>{ intro.style.display='none'; }, 1250);
 }
 function openApp(role){
   currentRole=role;
@@ -3384,8 +3412,8 @@ function gambarKonfirmasi(){
   }
   if(!daftarProker.length){
     wadah.innerHTML='<div class="card"><div class="konf-kabar">'
-      +'Belum ada satu pun laporan yang masuk. Bagikan dulu link di atas ke grup '
-      +escHtml(dept||'Bizstar-mu')+', nanti laporan mereka muncul di sini.</div></div>';
+      +'Belum ada yang dicatat. Minta daftar siapa yang ikut proker di grup '
+      +escHtml(dept||'departemenmu')+', lalu catat lewat kotak di atas.</div></div>';
     return;
   }
 
