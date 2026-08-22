@@ -141,9 +141,9 @@ input:focus,select:focus{border-color:rgba(232,191,106,.55);box-shadow:0 0 0 2px
 
 <script>
 /* ══ SAKLAR FITUR ══
-   Halaman lapor proker ditutup dulu — belum dipakai. Mau dibuka lagi: ganti false
-   jadi true di sini, dan di index.html (cari FITUR_PROKER). Isinya tidak dihapus. */
-const FITUR_PROKER = false;
+   Halaman lapor proker. Mau ditutup lagi: ganti true jadi false di sini,
+   dan di index.html (cari FITUR_PROKER). */
+const FITUR_PROKER = true;
 if(!FITUR_PROKER){
   document.head.insertAdjacentHTML('beforeend',
     '<style>.terkunci .card{display:none!important}.terkunci .card.kunci{display:block!important}</style>');
