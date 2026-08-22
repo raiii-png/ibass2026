@@ -447,8 +447,14 @@ function doPost(e) {
           .some(function (r) { return rapikan(r[2]) === nb && rapikan(r[4]) === pb; });
         if (adaKembar) return jsonOk({ kembar: true });
       }
+      /* Buddy boleh mencatat sendiri (jalur kedua). Kalau yang mengirim menyertakan
+         status 'Hadir' berikut namanya, laporan langsung sah tanpa perlu dikonfirmasi
+         lagi — yang mencatat memang orang yang berhak mengonfirmasi. */
+      const langsung = String(body.status || '') === 'Hadir' && String(body.oleh || '').trim();
       sh.appendRow([Date.now(), new Date().toISOString(), nama, String(body.dept || ''),
-        proker, String(body.tanggal || ''), String(body.bukti || ''), 'Menunggu', '']);
+        proker, String(body.tanggal || ''), String(body.bukti || ''),
+        langsung ? 'Hadir' : 'Menunggu', langsung ? String(body.oleh).trim() : '']);
+      if (langsung) { try { rebuildPeringkat(); } catch (e2) {} }
       return jsonOk({ tersimpan: true });
     }
 
