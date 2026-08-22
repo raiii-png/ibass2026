@@ -101,7 +101,13 @@ nggak nanya ulang seminggu kemudian.)*
 >
 > **Empat.** Nanti kalau ada yang lapor, dia muncul di bawah, dikelompokin per orang.
 > Yang belum kalian cek naik ke paling atas. Tinggal pencet **Hadir** atau **Tidak**.
-> Kalau salah pencet, ada tombol 'ubah' buat balikin."
+> Kalau salah pencet, ada tombol 'ubah' buat balikin.
+>
+> **Lima.** Ada juga kotak **Catat Sendiri**. Itu buat Bizstar yang males lapor tapi kalian
+> lihat sendiri dia dateng. Pilih namanya, tulis nama prokernya, tanggalnya, pencet Catat
+> Hadir. Langsung kehitung, dia nggak usah lapor lagi.
+>
+> Jadi dua jalur: mereka yang lapor, atau kalian yang catat. Sama aja hasilnya."
 
 **Yang perlu ditekankan:**
 
@@ -111,6 +117,8 @@ nggak nanya ulang seminggu kemudian.)*
 - Ada bagian **Departemen lain** di paling bawah. Itu laporan yang bukan punya kalian —
   sengaja ditampilin biar kalau ada yang salah pilih departemen, ketauan, bukan hilang.
   Biarin aja, biar buddy mereka yang urus.
+- Kalau proker yang sama sudah pernah dicatat buat orang yang sama, sistemnya nolak —
+  jadi nggak bakal kehitung dua kali walaupun Bizstar-nya juga lapor sendiri.
 
 ---
 
@@ -170,10 +178,9 @@ soal kehadiran.)*
 
 **Kalau ada yang nanya soal Townhall 3:**
 
-> "Townhall 3 sengaja dikunci, nggak ada penilaian di situ. Ada acara lain hari itu —
-> biar jadi kejutan aja."
+> "Townhall 3 sengaja dikunci, nggak ada penilaian di situ."
 
-*(Jangan dijelasin lebih dari itu. Kalau didesak, bilang "nanti juga tau".)*
+*(Cukup segitu. Jangan dikasih tahu ada apa. Kalau didesak, bilang "nanti juga tau".)*
 
 **Kenapa skalanya 1–10 buat kalian tapi 1–5 buat panitia:**
 
@@ -261,7 +268,11 @@ Iya, +1. Yang gede kontribusinya bakal keliatan di nilai KPI, bukan di sini.
 Ada tombol 'ubah' di samping statusnya. Balik ke menunggu, terus pilih ulang.
 
 **"Kenapa Townhall 3 nggak bisa dipencet?"**
-Nggak ada penilaian di Townhall 3. Ada acara lain hari itu — biar jadi kejutan.
+Emang dikunci. Nggak ada penilaian di situ. Jangan dijelasin lebih dari itu.
+
+**"Bizstar-ku males lapor, gimana?"**
+Catat sendiri lewat kotak Catat Sendiri di menu Konfirmasi Proker. Kalian yang lihat,
+kalian yang catat.
 
 **"Aku ganti HP, datanya ilang nggak?"**
 Nggak. Semua tersimpan di server, bukan di HP. Tinggal buka lagi, pilih nama, muncul lagi.
@@ -277,7 +288,7 @@ Poin prokernya bisa — muncul di halaman lapornya. Nilai KPI nggak.
 ## Catatan buat kamu sendiri
 
 - Milestone yang bisa dinilai: **Townhall 1, Pematerian 1, Townhall 2, Pematerian 2**.
-  Townhall 3 sengaja dikunci — kalau dipencet cuma keluar catatan "ada kejutan".
+  Townhall 3 dikunci, tombolnya mati, tanpa penjelasan apa pun di layar.
 - Nilai KPI dan poin proker disimpan terpisah, digabung otomatis di tabel **Peringkat**.
 - Kalau mau ganti pembagian 70/30 atau nilai +1 per proker, semua ada di baris paling atas
   file Apps Script — nggak usah ngubah web-nya.

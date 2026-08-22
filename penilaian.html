@@ -402,13 +402,6 @@ body {
 .chip.on     { background: rgba(91,163,232,0.1); border-color: var(--blue2); color: var(--blue2); }
 .chip.kunci  { opacity: 0.45; border-style: dashed; cursor: default; }
 .chip.kunci:hover { border-color: var(--bdr2); color: var(--muted); }
-#catatanTwn3 {
-  display: none; margin-top: 0.6rem; padding: 0.6rem 0.75rem;
-  border-left: 2px solid var(--gold); background: rgba(232,191,106,0.07);
-  border-radius: 0 var(--r) var(--r) 0;
-  font-size: 0.68rem; color: var(--text2); line-height: 1.6;
-}
-#catatanTwn3.tampil { display: block; }
 
 /* pilih nama buddy — kartu yang tinggal ditekan, bukan daftar turun */
 .nama-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
@@ -1865,16 +1858,12 @@ input:focus, select:focus, textarea:focus {
 
     <div class="card" style="margin-bottom:0.75rem">
       <div class="card-label">Kamu Buddy Siapa?</div>
-      <div class="field" style="margin-bottom:0">
-        <select id="pilihBuddy" onchange="pilihBuddyBerubah()">
-          <option value="">Pilih namamu</option>
-        </select>
-      </div>
+      <div class="nama-grid" id="gridBuddyKonf"></div>
       <div id="buddyLain" style="display:none;margin-top:0.6rem">
         <div class="field" style="margin-bottom:0">
           <label>Tulis namamu</label>
           <input type="text" id="namaBuddyKonf" placeholder="Nama lengkap"
-            oninput="simpanNamaBuddy()">
+            autocomplete="off" oninput="simpanNamaBuddy()">
         </div>
       </div>
     </div>
@@ -1891,6 +1880,34 @@ input:focus, select:focus, textarea:focus {
         <button class="btn-sm" onclick="salinTautan()">Salin Link</button>
         <button class="btn-sm" onclick="salinPesanWA()">Salin Pesan WA</button>
       </div>
+    </div>
+
+    <div class="card" id="kartuCatat" style="display:none;margin-bottom:0.75rem">
+      <div class="card-label">Catat Sendiri</div>
+      <div style="font-size:0.7rem;color:var(--text2);line-height:1.7;margin-bottom:0.7rem">
+        Buat Bizstar yang tidak sempat lapor tapi kamu lihat sendiri dia datang.
+        Yang kamu catat di sini langsung terhitung hadir.
+      </div>
+      <div class="field">
+        <label>Bizstar</label>
+        <div class="nama-grid" id="gridBizstarCatat"></div>
+      </div>
+      <div class="field" id="bizstarLainWrap" style="display:none">
+        <label>Tulis namanya</label>
+        <input type="text" id="bizstarLain" placeholder="Nama lengkap" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Nama Proker HIMA</label>
+        <input type="text" id="catatProker" placeholder="Contoh: Adbis Cup 2026" autocomplete="off">
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Tanggal Kehadiran</label>
+        <input type="date" id="catatTanggal">
+      </div>
+      <div class="btn-sm-row">
+        <button class="btn-sm" onclick="catatManual()">Catat Hadir</button>
+      </div>
+      <div id="catatPesan" style="font-size:0.68rem;line-height:1.6;margin-top:0.5rem"></div>
     </div>
 
     <div id="daftarKonfirmasi"></div>
@@ -1960,10 +1977,8 @@ input:focus, select:focus, textarea:focus {
             <button class="chip" onclick="setMilestone(this,'Pematerian 1')">PMT 1</button>
             <button class="chip" onclick="setMilestone(this,'Townhall 2')">Townhall 2</button>
             <button class="chip" onclick="setMilestone(this,'Pematerian 2')">PMT 2</button>
-            <button class="chip kunci" onclick="kejutanTownhall3()">Townhall 3</button>
+            <button class="chip kunci" disabled>Townhall 3</button>
           </div>
-          <div id="catatanTwn3">Townhall 3 tidak ada penilaian. Ada acara lain hari itu &mdash;
-            biar jadi kejutan, ya.</div>
         </div>
       </div>
 
@@ -2940,13 +2955,6 @@ function showBizstarPreview(){
     bizList.map((n,i)=>`<span style="color:var(--muted);margin-right:0.5rem">${i+1}.</span>${n}<br>`).join('');
 }
 
-/* Townhall 3 tidak dipakai menilai — sengaja dibiarkan terlihat tapi terkunci,
-   biar buddy tahu tanggalnya ada tanpa dikasih tahu isinya. */
-function kejutanTownhall3(){
-  const c=document.getElementById('catatanTwn3');
-  if(c) c.classList.add('tampil');
-}
-
 /* ══ VALIDATION PAGE 1 ══ */
 function setMilestone(el,val){
   document.querySelectorAll('#milestoneChips .chip').forEach(c=>c.classList.remove('on'));
@@ -3092,9 +3100,10 @@ function tautanKeaktifan(dept, buddy){
 }
 
 /* Nama buddy yang sedang dipakai — dari daftar, atau ketikan sendiri kalau pilih "Lainnya". */
+let buddyKonfNama = '';   // '' belum pilih, 'lain' berarti ketik sendiri
+
 function buddySekarang(){
-  const s = document.getElementById('pilihBuddy');
-  if(s && s.value && s.value!=='lain') return s.value;
+  if(buddyKonfNama && buddyKonfNama !== 'lain') return buddyKonfNama;
   const t = document.getElementById('namaBuddyKonf');
   return t ? t.value.trim() : '';
 }
@@ -3105,29 +3114,102 @@ function deptSekarang(){
 }
 
 function isiPilihanBuddy(){
-  const s = document.getElementById('pilihBuddy');
-  if(!s || s.dataset.terisi) return;
-  s.innerHTML = '<option value="">Pilih namamu</option>'
-    + BUDDY_2026.map(b=>`<option value="${esc(b.n)}">${esc(b.n)} &mdash; ${esc(b.d)}</option>`).join('')
-    + '<option value="lain">Bukan salah satu di atas</option>';
-  s.dataset.terisi = '1';
+  const g = document.getElementById('gridBuddyKonf');
+  if(!g || g.children.length) return;
+  g.innerHTML = BUDDY_2026.map(b=>
+      `<button type="button" class="nama-btn" onclick="pilihBuddyKonf(this,'${esc(b.n)}')">`
+      + `<span class="nb-n">${esc(b.n)}</span><span class="nb-d">${esc(b.d)}</span></button>`
+    ).join('')
+    + `<button type="button" class="nama-btn lain" onclick="pilihBuddyKonf(this,'lain')">`
+    + `<span class="nb-n">Nama lain</span>`
+    + `<span class="nb-d">kalau kamu bukan salah satu di atas</span></button>`;
 }
 
-function pilihBuddyBerubah(){
-  const s = document.getElementById('pilihBuddy');
-  const lain = s.value === 'lain';
+function pilihBuddyKonf(el, nama){
+  document.querySelectorAll('#gridBuddyKonf .nama-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  buddyKonfNama = nama;
+  const lain = nama === 'lain';
   document.getElementById('buddyLain').style.display = lain ? 'block' : 'none';
-  if(!lain && s.value){
-    try{ localStorage.setItem('ibass_buddy_nama', s.value); }catch(e){}
-  }
   if(lain){ const t=document.getElementById('namaBuddyKonf'); if(t) t.focus(); }
+  else { try{ localStorage.setItem('ibass_buddy_nama', nama); }catch(e){} }
   segarkanTautan();
+  isiPilihanBizstar();
   gambarKonfirmasi();
 }
 function simpanNamaBuddy(){
   try{ localStorage.setItem('ibass_buddy_nama', buddySekarang()); }catch(e){}
   segarkanTautan();
+  isiPilihanBizstar();
   gambarKonfirmasi();
+}
+
+/* Jalur kedua: buddy mencatat sendiri kehadiran Bizstar-nya. Yang dicatat lewat sini
+   langsung berstatus Hadir karena buddy-nya sendiri yang melihat — Bizstar tidak perlu
+   lapor ulang. Laporan kembar (orang + proker yang sama) ditolak server. */
+let bizstarCatat = '';
+
+function isiPilihanBizstar(){
+  const g = document.getElementById('gridBizstarCatat');
+  const kartu = document.getElementById('kartuCatat');
+  if(!g || !kartu) return;
+  const dept = deptSekarang();
+  kartu.style.display = buddySekarang() ? 'block' : 'none';
+  bizstarCatat = '';
+  const daftar = dept ? (BIZSTAR_DB[dept] || []) : [];
+  g.innerHTML = daftar.map(n=>
+      `<button type="button" class="nama-btn" onclick="pilihBizstarCatat(this,'${esc(n)}')">`
+      + `<span class="nb-n">${esc(n)}</span></button>`).join('')
+    + `<button type="button" class="nama-btn lain" onclick="pilihBizstarCatat(this,'lain')">`
+    + `<span class="nb-n">Nama lain</span></button>`;
+  document.getElementById('bizstarLainWrap').style.display = 'none';
+  const bl = document.getElementById('bizstarLain'); if(bl) bl.value = '';
+}
+
+function pilihBizstarCatat(el, nama){
+  document.querySelectorAll('#gridBizstarCatat .nama-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  bizstarCatat = nama;
+  const lain = nama === 'lain';
+  document.getElementById('bizstarLainWrap').style.display = lain ? 'block' : 'none';
+  if(lain){ const t=document.getElementById('bizstarLain'); if(t) t.focus(); }
+}
+
+function namaBizstarCatat(){
+  if(bizstarCatat && bizstarCatat !== 'lain') return bizstarCatat;
+  const t = document.getElementById('bizstarLain');
+  return t ? t.value.trim() : '';
+}
+
+async function catatManual(){
+  const oleh = buddySekarang();
+  const nama = namaBizstarCatat();
+  const proker = document.getElementById('catatProker').value.trim();
+  const tanggal = document.getElementById('catatTanggal').value;
+  const p = document.getElementById('catatPesan');
+  const kabar = (teks, warna) => { p.style.color = warna; p.textContent = teks; };
+
+  if(!oleh)   return showToast('Pilih namamu dulu di atas');
+  if(!nama)   return kabar('Pilih dulu Bizstar-nya.', 'var(--amber)');
+  if(!proker) return kabar('Nama prokernya diisi dulu.', 'var(--amber)');
+
+  kabar('Menyimpan…', 'var(--muted)');
+  try{
+    const r = await fetch(APPS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'keaktifanlapor', nama, dept:deptSekarang(), proker,
+        tanggal, bukti:'', status:'Hadir', oleh})});
+    const js = await r.json();
+    if(!js.ok) throw new Error(js.error||'ditolak');
+    if(js.kembar){
+      kabar('Proker ini sudah pernah dicatat untuk '+nama+'. Cek daftarnya di bawah.','var(--amber)');
+    }else{
+      kabar('Tercatat hadir.','var(--green)');
+      document.getElementById('catatProker').value='';
+    }
+    muatKonfirmasi();
+  }catch(e){
+    kabar('Gagal menyimpan. Periksa koneksi lalu coba lagi.','var(--red)');
+  }
 }
 
 function segarkanTautan(){
@@ -3204,15 +3286,15 @@ function bukaKonfirmasi(){
   let n='';
   try{ n=localStorage.getItem('ibass_buddy_nama')||''; }catch(e){}
   if(n){
-    const s=document.getElementById('pilihBuddy');
-    const kenal=BUDDY_2026.some(b=>b.n===n);
-    if(kenal){ s.value=n; }
+    const g=document.getElementById('gridBuddyKonf');
+    const urut=BUDDY_2026.findIndex(b=>b.n===n);
+    if(urut>-1){ pilihBuddyKonf(g.children[urut], n); }
     else{
-      s.value='lain';
-      document.getElementById('buddyLain').style.display='block';
       document.getElementById('namaBuddyKonf').value=n;
+      pilihBuddyKonf(g.lastElementChild, 'lain');
     }
   }
+  isiPilihanBizstar();
   segarkanTautan();
   muatKonfirmasi();
 }
