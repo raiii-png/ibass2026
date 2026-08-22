@@ -2265,7 +2265,7 @@ input:focus, select:focus, textarea:focus {
     <div class="guide-section">
       <div class="guide-sec-title">Poin Proker HIMA</div>
       <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Ini terpisah dari nilai di form ini. Bizstar melapor sendiri lewat link, buddy tinggal mengecek di menu <strong>Konfirmasi Proker</strong>.</p></div>
-      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Tiap proker HIMA yang dicek benar menambah <strong>+2</strong>, mentok <strong>+10</strong>. Acara IBASS sendiri dan acara di luar HIMA tidak dihitung.</p></div>
+      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Tiap proker HIMA yang dicek benar menambah <strong>+1</strong>, mentok <strong>+5</strong>. Acara IBASS sendiri dan acara di luar HIMA tidak dihitung.</p></div>
       <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Nilai KPI dan poin ini digabung otomatis di tabel peringkat, jadi tidak perlu dihitung manual.</p></div>
     </div>
 
@@ -3057,7 +3057,7 @@ function onPanitiaDeptFilter(){
    Dua tugas buddy dipisah: mengisi penilaian KPI, dan mengonfirmasi laporan
    kehadiran proker dari Bizstar. Poin kehadiran TIDAK bercampur dengan nilai KPI
    di form penilaian — digabung nanti saat rekap. */
-const POIN_PROKER = 2, POIN_PROKER_MAKS = 10;
+const POIN_PROKER = 1, POIN_PROKER_MAKS = 5;
 let daftarProker = null;
 
 /* Delapan buddy IBASS 2026 — satu per departemen. Nama yang sama juga dipakai di

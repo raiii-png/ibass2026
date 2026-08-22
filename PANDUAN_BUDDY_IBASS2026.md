@@ -57,7 +57,7 @@ Script-nya belum di-deploy versi baru. Beresin dulu sebelum kumpul, jangan pas d
             ↓
    Buddy klik "Hadir" atau "Tidak"          Buddy isi KPI tiap milestone
             ↓                                          ↓
-        +2 poin (maks +10)                    nilai 1–10 per orang
+        +1 poin (maks +5)                     nilai 1–10 per orang
             ↓                                          ↓
             └──────────→  Tabel peringkat  ←──────────┘
                           (urut sendiri, nggak usah dihitung)
@@ -126,7 +126,10 @@ nggak nanya ulang seminggu kemudian.)*
 > **Yang nggak dihitung:** acara IBASS sendiri — ya iyalah, itu emang kerjaan mereka. Terus
 > acara UKM, acara himpunan lain, seminar luar — nggak masuk juga.
 >
-> **Satu proker = +2, mentok di +10.** Jadi lima proker udah penuh. Yang keenam nggak nambah.
+> **Satu proker = +1, mentok di +5.** Jadi lima proker udah penuh. Yang keenam nggak nambah.
+>
+> Ini cuma nilai plus. Yang nentuin peringkat tetep nilai KPI dari kalian — poin ini
+> nggak bakal bikin yang jarang keliatan tiba-tiba naik ke atas.
 >
 > **Dateng doang sama jadi panitia, nilainya sama.** Ini sengaja. Kita nggak lagi ngukur
 > seberapa dalam dia terlibat — cuma mau tau dia muncul apa nggak di kegiatan himpunan.
@@ -251,8 +254,8 @@ pencet Tidak — bisa diubah lagi nanti kalau dia bawa bukti.
 **"Dia ikut acara UKM, masuk nggak?"**
 Nggak. Cuma proker HIMA.
 
-**"Dia panitia inti di proker itu, masa cuma +2?"**
-Iya, +2. Yang gede kontribusinya bakal keliatan di nilai KPI, bukan di sini.
+**"Dia panitia inti di proker itu, masa cuma +1?"**
+Iya, +1. Yang gede kontribusinya bakal keliatan di nilai KPI, bukan di sini.
 
 **"Kalau aku salah pencet Hadir gimana?"**
 Ada tombol 'ubah' di samping statusnya. Balik ke menunggu, terus pilih ulang.
@@ -276,7 +279,7 @@ Poin prokernya bisa — muncul di halaman lapornya. Nilai KPI nggak.
 - Milestone yang bisa dinilai: **Townhall 1, Pematerian 1, Townhall 2, Pematerian 2**.
   Townhall 3 sengaja dikunci — kalau dipencet cuma keluar catatan "ada kejutan".
 - Nilai KPI dan poin proker disimpan terpisah, digabung otomatis di tabel **Peringkat**.
-- Kalau mau ganti pembagian 70/30 atau nilai +2 per proker, semua ada di baris paling atas
+- Kalau mau ganti pembagian 70/30 atau nilai +1 per proker, semua ada di baris paling atas
   file Apps Script — nggak usah ngubah web-nya.
 - Mau menutup menu proker lagi? ganti `FITUR_PROKER = true` jadi `false` di `index.html`
   dan `keaktifan/index.html`.

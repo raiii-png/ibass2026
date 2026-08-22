@@ -82,8 +82,8 @@ input:focus,select:focus{border-color:rgba(232,191,106,.55);box-shadow:0 0 0 2px
   <div class="card">
     <div class="lbl">Hitungannya</div>
     <div class="tingkat">
-      <div class="tk"><span class="tk-p">+2</span><span>Tiap <b>proker HIMA di luar IBASS</b> yang kamu datangi, setelah dicek buddy.</span></div>
-      <div class="tk"><span class="tk-p no">maks</span><span>Mentok di <b>+10</b>. Jadi lima proker sudah penuh.</span></div>
+      <div class="tk"><span class="tk-p">+1</span><span>Tiap <b>proker HIMA di luar IBASS</b> yang kamu datangi, setelah dicek buddy.</span></div>
+      <div class="tk"><span class="tk-p no">maks</span><span>Mentok di <b>+5</b>. Jadi lima proker sudah penuh.</span></div>
       <div class="tk"><span class="tk-p no">0</span><span>Acara IBASS sendiri dan acara di luar HIMA tidak dihitung.</span></div>
     </div>
     <div class="note" style="margin-top:.7rem">
@@ -260,10 +260,10 @@ async function muatPunyaku(nama){
     if(!punya.length) return;
     $('kartuSaya').style.display='block';
     const hadir=punya.filter(d=>d.status==='Hadir').length;
-    const poin=Math.min(hadir*(js.perProker||2), js.maks||10);
+    const poin=Math.min(hadir*(js.perProker||1), js.maks||5);
     $('poinSaya').textContent='+'+poin;
     $('poinKet').textContent=hadir
-      ? hadir+' proker terkonfirmasi'+(poin>=(js.maks||10)?' · sudah mentok':'')
+      ? hadir+' proker terkonfirmasi'+(poin>=(js.maks||5)?' · sudah mentok':'')
       : 'belum ada yang dikonfirmasi buddy';
     $('daftarSaya').innerHTML=punya.map(d=>{
       const s=d.status==='Hadir'?'setuju':(d.status==='Tidak Hadir'?'tolak':'tunggu');

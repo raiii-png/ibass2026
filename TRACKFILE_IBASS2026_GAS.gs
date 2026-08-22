@@ -49,8 +49,9 @@ const HT_SHEET = 'HT'; // pesan suara/teks antar panitia saat kegiatan
 /* Kehadiran Bizstar di proker HIMA lain (di luar IBASS).
    Bizstar melapor sendiri lewat sublink, buddy tinggal mengonfirmasi. */
 const KEAKTIFAN_SHEET = 'Keaktifan';
-const KEAKTIFAN_POIN = 2;   // poin per proker yang dikonfirmasi hadir
-const KEAKTIFAN_MAKS = 10;  // batas atas tambahan nilai
+const KEAKTIFAN_POIN = 1;   // poin per proker yang dikonfirmasi hadir
+const KEAKTIFAN_MAKS = 5;   // batas atas tambahan nilai — ini cuma nilai plus,
+                            // jangan sampai menggeser urutan yang dibentuk KPI
 const PENILAIAN_HEADER = ['Waktu', 'Peran', 'Penilai', 'Dept Penilai', 'Milestone', 'Nama Bizstar',
   'Adaptive (raw)', 'Collaborative (raw)', 'Growth (raw)',
   'Adaptive %', 'Collaborative %', 'Growth %', 'Skor KPI',
@@ -72,7 +73,7 @@ const BUDDY_2026 = [
 ];
 
 /* Tabel peringkat Bizstar.
-   Nilai akhir = nilai KPI (0–100, dari sheet Penilaian) + poin keaktifan (maks +10).
+   Nilai akhir = nilai KPI (0–100, dari sheet Penilaian) + poin keaktifan (maks +5).
    Kalau satu Bizstar dinilai buddy DAN panitia, nilai buddy dipakai 70% dan panitia 30%
    — buddy mengamati tiap hari, panitia cuma saat acara. Ubah angka di bawah kalau
    pembagiannya mau lain; sisanya ikut otomatis. */
