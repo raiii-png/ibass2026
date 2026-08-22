@@ -141,9 +141,10 @@ input:focus,select:focus{border-color:rgba(232,191,106,.55);box-shadow:0 0 0 2px
 
 <script>
 /* ══ SAKLAR FITUR ══
-   Halaman lapor proker. Mau ditutup lagi: ganti true jadi false di sini,
-   dan di index.html (cari FITUR_PROKER). */
-const FITUR_PROKER = true;
+   Keputusan ketuplak (22 Agu 2026): Bizstar tidak dikasih tahu ada poin tambahan,
+   jadi halaman lapor mandiri ini ditutup. Buddy yang mencatat lewat menu Catat Proker.
+   Mau dibuka lagi: ganti false jadi true di sini, dan LAPOR_BIZSTAR di index.html. */
+const FITUR_PROKER = false;
 if(!FITUR_PROKER){
   document.head.insertAdjacentHTML('beforeend',
     '<style>.terkunci .card{display:none!important}.terkunci .card.kunci{display:block!important}</style>');
@@ -151,9 +152,11 @@ if(!FITUR_PROKER){
   w.classList.add('terkunci');
   const kotak = document.createElement('div');
   kotak.className = 'card kunci';
-  kotak.innerHTML = '<div class="lbl">Belum Dibuka</div>'
-    + '<div class="note">Halaman lapor proker belum dipakai. Nanti buddy kamu yang '
-    + 'kasih kabar kalau sudah bisa diisi.</div>';
+  /* Jangan menjanjikan halaman ini akan dibuka — Bizstar tidak perlu tahu ada apa
+     di baliknya. Cukup bilang salah alamat. */
+  kotak.innerHTML = '<div class="lbl">Tidak Dipakai</div>'
+    + '<div class="note">Halaman ini tidak dipakai. Kalau ada yang perlu ditanyakan, '
+    + 'hubungi buddy departemenmu.</div>';
   w.insertBefore(kotak, w.querySelector('.card'));
 }
 
