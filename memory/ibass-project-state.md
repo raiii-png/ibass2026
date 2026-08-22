@@ -10,22 +10,35 @@ metadata:
 
 # Proyek IBASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
 
-## FITUR PROKER DIKUNCI (2026-08-22 pagi, commit a8f86c9) — KONDISI TERAKHIR
-- Boss mau **presentasi contoh dulu**, jadi menu **Konfirmasi Proker** dan halaman
-  `keaktifan/` DITUTUP lewat satu saklar `const FITUR_PROKER = false` di
-  `index.html` (paling atas blok `<script>`) dan `keaktifan/index.html`.
-  Tidak ada kode yang dihapus — buka lagi = ganti ke `true` di DUA file itu.
-  Perilaku saat terkunci: buddy pilih peran -> LANGSUNG form penilaian (menu dua-kartu
-  dilewati), tombol kembali balik ke pilihan peran, `bukaKonfirmasi()` dijaga,
-  halaman keaktifan menampilkan kartu "Belum Dibuka" (CSS `.terkunci .card{display:none}`).
-- Kartu penjelasan **"Yang Dihitung"** di layar konfirmasi DIBUANG permanen — Boss
-  tidak suka blok deskripsi panjang di layar yang tugasnya cuma pencet Hadir/Tidak.
-  Jangan dibalikin waktu fitur dibuka lagi.
-- `PANDUAN_BUDDY_IBASS2026.md` ditulis ulang: alur **penilaian KPI saja** (6 bagian,
-  ±12 menit). Bahan proker dipindah ke bagian "Simpanan: poin proker HIMA" di paling
-  bawah, ditandai jangan dibahas. Artefak yang sama sudah diperbarui (URL tetap).
-- Boss bilang "nanti ku kabarin kalau mau lanjutin" soal fitur proker — JANGAN dibuka
-  sendiri tanpa diminta.
+## KONDISI TERAKHIR (2026-08-22 sore, commit ce0d8fd)
+- **Fitur proker DIBUKA lagi** (`FITUR_PROKER = true` di `index.html` dan
+  `keaktifan/index.html`). Sempat ditutup buat presentasi contoh, sudah selesai.
+  Saklarnya tetap dipakai kalau mau ditutup lagi.
+- **Townhall 3 dikunci permanen** — chip-nya `class="chip kunci"` (dashed, redup),
+  ditekan memanggil `kejutanTownhall3()` yang memunculkan `#catatanTwn3`:
+  "Townhall 3 tidak ada penilaian. Ada acara lain hari itu — biar jadi kejutan, ya."
+  Milestone TIDAK ikut terpilih. `resumeSession()` membuang sesi lama ber-Townhall 3.
+  Boss sengaja tidak mau bilang acaranya apa — kalau ditanya, jawab "nanti juga tau".
+- **Pilih nama buddy = kartu nama** (`.nama-grid` / `.nama-btn`, `gridNamaBuddy`),
+  bukan ketik dan bukan dropdown. Riwayat sudah dua kali: input+datalist -> `<select>`
+  -> kartu. Boss tidak suka dua yang pertama ("ribet", "layoutnya nggak suka").
+  Ada kartu "Nama lain" -> baru muncul kolom ketik. Panitia tetap mengetik.
+- **JANGAN sebut "Google Sheets"/"sheet" di teks yang dilihat user.** Sudah dibersihkan
+  dua kali (pesan sukses + panduan dalam web). Pakai "tersimpan" / "tabel peringkat".
+  Kadiv dashboard boleh tetap menyebut Google Sheets — di situ memang alatnya.
+- Pesan sukses sekarang: "N penilaian tersimpan." + (kalau ada) "M yang tidak hadir
+  tidak ikut dikirim."
+
+## NETLIFY — MENGHABISKAN KREDIT (2026-08-22)
+- Repo GitHub `raiii-png/ibass2026` masih tersambung ke **project Netlify `ibass2026`**
+  (site id `4e29c3c3-94f6-4c1e-b6b0-cf92075d1147`), jadi TIAP PUSH memicu build dan
+  memakan kredit Boss. Yang dipakai beneran cuma GitHub Pages.
+- **Connector Netlify TIDAK bisa memutus repo** — operasinya cuma deploy, ganti nama,
+  env var, forms, access control. CLI netlify tidak terpasang, tidak ada token.
+  Jadi Boss yang harus klik sendiri: app.netlify.com -> project ibass2026 ->
+  Project configuration -> Build & deploy -> Continuous deployment -> **Stop builds**.
+- Project Netlify lain milik Boss: kadivibass2026, kpiadbis, absensihimaadbis,
+  mykisah-raffi, + 3 nama acak. Cek juga kalau kreditnya masih kesedot.
 
 ## CARA TAYANG (jangan lupa lagi)
 - Kerja di worktree `claude/...` TIDAK otomatis tayang. GitHub Pages menyajikan **main**.
