@@ -10,6 +10,30 @@ metadata:
 
 # Proyek IBASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
 
+## FITUR PROKER DIKUNCI (2026-08-22 pagi, commit a8f86c9) — KONDISI TERAKHIR
+- Boss mau **presentasi contoh dulu**, jadi menu **Konfirmasi Proker** dan halaman
+  `keaktifan/` DITUTUP lewat satu saklar `const FITUR_PROKER = false` di
+  `index.html` (paling atas blok `<script>`) dan `keaktifan/index.html`.
+  Tidak ada kode yang dihapus — buka lagi = ganti ke `true` di DUA file itu.
+  Perilaku saat terkunci: buddy pilih peran -> LANGSUNG form penilaian (menu dua-kartu
+  dilewati), tombol kembali balik ke pilihan peran, `bukaKonfirmasi()` dijaga,
+  halaman keaktifan menampilkan kartu "Belum Dibuka" (CSS `.terkunci .card{display:none}`).
+- Kartu penjelasan **"Yang Dihitung"** di layar konfirmasi DIBUANG permanen — Boss
+  tidak suka blok deskripsi panjang di layar yang tugasnya cuma pencet Hadir/Tidak.
+  Jangan dibalikin waktu fitur dibuka lagi.
+- `PANDUAN_BUDDY_IBASS2026.md` ditulis ulang: alur **penilaian KPI saja** (6 bagian,
+  ±12 menit). Bahan proker dipindah ke bagian "Simpanan: poin proker HIMA" di paling
+  bawah, ditandai jangan dibahas. Artefak yang sama sudah diperbarui (URL tetap).
+- Boss bilang "nanti ku kabarin kalau mau lanjutin" soal fitur proker — JANGAN dibuka
+  sendiri tanpa diminta.
+
+## CARA TAYANG (jangan lupa lagi)
+- Kerja di worktree `claude/...` TIDAK otomatis tayang. GitHub Pages menyajikan **main**.
+  Urutannya: commit di branch -> `git -C <repo utama> merge <branch>` -> `git push origin main`
+  -> Pages rebuild ~1 menit. Pernah bikin Boss bingung "kok link nggak berubah" (22 Agu):
+  3 commit nyangkut di worktree branch selama beberapa jam.
+- Cek tayang beneran: `curl -s "https://raiii-png.github.io/ibass2026/?cb=$(date +%s)" | grep -c <penanda>`.
+
 ## PERINGKAT + KONFIRMASI PER BUDDY (2026-08-22, commit 827ae06) — KONDISI TERAKHIR
 - **Sheet `Peringkat`** dibangun `rebuildPeringkat()` di file penilaian (`penilaianSS()`),
   BUKAN di Track File. Nilai Akhir = nilai KPI (0–100) + poin keaktifan (maks +10).
