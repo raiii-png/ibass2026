@@ -12,7 +12,7 @@ Perkiraan waktu: **20 menit** kalau sambil praktek buka HP, 10 menit kalau cuma 
 
 1. Buka `raiii-png.github.io/ibass2026/` di HP sendiri, masuk sebagai **Buddy**, pastikan
    dua kartu menunya muncul.
-2. Buka **Konfirmasi Proker**, pilih satu nama, pastikan link-nya keluar.
+2. Buka **Catat Proker**, pilih satu nama, pastikan kotak Catat Kehadiran keluar.
 3. Cek nama Bizstar di form penilaian sudah nama asli, bukan `HRD-01 [Nama]`.
 
 *(Kalau tombolnya belum jalan atau muncul tulisan "Server belum diperbarui", berarti Apps
@@ -43,8 +43,11 @@ Script-nya belum di-deploy versi baru. Beresin dulu sebelum kumpul, jangan pas d
 > "Nilai Bizstar itu datang dari dua sumber, dan dua-duanya lewat kalian.
 >
 > Pertama, **nilai KPI** — kalian yang ngisi tiap habis Townhall atau Pematerian.
-> Kedua, **poin proker HIMA** — Bizstar-nya sendiri yang lapor kalau dia ikut proker HIMA
-> lain, kalian tinggal bilang bener apa nggak.
+> Kedua, **poin proker HIMA** — kalau Bizstar kalian ikut proker HIMA lain, kalian yang
+> catat sendiri di web.
+>
+> Satu hal yang penting: **Bizstar nggak usah tau soal poin ini.** Jangan diumumin.
+> Biar mereka dateng karena emang mau dateng, bukan karena ngejar nilai.
 >
 > Dua-duanya nyatu otomatis jadi satu tabel peringkat. Kalian nggak usah ngitung apa-apa."
 
@@ -53,9 +56,9 @@ Script-nya belum di-deploy versi baru. Beresin dulu sebelum kumpul, jangan pas d
 ```
    Bizstar ikut proker HIMA
             ↓
-   lapor lewat link dari buddy-nya
+   Buddy lihat sendiri, atau tanya di grup dep
             ↓
-   Buddy klik "Hadir" atau "Tidak"          Buddy isi KPI tiap milestone
+   Buddy catat di web                       Buddy isi KPI tiap milestone
             ↓                                          ↓
         +1 poin (maks +5)                     nilai 1–10 per orang
             ↓                                          ↓
@@ -74,51 +77,53 @@ Script-nya belum di-deploy versi baru. Beresin dulu sebelum kumpul, jangan pas d
 >
 > Kiri: **Isi Penilaian**. Itu KPI. Dibuka tiap habis milestone.
 >
-> Kanan: **Konfirmasi Proker**. Itu buat ngecek laporan Bizstar. Ini yang paling sering
-> kalian buka, karena Bizstar bisa lapor kapan aja."
+> Kanan: **Catat Proker**. Buat nyatet Bizstar kalian yang ikut proker HIMA lain.
+> Dibuka tiap ada proker HIMA lewat."
 
 *(Suruh mereka buka HP sekarang, jangan cuma diliatin. Yang praktek langsung biasanya
 nggak nanya ulang seminggu kemudian.)*
 
 ---
 
-## 4. Praktek: Konfirmasi Proker
+## 4. Praktek: Catat Proker
 
 > **Kamu bilang:**
 >
-> "Kita mulai dari yang kanan dulu, karena ini yang paling sering dipakai.
+> "Kita mulai dari yang kanan.
 >
-> **Satu.** Klik Konfirmasi Proker. Di atas ada 'Kamu Buddy Siapa?' — pilih nama kalian.
-> Departemennya kebaca otomatis dari situ, jadi cukup sekali, nanti diinget sama HP-nya.
+> **Satu.** Klik Catat Proker. Di atas ada 'Kamu Buddy Siapa?' — pilih nama kalian.
+> Departemennya kebaca otomatis, jadi cukup sekali, nanti diinget sama HP-nya.
 >
-> **Dua.** Begitu kepilih, keluar kotak **Link untuk Bizstar-mu**. Link ini beda-beda tiap
-> orang — punya Eghina beda sama punya Tyara. Ada dua tombol: 'Salin Link' kalau mau
-> kirim link doang, 'Salin Pesan WA' kalau mau langsung sama penjelasannya. Yang kedua
-> saranku, biar mereka nggak nanya-nanya lagi.
+> **Dua.** Keluar kotak **Catat Kehadiran**. Pilih Bizstar-nya dari kartu nama, tulis nama
+> prokernya, terus tanggalnya, pencet **Catat Hadir**. Udah, gitu doang.
 >
-> **Tiga.** Sebar sekali aja di grup departemen kalian. Nggak usah tiap acara — link-nya
-> sama terus, tinggal dipakai ulang.
+> **Tiga.** Yang kalian catat muncul di bawah, dikelompokin per orang, lengkap sama
+> poinnya sampai sekarang."
+
+### Kalian tau dari mana siapa yang dateng
+
+Ini bagian yang paling sering ditanya. Jawabannya sederhana:
+
+> **Kamu bilang:**
 >
-> **Empat.** Nanti kalau ada yang lapor, dia muncul di bawah, dikelompokin per orang.
-> Yang belum kalian cek naik ke paling atas. Tinggal pencet **Hadir** atau **Tidak**.
-> Kalau salah pencet, ada tombol 'ubah' buat balikin.
+> "Kalian kan fungsio HIMA juga. Proker HIMA manapun, ya kita semua dateng, minimal
+> ngeramein. Jadi pas kalian di sana, sekalian aja liat Bizstar kalian dateng apa nggak.
+> Gampang, orangnya kalian dampingi terus.
 >
-> **Lima.** Ada juga kotak **Catat Sendiri**. Itu buat Bizstar yang males lapor tapi kalian
-> lihat sendiri dia dateng. Pilih namanya, tulis nama prokernya, tanggalnya, pencet Catat
-> Hadir. Langsung kehitung, dia nggak usah lapor lagi.
+> Kalau kebetulan kalian nggak bisa dateng — tinggal list aja di grup departemen. 'Siapa
+> yang ikut IEFBA besok?' Sesimpel itu. Atau tanya fungsio lain yang dateng.
 >
-> Jadi dua jalur: mereka yang lapor, atau kalian yang catat. Sama aja hasilnya."
+> Tahun lalu Fakhri juga gitu. Nggak usah dibikin ribet."
 
 **Yang perlu ditekankan:**
 
-- Link masing-masing beda. Jangan pakai link punya orang lain, nanti laporannya nyasar ke
-  departemen lain.
-- Kalau ada bukti foto, ada tulisan "lihat bukti" — klik dulu sebelum mutusin.
-- Ada bagian **Departemen lain** di paling bawah. Itu laporan yang bukan punya kalian —
-  sengaja ditampilin biar kalau ada yang salah pilih departemen, ketauan, bukan hilang.
-  Biarin aja, biar buddy mereka yang urus.
-- Kalau proker yang sama sudah pernah dicatat buat orang yang sama, sistemnya nolak —
-  jadi nggak bakal kehitung dua kali walaupun Bizstar-nya juga lapor sendiri.
+- **Jangan kasih tau Bizstar soal poin ini.** Nggak ada link buat mereka, nggak ada
+  pengumuman. Kalau ada yang nanya kenapa ditanyain ikut proker apa — bilang aja buat
+  data himpunan.
+- Kalau proker yang sama sudah pernah dicatat buat orang yang sama, sistemnya nolak.
+  Jadi aman kalau kalian lupa terus nyatet dua kali.
+- Nyatetnya nggak harus hari itu juga. Seminggu sekali sekalian juga boleh, asal jangan
+  numpuk sampai lupa siapa aja yang dateng.
 
 ---
 
@@ -215,48 +220,47 @@ nggak beredar.)*
 >
 > "Tiga hal, hari ini juga:
 >
-> **Satu**, buka web-nya, masuk Konfirmasi Proker, pilih nama kalian sekali.
+> **Satu**, buka web-nya, masuk Catat Proker, pilih nama kalian sekali. Biar HP-nya inget.
 >
-> **Dua**, salin pesan WA-nya, sebar ke grup departemen kalian.
+> **Dua**, tiap ada proker HIMA lewat — kalian dateng, kalian liat, kalian catat. Kalau
+> nggak bisa dateng, list aja di grup departemen.
 >
-> **Tiga**, sekitar seminggu sekali dicek lagi — ada laporan baru apa nggak. Nggak usah
-> tiap hari, tapi jangan sampai numpuk sebulan.
+> **Tiga**, inget: Bizstar nggak usah tau soal poin ini. Jangan sampai bocor.
 >
 > Kalau ada yang aneh, error, atau nggak ngerti, chat aku. Jangan didiemin terus nilainya
 > nggak masuk."
 
 ---
 
-## Link masing-masing buddy
+## Siapa pegang siapa
 
-Kirim satu-satu ke orangnya, jangan disebar barengan — biar nggak ketuker.
+| Departemen | Buddy |
+|---|---|
+| Secretary | Ayu Diah Pramesti |
+| Finance | Nursyfa Alawiyah Thoyibah |
+| HRD | Eghina Salsabilla |
+| Advocacy | Muhammad Akram Ziyad |
+| External Affairs | Razwa Zahara Maulidiya |
+| MEIN | Tyara Nadira Putri |
+| Entrepreneurship | Marzya Zyalzyabila |
+| ACT | Anggun Puti Maharani |
 
-| Departemen | Buddy | Link buat Bizstar-nya |
-|---|---|---|
-| Secretary | Ayu Diah Pramesti | `https://raiii-png.github.io/ibass2026/keaktifan/?dept=Secretary&buddy=Ayu+Diah+Pramesti` |
-| Finance | Nursyfa Alawiyah Thoyibah | `https://raiii-png.github.io/ibass2026/keaktifan/?dept=Finance&buddy=Nursyfa+Alawiyah+Thoyibah` |
-| HRD | Eghina Salsabilla | `https://raiii-png.github.io/ibass2026/keaktifan/?dept=HRD&buddy=Eghina+Salsabilla` |
-| Advocacy | Muhammad Akram Ziyad | `https://raiii-png.github.io/ibass2026/keaktifan/?dept=Advocacy&buddy=Muhammad+Akram+Ziyad` |
-| External Affairs | Razwa Zahara Maulidiya | `https://raiii-png.github.io/ibass2026/keaktifan/?dept=External+Affairs&buddy=Razwa+Zahara+Maulidiya` |
-| MEIN | Tyara Nadira Putri | `https://raiii-png.github.io/ibass2026/keaktifan/?dept=MEIN&buddy=Tyara+Nadira+Putri` |
-| Entrepreneurship | Marzya Zyalzyabila | `https://raiii-png.github.io/ibass2026/keaktifan/?dept=Entrepreneurship&buddy=Marzya+Zyalzyabila` |
-| ACT | Anggun Puti Maharani | `https://raiii-png.github.io/ibass2026/keaktifan/?dept=ACT&buddy=Anggun+Puti+Maharani` |
-
-Buddy nggak perlu nyalin dari tabel ini — di web sudah ada tombol salinnya. Tabel ini buat
-kamu, kalau ada yang bilang "link-ku ilang".
+Cuma ada satu link, yang buat buddy: `raiii-png.github.io/ibass2026/`. Jangan disebar ke
+Bizstar.
 
 ---
 
 ## Kemungkinan pertanyaan mereka
 
-**"Bizstar-ku lapor tapi nggak muncul di daftarku."**
-Kemungkinan besar dia salah pilih departemen. Coba scroll ke bawah, di bagian
-"Departemen lain". Kalau namanya ada di situ, suruh dia lapor ulang pakai link yang
-kamu kasih — link itu udah bawa departemennya, jadi nggak bisa salah.
+**"Aku nggak bisa dateng di proker itu, gimana tau siapa yang ikut?"**
+List aja di grup departemen — "siapa yang ikut IEFBA besok?" Atau tanya fungsio lain yang
+dateng. Nggak usah dibikin ribet.
+
+**"Bizstar-ku nanya kenapa ditanyain ikut proker apa aja."**
+Bilang buat data himpunan. Jangan sebut soal poin atau nilai.
 
 **"Aku nggak yakin dia beneran dateng."**
-Cek buktinya dulu. Kalau nggak ada bukti dan kamu ragu, tanya orangnya. Kalau tetap ragu,
-pencet Tidak — bisa diubah lagi nanti kalau dia bawa bukti.
+Tanya fungsio lain yang dateng di acara itu. Kalau tetap ragu, jangan dicatat dulu.
 
 **"Dia ikut acara UKM, masuk nggak?"**
 Nggak. Cuma proker HIMA.
@@ -264,15 +268,11 @@ Nggak. Cuma proker HIMA.
 **"Dia panitia inti di proker itu, masa cuma +1?"**
 Iya, +1. Yang gede kontribusinya bakal keliatan di nilai KPI, bukan di sini.
 
-**"Kalau aku salah pencet Hadir gimana?"**
-Ada tombol 'ubah' di samping statusnya. Balik ke menunggu, terus pilih ulang.
+**"Kalau aku salah catat gimana?"**
+Ada tombol 'ubah' di samping statusnya, tinggal dipencet buat batalin.
 
 **"Kenapa Townhall 3 nggak bisa dipencet?"**
 Emang dikunci. Nggak ada penilaian di situ. Jangan dijelasin lebih dari itu.
-
-**"Bizstar-ku males lapor, gimana?"**
-Catat sendiri lewat kotak Catat Sendiri di menu Konfirmasi Proker. Kalian yang lihat,
-kalian yang catat.
 
 **"Aku ganti HP, datanya ilang nggak?"**
 Nggak. Semua tersimpan di server, bukan di HP. Tinggal buka lagi, pilih nama, muncul lagi.
@@ -281,7 +281,7 @@ Nggak. Semua tersimpan di server, bukan di HP. Tinggal buka lagi, pilih nama, mu
 Ada tulisan "Tersimpan" habis kirim. Kalau ragu, bilang ke aku, nanti aku cek.
 
 **"Bizstar bisa lihat nilainya sendiri?"**
-Poin prokernya bisa — muncul di halaman lapornya. Nilai KPI nggak.
+Nggak, nggak satupun. Itu memang disengaja.
 
 ---
 
@@ -292,8 +292,11 @@ Poin prokernya bisa — muncul di halaman lapornya. Nilai KPI nggak.
 - Nilai KPI dan poin proker disimpan terpisah, digabung otomatis di tabel **Peringkat**.
 - Kalau mau ganti pembagian 70/30 atau nilai +1 per proker, semua ada di baris paling atas
   file Apps Script — nggak usah ngubah web-nya.
-- Mau menutup menu proker lagi? ganti `FITUR_PROKER = true` jadi `false` di `index.html`
-  dan `keaktifan/index.html`.
+- Halaman lapor mandiri buat Bizstar (`keaktifan/`) sudah ditutup sesuai keputusan Fikri —
+  Bizstar nggak dikasih tau ada poin ini. Kalau suatu saat mau dibuka lagi, ganti
+  `LAPOR_BIZSTAR` di `index.html` dan `FITUR_PROKER` di `keaktifan/index.html` jadi `true`.
+- Mau menutup menu Catat Proker sekalian? ganti `FITUR_PROKER = true` jadi `false`
+  di `index.html`.
 - Nama Bizstar di form penilaian masih placeholder (`HRD-01 [Nama]` dan seterusnya).
   Harus diisi nama asli sebelum buddy mulai ngisi KPI, kalau nggak nilainya masuk atas nama
   placeholder dan susah dibenerin belakangan.
