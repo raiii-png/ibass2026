@@ -28,6 +28,12 @@ metadata:
   Kadiv dashboard boleh tetap menyebut Google Sheets — di situ memang alatnya.
 - Pesan sukses sekarang: "N penilaian tersimpan." + (kalau ada) "M yang tidak hadir
   tidak ikut dikirim."
+- **Poin keaktifan turun jadi +1 per proker, mentok +5** (dulu +2 / +10). Alasan Boss:
+  "itu nilai plus aja", bukan penentu peringkat. Batas ikut turun biar bobotnya kecil
+  terhadap KPI 0-100 dan cerita "lima proker sudah penuh" tetap jalan. Angkanya ada di
+  `KEAKTIFAN_POIN`/`KEAKTIFAN_MAKS` (GAS), `POIN_PROKER`/`POIN_PROKER_MAKS` (index.html),
+  teks kartu Hitungannya + nilai cadangan `js.perProker||1`/`js.maks||5` (keaktifan).
+  **Ganti angka = ganti di lima tempat itu + panduan + artefak.**
 
 ## NETLIFY — MENGHABISKAN KREDIT (2026-08-22)
 - Repo GitHub `raiii-png/ibass2026` masih tersambung ke **project Netlify `ibass2026`**
@@ -37,8 +43,11 @@ metadata:
   env var, forms, access control. CLI netlify tidak terpasang, tidak ada token.
   Jadi Boss yang harus klik sendiri: app.netlify.com -> project ibass2026 ->
   Project configuration -> Build & deploy -> Continuous deployment -> **Stop builds**.
-- Project Netlify lain milik Boss: kadivibass2026, kpiadbis, absensihimaadbis,
-  mykisah-raffi, + 3 nama acak. Cek juga kalau kreditnya masih kesedot.
+- **Ternyata project `ibass2026` BELUM PERNAH deploy** ("Project has not yet been deployed",
+  update terakhir 6 Juli) — jadi bukan itu yang menyedot kredit. Kredit tim juga SUDAH
+  habis: banner "running on operational credits, production deploys and Agent Runners are
+  paused". Tersangka lain: kadivibass2026, kpiadbis, absensihimaadbis, mykisah-raffi,
+  + 3 nama acak. Cek tab Deploys masing-masing.
 
 ## CARA TAYANG (jangan lupa lagi)
 - Kerja di worktree `claude/...` TIDAK otomatis tayang. GitHub Pages menyajikan **main**.
