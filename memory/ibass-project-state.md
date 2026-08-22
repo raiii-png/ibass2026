@@ -14,10 +14,16 @@ metadata:
 - **Fitur proker DIBUKA lagi** (`FITUR_PROKER = true` di `index.html` dan
   `keaktifan/index.html`). Sempat ditutup buat presentasi contoh, sudah selesai.
   Saklarnya tetap dipakai kalau mau ditutup lagi.
+- **Buddy bisa mencatat sendiri (hybrid)** — kartu "Catat Sendiri" di layar Konfirmasi
+  Proker: pilih Bizstar dari kartu nama `BIZSTAR_DB[dept]`, nama proker, tanggal ->
+  POST `keaktifanlapor` dengan `status:'Hadir'` + `oleh`. GAS menandai langsung Hadir dan
+  memanggil rebuildPeringkat. Penolakan laporan kembar (orang+proker sama) yang lama tetap
+  jalan, jadi tidak dobel walau Bizstar juga lapor sendiri.
+- **Pilih nama buddy di layar Konfirmasi juga pakai kartu** (`gridBuddyKonf`), sama seperti
+  form penilaian. Select `pilihBuddy` sudah dihapus; state-nya di variabel `buddyKonfNama`.
 - **Townhall 3 dikunci permanen** — chip-nya `class="chip kunci"` (dashed, redup),
-  ditekan memanggil `kejutanTownhall3()` yang memunculkan `#catatanTwn3`:
-  "Townhall 3 tidak ada penilaian. Ada acara lain hari itu — biar jadi kejutan, ya."
-  Milestone TIDAK ikut terpilih. `resumeSession()` membuang sesi lama ber-Townhall 3.
+  tombolnya `disabled`, TANPA catatan apa pun di layar — Boss minta penjelasannya dibuang,
+  cukup terkunci saja. `resumeSession()` membuang sesi lama ber-Townhall 3.
   Boss sengaja tidak mau bilang acaranya apa — kalau ditanya, jawab "nanti juga tau".
 - **Pilih nama buddy = kartu nama** (`.nama-grid` / `.nama-btn`, `gridNamaBuddy`),
   bukan ketik dan bukan dropdown. Riwayat sudah dua kali: input+datalist -> `<select>`
@@ -43,6 +49,9 @@ metadata:
   env var, forms, access control. CLI netlify tidak terpasang, tidak ada token.
   Jadi Boss yang harus klik sendiri: app.netlify.com -> project ibass2026 ->
   Project configuration -> Build & deploy -> Continuous deployment -> **Stop builds**.
+- Tim Netlify Boss = **plan Free**, slug `mr-raffi-maenaki`, dibuat **27 April 2026** —
+  jadi siklus tagihannya kemungkinan besar berakhir tiap **tanggal 27**, bukan tanggal 1.
+  Itu jawaban "kok belum recharge": belum waktunya. Cek pastinya di Team settings -> Billing.
 - **Ternyata project `ibass2026` BELUM PERNAH deploy** ("Project has not yet been deployed",
   update terakhir 6 Juli) — jadi bukan itu yang menyedot kredit. Kredit tim juga SUDAH
   habis: banner "running on operational credits, production deploys and Agent Runners are
