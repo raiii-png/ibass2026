@@ -1903,10 +1903,15 @@ input:focus, select:focus, textarea:focus {
 
       <div class="card">
         <div class="card-label">Penilai</div>
-        <div class="field"><label>Nama Lengkap <span class="req">*</span></label>
-          <input type="text" id="namaPenilai" placeholder="Nama kamu" list="daftarBuddy"
+        <div class="field" id="fieldPilihNama" style="display:none">
+          <label>Nama Kamu <span class="req">*</span></label>
+          <select id="pilihNamaBuddy" onchange="pilihNamaBuddyBerubah()">
+            <option value="">Pilih namamu</option>
+          </select>
+        </div>
+        <div class="field" id="fieldKetikNama"><label>Nama Lengkap <span class="req">*</span></label>
+          <input type="text" id="namaPenilai" placeholder="Nama kamu" autocomplete="off"
             oninput="namaPenilaiBerubah()">
-          <datalist id="daftarBuddy"></datalist>
         </div>
 
         <!-- Buddy: pilih department sendiri -->
@@ -2822,11 +2827,12 @@ function openApp(role){
 
   // Buddy punya dua tugas terpisah — tampilkan menunya dulu.
   // Panitia langsung ke form karena tugasnya cuma satu.
+  // buddy pilih nama dari daftar; panitia tetap mengetik sendiri
+  document.getElementById('fieldPilihNama').style.display = role==='buddy'?'block':'none';
+  document.getElementById('fieldKetikNama').style.display = role==='buddy'?'none':'block';
+  if(role==='buddy') isiPilihanNamaBuddy();
+
   if(role==='buddy'){
-    const dl=document.getElementById('daftarBuddy');
-    if(dl && !dl.children.length){
-      dl.innerHTML=BUDDY_2026.map(b=>`<option value="${esc(b.n)}">${esc(b.d)}</option>`).join('');
-    }
     // cuma satu tugas selama konfirmasi proker ditutup — menunya dilewati
     if(!FITUR_PROKER){ goPage(1); return; }
     document.getElementById('app').classList.remove('visible');
@@ -2852,6 +2858,29 @@ function backToRole(){
 }
 
 /* ══ DEPT CHANGE ══ */
+/* Buddy tinggal pilih namanya dari daftar — tidak perlu mengetik, tidak ada
+   saran nama tersimpan dari HP yang ikut muncul. Kalau yang mengisi bukan salah
+   satu dari delapan buddy, ada pilihan "Nama lain" untuk mengetik sendiri. */
+function isiPilihanNamaBuddy(){
+  const s=document.getElementById('pilihNamaBuddy');
+  if(!s || s.children.length>1) return;
+  s.innerHTML='<option value="">Pilih namamu</option>'
+    + BUDDY_2026.map(b=>`<option value="${esc(b.n)}">${esc(b.n)} &mdash; ${esc(b.d)}</option>`).join('')
+    + '<option value="lain">Nama lain</option>';
+}
+
+function pilihNamaBuddyBerubah(){
+  const s=document.getElementById('pilihNamaBuddy');
+  const ketik=document.getElementById('fieldKetikNama');
+  const inp=document.getElementById('namaPenilai');
+  if(s.value==='lain'){
+    ketik.style.display='block'; inp.value=''; inp.focus(); updateP1(); return;
+  }
+  ketik.style.display='none';
+  inp.value=s.value;
+  namaPenilaiBerubah();
+}
+
 /* Kalau yang mengisi salah satu dari 8 buddy, departemennya diisikan sendiri —
    panitia tetap bebas mengetik nama apa pun. */
 function namaPenilaiBerubah(){
@@ -3549,7 +3578,7 @@ async function doSubmit(){
   try{
     await fetch(APPS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({submissions:rows,token:SUBMIT_TOKEN})});
     if(currentRole==='panitia') saveSubmittedNames(rows.map(r=>r.nama_bizstar));
-    document.getElementById('successMsg').textContent=`${rows.length} penilaian berhasil dikirim ke Google Sheets.`;
+    document.getElementById('successMsg').textContent=`${rows.length} penilaian tersimpan.`;
     document.getElementById('success').classList.add('visible');
   }catch{
     alert('Gagal mengirim. Periksa koneksi internet.');
@@ -4082,7 +4111,7 @@ window.doSubmit = async function(){
   if(APPS_URL==='YOUR_APPS_SCRIPT_URL_HERE'){
     await new Promise(r=>setTimeout(r,1800));
     if(currentRole==='panitia') saveSubmittedNames(rows.map(r=>r.nama_bizstar));
-    const absentNote = absentList.length ? ` (${absentList.length} tidak hadir dikecualikan)` : '';
+    const absentNote = absentList.length ? ` ${absentList.length} yang tidak hadir tidak ikut dikirim.` : '';
     document.getElementById('successMsg').textContent=
       `${rows.length} penilaian untuk milestone "${milestone}" berhasil disimulasikan.${absentNote}`;
     document.getElementById('success').classList.add('visible');
@@ -4092,8 +4121,8 @@ window.doSubmit = async function(){
   try{
     await fetch(APPS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({submissions:rows,token:SUBMIT_TOKEN})});
     if(currentRole==='panitia') saveSubmittedNames(rows.map(r=>r.nama_bizstar));
-    const absentNote = absentList.length ? ` (${absentList.length} tidak hadir dikecualikan)` : '';
-    document.getElementById('successMsg').textContent=`${rows.length} penilaian berhasil dikirim ke Google Sheets.${absentNote}`;
+    const absentNote = absentList.length ? ` ${absentList.length} yang tidak hadir tidak ikut dikirim.` : '';
+    document.getElementById('successMsg').textContent=`${rows.length} penilaian tersimpan.${absentNote}`;
     document.getElementById('success').classList.add('visible');
   }catch{
     alert('Gagal mengirim. Periksa koneksi internet.');
@@ -4156,6 +4185,7 @@ function resetAll(){
 
   // form fields
   const np=document.getElementById('namaPenilai'); if(np) np.value='';
+  const pnb=document.getElementById('pilihNamaBuddy'); if(pnb) pnb.value='';
   const dp=document.getElementById('deptPenilai'); if(dp) dp.value='';
   const pdf=document.getElementById('panitia-dept-filter'); if(pdf) pdf.value='';
   const pbc=document.getElementById('panitia-biz-chips'); if(pbc) pbc.innerHTML='';
