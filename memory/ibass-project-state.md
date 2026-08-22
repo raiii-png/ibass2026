@@ -14,12 +14,18 @@ metadata:
 - **Fitur proker DIBUKA lagi** (`FITUR_PROKER = true` di `index.html` dan
   `keaktifan/index.html`). Sempat ditutup buat presentasi contoh, sudah selesai.
   Saklarnya tetap dipakai kalau mau ditutup lagi.
-- **Buddy bisa mencatat sendiri (hybrid)** — kartu "Catat Sendiri" di layar Konfirmasi
-  Proker: pilih Bizstar dari kartu nama `BIZSTAR_DB[dept]`, nama proker, tanggal ->
-  POST `keaktifanlapor` dengan `status:'Hadir'` + `oleh`. GAS menandai langsung Hadir dan
-  memanggil rebuildPeringkat. Penolakan laporan kembar (orang+proker sama) yang lama tetap
-  jalan, jadi tidak dobel walau Bizstar juga lapor sendiri.
-- **Pilih nama buddy di layar Konfirmasi juga pakai kartu** (`gridBuddyKonf`), sama seperti
+- **HANYA BUDDY YANG MENCATAT — hybrid dibatalkan** (keputusan ketuplak Fikri, 22 Agu).
+  Alasannya: Bizstar tidak boleh tahu ada nilai tambahan, dan buddy toh selalu ikut proker
+  HIMA sebagai fungsionaris jadi sudah lihat sendiri siapa yang datang; kalau berhalangan
+  tinggal minta daftar di grup departemen (cara Fakhri tahun lalu). JANGAN tawarkan lagi
+  jalur lapor mandiri Bizstar tanpa Boss yang minta.
+  - Saklar `LAPOR_BIZSTAR = false` di index.html menyembunyikan kartu link untuk Bizstar;
+    `keaktifan/index.html` FITUR_PROKER = false (pesannya netral, tidak menjanjikan dibuka).
+  - Menu jadi **"Catat Proker"** (dulu "Konfirmasi Proker"), kartu isian **"Catat Kehadiran"**:
+    pilih Bizstar dari kartu nama `BIZSTAR_DB[dept]`, nama proker, tanggal -> POST
+    `keaktifanlapor` dengan `status:'Hadir'` + `oleh`. GAS langsung menandai Hadir dan
+    memanggil rebuildPeringkat. Penolakan catatan kembar (orang+proker sama) tetap jalan.
+- **Pilih nama buddy di layar Catat Proker juga pakai kartu** (`gridBuddyKonf`), sama seperti
   form penilaian. Select `pilihBuddy` sudah dihapus; state-nya di variabel `buddyKonfNama`.
 - **Townhall 3 dikunci permanen** — chip-nya `class="chip kunci"` (dashed, redup),
   tombolnya `disabled`, TANPA catatan apa pun di layar — Boss minta penjelasannya dibuang,
