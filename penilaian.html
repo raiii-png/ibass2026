@@ -400,6 +400,33 @@ body {
 }
 .chip:hover  { border-color: var(--bdr); color: var(--text2); }
 .chip.on     { background: rgba(91,163,232,0.1); border-color: var(--blue2); color: var(--blue2); }
+.chip.kunci  { opacity: 0.45; border-style: dashed; cursor: default; }
+.chip.kunci:hover { border-color: var(--bdr2); color: var(--muted); }
+#catatanTwn3 {
+  display: none; margin-top: 0.6rem; padding: 0.6rem 0.75rem;
+  border-left: 2px solid var(--gold); background: rgba(232,191,106,0.07);
+  border-radius: 0 var(--r) var(--r) 0;
+  font-size: 0.68rem; color: var(--text2); line-height: 1.6;
+}
+#catatanTwn3.tampil { display: block; }
+
+/* pilih nama buddy — kartu yang tinggal ditekan, bukan daftar turun */
+.nama-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
+.nama-btn {
+  background: transparent; border: 1px solid var(--bdr2); border-radius: var(--r);
+  padding: 0.55rem 0.7rem; cursor: pointer; text-align: left; width: 100%;
+  display: flex; flex-direction: column; gap: 0.1rem; transition: all 0.18s;
+}
+.nama-btn:hover { border-color: rgba(232,191,106,0.4); }
+.nama-btn.on { background: rgba(232,191,106,0.09); border-color: rgba(232,191,106,0.55); }
+.nb-n { font-size: 0.72rem; color: var(--text2); line-height: 1.35; }
+.nama-btn.on .nb-n { color: var(--gold2); }
+.nb-d {
+  font-family: 'Cinzel', serif; font-size: 0.48rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted);
+}
+.nama-btn.lain { grid-column: 1 / -1; }
+@media (max-width: 400px) { .nama-grid { grid-template-columns: 1fr; } }
 
 /* ═══════════════════════════════════
    BIZSTAR NAVIGATOR
@@ -1905,9 +1932,7 @@ input:focus, select:focus, textarea:focus {
         <div class="card-label">Penilai</div>
         <div class="field" id="fieldPilihNama" style="display:none">
           <label>Nama Kamu <span class="req">*</span></label>
-          <select id="pilihNamaBuddy" onchange="pilihNamaBuddyBerubah()">
-            <option value="">Pilih namamu</option>
-          </select>
+          <div class="nama-grid" id="gridNamaBuddy"></div>
         </div>
         <div class="field" id="fieldKetikNama"><label>Nama Lengkap <span class="req">*</span></label>
           <input type="text" id="namaPenilai" placeholder="Nama kamu" autocomplete="off"
@@ -1935,8 +1960,10 @@ input:focus, select:focus, textarea:focus {
             <button class="chip" onclick="setMilestone(this,'Pematerian 1')">PMT 1</button>
             <button class="chip" onclick="setMilestone(this,'Townhall 2')">Townhall 2</button>
             <button class="chip" onclick="setMilestone(this,'Pematerian 2')">PMT 2</button>
-            <button class="chip" onclick="setMilestone(this,'Townhall 3')">Townhall 3</button>
+            <button class="chip kunci" onclick="kejutanTownhall3()">Townhall 3</button>
           </div>
+          <div id="catatanTwn3">Townhall 3 tidak ada penilaian. Ada acara lain hari itu &mdash;
+            biar jadi kejutan, ya.</div>
         </div>
       </div>
 
@@ -2209,7 +2236,7 @@ input:focus, select:focus, textarea:focus {
       <div class="guide-row"><span class="guide-num">2</span><p class="guide-text">Tulis namamu. Kalau kamu buddy, departemenmu terisi sendiri dan Bizstar-mu langsung muncul. Lalu pilih <strong>milestone</strong> yang mau dinilai.</p></div>
       <div class="guide-row"><span class="guide-num">3</span><p class="guide-text">Nilai satu per satu. Titik-titik di atas kartu untuk lompat ke Bizstar lain sekaligus melihat mana yang belum kelar.</p></div>
       <div class="guide-row"><span class="guide-num">4</span><p class="guide-text">Kolom catatan boleh dilewat, tapi isi kalau ada yang perlu diingat. Angka cepat lupa, kalimat tidak.</p></div>
-      <div class="guide-row"><span class="guide-num">5</span><p class="guide-text">Di halaman Review, baca ulang sekali sebelum <strong>Kirim</strong>. Setelah terkirim, nilainya langsung masuk ke sheet.</p></div>
+      <div class="guide-row"><span class="guide-num">5</span><p class="guide-text">Di halaman Review, baca ulang sekali sebelum <strong>Kirim</strong>. Setelah terkirim, nilainya langsung tersimpan.</p></div>
     </div>
 
     <div class="guide-section">
@@ -2239,7 +2266,7 @@ input:focus, select:focus, textarea:focus {
       <div class="guide-sec-title">Poin Proker HIMA</div>
       <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Ini terpisah dari nilai di form ini. Bizstar melapor sendiri lewat link, buddy tinggal mengecek di menu <strong>Konfirmasi Proker</strong>.</p></div>
       <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Tiap proker HIMA yang dicek benar menambah <strong>+2</strong>, mentok <strong>+10</strong>. Acara IBASS sendiri dan acara di luar HIMA tidak dihitung.</p></div>
-      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Nilai KPI dan poin ini digabung otomatis di sheet <strong>Peringkat</strong>, jadi tidak perlu dihitung manual.</p></div>
+      <div class="guide-row"><span class="guide-num">&#9679;</span><p class="guide-text">Nilai KPI dan poin ini digabung otomatis di tabel peringkat, jadi tidak perlu dihitung manual.</p></div>
     </div>
 
     <div class="guide-section">
@@ -2297,10 +2324,9 @@ input:focus, select:focus, textarea:focus {
 
 <script>
 /* ══ SAKLAR FITUR ══
-   Konfirmasi Proker (dan halaman lapor keaktifan) ditutup dulu — belum dipakai.
-   Mau dibuka lagi: ganti false jadi true di sini, dan di keaktifan/index.html.
-   Tidak ada kode yang dihapus, jadi tinggal dibalik saja. */
-const FITUR_PROKER = false;
+   Konfirmasi Proker dan halaman lapor keaktifan. Mau ditutup lagi: ganti true
+   jadi false di sini, dan di keaktifan/index.html. */
+const FITUR_PROKER = true;
 if(!FITUR_PROKER){
   const k = document.getElementById('kartuKonfirmasi');
   if(k) k.style.display = 'none';
@@ -2862,22 +2888,27 @@ function backToRole(){
    saran nama tersimpan dari HP yang ikut muncul. Kalau yang mengisi bukan salah
    satu dari delapan buddy, ada pilihan "Nama lain" untuk mengetik sendiri. */
 function isiPilihanNamaBuddy(){
-  const s=document.getElementById('pilihNamaBuddy');
-  if(!s || s.children.length>1) return;
-  s.innerHTML='<option value="">Pilih namamu</option>'
-    + BUDDY_2026.map(b=>`<option value="${esc(b.n)}">${esc(b.n)} &mdash; ${esc(b.d)}</option>`).join('')
-    + '<option value="lain">Nama lain</option>';
+  const g=document.getElementById('gridNamaBuddy');
+  if(!g || g.children.length) return;
+  g.innerHTML = BUDDY_2026.map(b=>
+      `<button type="button" class="nama-btn" onclick="pilihNamaBuddy(this,'${esc(b.n)}')">`
+      + `<span class="nb-n">${esc(b.n)}</span><span class="nb-d">${esc(b.d)}</span></button>`
+    ).join('')
+    + `<button type="button" class="nama-btn lain" onclick="pilihNamaBuddy(this,'')">`
+    + `<span class="nb-n">Nama lain</span>`
+    + `<span class="nb-d">kalau kamu bukan salah satu di atas</span></button>`;
 }
 
-function pilihNamaBuddyBerubah(){
-  const s=document.getElementById('pilihNamaBuddy');
+function pilihNamaBuddy(el, nama){
+  document.querySelectorAll('#gridNamaBuddy .nama-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
   const ketik=document.getElementById('fieldKetikNama');
   const inp=document.getElementById('namaPenilai');
-  if(s.value==='lain'){
+  if(!nama){
     ketik.style.display='block'; inp.value=''; inp.focus(); updateP1(); return;
   }
   ketik.style.display='none';
-  inp.value=s.value;
+  inp.value=nama;
   namaPenilaiBerubah();
 }
 
@@ -2907,6 +2938,13 @@ function showBizstarPreview(){
   document.getElementById('bizstarPreviewCard').style.display='block';
   document.getElementById('bizstarPreviewList').innerHTML=
     bizList.map((n,i)=>`<span style="color:var(--muted);margin-right:0.5rem">${i+1}.</span>${n}<br>`).join('');
+}
+
+/* Townhall 3 tidak dipakai menilai — sengaja dibiarkan terlihat tapi terkunci,
+   biar buddy tahu tanggalnya ada tanpa dikasih tahu isinya. */
+function kejutanTownhall3(){
+  const c=document.getElementById('catatanTwn3');
+  if(c) c.classList.add('tampil');
 }
 
 /* ══ VALIDATION PAGE 1 ══ */
@@ -3657,7 +3695,7 @@ function resumeSession(){
   clearSavedSession();
 
   // restore state
-  currentRole = d.role; milestone = d.milestone;
+  currentRole = d.role; milestone = d.milestone==='Townhall 3' ? '' : d.milestone;
   bizList = d.bizList;
   Object.assign(allScores, d.allScores||{});
 
@@ -4185,7 +4223,7 @@ function resetAll(){
 
   // form fields
   const np=document.getElementById('namaPenilai'); if(np) np.value='';
-  const pnb=document.getElementById('pilihNamaBuddy'); if(pnb) pnb.value='';
+  document.querySelectorAll('#gridNamaBuddy .nama-btn').forEach(b=>b.classList.remove('on'));
   const dp=document.getElementById('deptPenilai'); if(dp) dp.value='';
   const pdf=document.getElementById('panitia-dept-filter'); if(pdf) pdf.value='';
   const pbc=document.getElementById('panitia-biz-chips'); if(pbc) pbc.innerHTML='';
