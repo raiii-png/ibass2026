@@ -47,6 +47,24 @@ metadata:
   teks kartu Hitungannya + nilai cadangan `js.perProker||1`/`js.maks||5` (keaktifan).
   **Ganti angka = ganti di lima tempat itu + panduan + artefak.**
 
+## RASA PAKAI LAYAR PENILAIAN (2026-08-22 malam)
+- **Bar "Selesai"** (`#lanjutBar`, fungsi `bukaLanjut`/`tutupLanjut`): naik dari bawah
+  begitu tiga nilai satu Bizstar terisi, menyebut siapa berikutnya, auto-pindah 2,2 detik.
+  Dibatalkan oleh tombol "Tetap di sini", menggulung layar, atau fokus ke kolom catatan;
+  nama yang ditahan masuk `lanjutDitahan` dan tidak ditawari lagi.
+  Pemicunya di `rate()` — bandingkan `isComplete()` SEBELUM dan sesudah menulis nilai.
+- `getar()` (navigator.vibrate) 8ms tiap nilai, pola [8,45,14] saat satu orang beres.
+- `denyutkan()` — cincin di angka yang barusan ditekan, karena angka pilihan menyala
+  bersama angka di bawahnya jadi susah dibedakan.
+- Geser kiri/kanan di `#bizCardWrap` untuk pindah Bizstar (ambang 34px, rasio 1.6 ke
+  gerak vertikal). `geserKartu()` + `gulungKeKartu()` dipakai juga oleh next/prev/titik.
+- `kurangiGerak()` menjaga prefers-reduced-motion di semua animasi baru.
+- Pintasan papan ketik disembunyikan di layar sentuh (`hover:none and pointer:coarse`).
+- **Pelajaran verifikasi**: panel browser sering tersembunyi -> rendering dijeda, jadi
+  transisi CSS dan requestAnimationFrame TIDAK jalan. Ukur kelas/DOM, jangan ukur
+  opacity/transform sebagai bukti animasi. Semua alur baru wajib punya jaring pengaman
+  setTimeout kalau bergantung pada rAF (lihat `openRoleSelect`).
+
 ## NETLIFY — MENGHABISKAN KREDIT (2026-08-22)
 - Repo GitHub `raiii-png/ibass2026` masih tersambung ke **project Netlify `ibass2026`**
   (site id `4e29c3c3-94f6-4c1e-b6b0-cf92075d1147`), jadi TIAP PUSH memicu build dan
