@@ -140,6 +140,23 @@ input:focus,select:focus{border-color:rgba(232,191,106,.55);box-shadow:0 0 0 2px
 </div>
 
 <script>
+/* ══ SAKLAR FITUR ══
+   Halaman lapor proker ditutup dulu — belum dipakai. Mau dibuka lagi: ganti false
+   jadi true di sini, dan di index.html (cari FITUR_PROKER). Isinya tidak dihapus. */
+const FITUR_PROKER = false;
+if(!FITUR_PROKER){
+  document.head.insertAdjacentHTML('beforeend',
+    '<style>.terkunci .card{display:none!important}.terkunci .card.kunci{display:block!important}</style>');
+  const w = document.querySelector('.wrap');
+  w.classList.add('terkunci');
+  const kotak = document.createElement('div');
+  kotak.className = 'card kunci';
+  kotak.innerHTML = '<div class="lbl">Belum Dibuka</div>'
+    + '<div class="note">Halaman lapor proker belum dipakai. Nanti buddy kamu yang '
+    + 'kasih kabar kalau sudah bisa diisi.</div>';
+  w.insertBefore(kotak, w.querySelector('.card'));
+}
+
 const GAS_URL='https://script.google.com/macros/s/AKfycbxCTCMFY1KEBuT6TeiBbMeDgB-JL2o3zOXtdvpDagd1E-tMScq45uxX-nwUqA9qf9Becg/exec';
 const $=id=>document.getElementById(id);
 const esc=s=>{const d=document.createElement('div');d.textContent=String(s==null?'':s);return d.innerHTML;};

@@ -1807,7 +1807,7 @@ input:focus, select:focus, textarea:focus {
         <div class="role-scale">Skala 1 &ndash; 10</div>
         <div class="role-desc">Nilai Adaptive, Collaborate, dan Growth per Bizstar</div>
       </div>
-      <div class="role-card" onclick="bukaKonfirmasi()">
+      <div class="role-card" id="kartuKonfirmasi" onclick="bukaKonfirmasi()">
         <div class="role-sigil">
           <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="22" cy="22" r="14" stroke="#8ec5f8" stroke-width="1.3"/>
@@ -1863,16 +1863,6 @@ input:focus, select:focus, textarea:focus {
       <div class="btn-sm-row">
         <button class="btn-sm" onclick="salinTautan()">Salin Link</button>
         <button class="btn-sm" onclick="salinPesanWA()">Salin Pesan WA</button>
-      </div>
-    </div>
-
-    <div class="card" style="margin-bottom:0.75rem">
-      <div class="card-label">Yang Dihitung</div>
-      <div class="konf-kabar">
-        Cuma <strong>proker HIMA di luar IBASS</strong>, dan cuma soal <strong>hadir atau
-        tidak</strong>. Jadi panitia atau sekadar datang nilainya sama: <strong>+2</strong>
-        per proker, mentok di <strong>+10</strong>. Acara IBASS sendiri dan acara di luar
-        HIMA tidak masuk hitungan.
       </div>
     </div>
 
@@ -2301,6 +2291,15 @@ input:focus, select:focus, textarea:focus {
 </div>
 
 <script>
+/* ══ SAKLAR FITUR ══
+   Konfirmasi Proker (dan halaman lapor keaktifan) ditutup dulu — belum dipakai.
+   Mau dibuka lagi: ganti false jadi true di sini, dan di keaktifan/index.html.
+   Tidak ada kode yang dihapus, jadi tinggal dibalik saja. */
+const FITUR_PROKER = false;
+if(!FITUR_PROKER){
+  const k = document.getElementById('kartuKonfirmasi');
+  if(k) k.style.display = 'none';
+}
 /* ══════════════════════════════════════
    DATA — BIZSTAR PER DEPARTMENT
    Ganti nama-nama ini setelah daftar Bizstar tersedia
@@ -2828,6 +2827,8 @@ function openApp(role){
     if(dl && !dl.children.length){
       dl.innerHTML=BUDDY_2026.map(b=>`<option value="${esc(b.n)}">${esc(b.d)}</option>`).join('');
     }
+    // cuma satu tugas selama konfirmasi proker ditutup — menunya dilewati
+    if(!FITUR_PROKER){ goPage(1); return; }
     document.getElementById('app').classList.remove('visible');
     document.getElementById('menuBuddy').style.display='block';
     window.scrollTo(0,0);
@@ -2837,7 +2838,7 @@ function openApp(role){
 }
 function backToRole(){
   // buddy kembali ke menu dua-tugasnya dulu, bukan langsung ke pilihan peran
-  if(currentRole==='buddy' && document.getElementById('menuBuddy')){
+  if(FITUR_PROKER && currentRole==='buddy' && document.getElementById('menuBuddy')){
     document.getElementById('app').classList.remove('visible');
     document.getElementById('app').style.display='';
     document.getElementById('menuBuddy').style.display='block';
@@ -3128,6 +3129,7 @@ function kembaliKeMenu(){
 }
 
 function bukaKonfirmasi(){
+  if(!FITUR_PROKER){ showToast('Menu ini belum dibuka'); return; }
   sembunyikanSemuaLayar();
   document.getElementById('konfirmasiView').style.display='block';
   window.scrollTo(0,0);
