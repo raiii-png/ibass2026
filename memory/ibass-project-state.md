@@ -47,6 +47,20 @@ metadata:
   teks kartu Hitungannya + nilai cadangan `js.perProker||1`/`js.maks||5` (keaktifan).
   **Ganti angka = ganti di lima tempat itu + panduan + artefak.**
 
+## BAHAN PEMAPARAN RTAPUM (2026-09-30)
+- `PEMAPARAN_RTAPUM_IBASS2026.md` + artifact https://claude.ai/artifact/Ca6gjL6WDKvE5vefR3XL9J
+  Sasarannya forum HIMA, bukan buddy: kenapa sistemnya ada, cara nilai terbentuk, kenapa
+  buddy yang mencatat, status apa adanya, tabel angka, antisipasi pertanyaan forum.
+  Beda peran dari `PANDUAN_BUDDY_IBASS2026.md` yang isinya cara pakai.
+- **JEBAKAN ANGKA — jangan dikira bug**: label "Bobot 15/20/25%" di form buddy berjumlah 60,
+  form panitia 15/15/10 berjumlah 40. Itu bobot relatif antar tiga kriteria DI DALAM satu form:
+  `kpi = (A*15 + C*20 + G*25)/60` untuk buddy, `(A*15 + C*15 + G*10)/40` untuk panitia —
+  dua-duanya menghasilkan skala 0-100. Baru setelah itu GAS menggabung `rb*0.7 + rp*0.3`.
+  Jadi 70/30 dan 15/20/25 adalah dua lapisan berbeda. Labelnya ambigu tapi SENGAJA belum
+  diubah: Boss sudah membriefing buddy dengan tampilan itu. Jangan ubah tanpa diminta.
+- Sisa pekerjaan yang masih sama: nama Bizstar asli belum masuk (masih `HRD-01 [Nama]`),
+  dan Apps Script belum di-deploy ulang sehingga tombol Catat Hadir belum bisa menyimpan.
+
 ## RASA PAKAI LAYAR PENILAIAN (2026-08-22 malam)
 - **Bar "Selesai"** (`#lanjutBar`, fungsi `bukaLanjut`/`tutupLanjut`): naik dari bawah
   begitu tiga nilai satu Bizstar terisi, menyebut siapa berikutnya, auto-pindah 2,2 detik.
