@@ -685,7 +685,7 @@ function ensurePenilaianSheet(ssAbaikan) {
     .setBackground('#1e3a5f').setFontColor('#5bc4f5')
     .setFontWeight('bold').setFontSize(10);
   sheet.setFrozenRows(1);
-  const widths = [140, 70, 150, 110, 110, 150, 90, 110, 80, 80, 100, 70, 80, 220, 220];
+  const widths = [140, 70, 150, 110, 110, 150, 90, 110, 80, 80, 100, 70, 80, 90, 220, 220];
   widths.forEach((w, i) => sheet.setColumnWidth(i + 1, w));
   return sheet;
 }
@@ -1021,6 +1021,39 @@ function rebuildPeringkat() {
   return daftar;
 }
 
+/* Dipakai sekali di awal: bikin ketiga sheet berikut judul kolomnya sekaligus,
+   tanpa menunggu penilaian pertama masuk. Aman diklik berulang — sheet yang
+   sudah ada tidak disentuh dan isinya tidak hilang. */
+function menuSiapkanSheet() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const ss = penilaianSS();
+    const sebelum = ss.getSheets().map(function (sh) { return sh.getName(); });
+
+    ensurePenilaianSheet(ss);
+    keaktifanSheet();
+    rebuildPeringkat();
+
+    const sesudah = ss.getSheets().map(function (sh) { return sh.getName(); });
+    const baru = sesudah.filter(function (n) { return sebelum.indexOf(n) === -1; });
+
+    const kabar = [
+      'File: ' + ss.getName(),
+      '',
+      baru.length ? 'Baru dibuat: ' + baru.join(', ') : 'Semua sheet sudah ada sebelumnya.',
+      '',
+      'Tiga sheet yang dipakai:',
+      '• ' + PENILAIAN_SHEET + ' — nilai KPI dari buddy dan panitia',
+      '• ' + KEAKTIFAN_SHEET + ' — kehadiran proker HIMA yang dicatat buddy',
+      '• ' + PERINGKAT_SHEET + ' — gabungan keduanya, tersusun otomatis'
+    ].join(String.fromCharCode(10));
+
+    ui.alert('Sheet siap dipakai', kabar, ui.ButtonSet.OK);
+  } catch (err) {
+    ui.alert('Gagal menyiapkan sheet', String((err && err.message) || err), ui.ButtonSet.OK);
+  }
+}
+
 function menuPerbaruiPeringkat() {
   const ui = SpreadsheetApp.getUi();
   try {
@@ -1059,6 +1092,7 @@ const LAP_W = 7; // lebar kolom laporan
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Laporan IBASS')
+    .addItem('Siapkan Sheet Penilaian', 'menuSiapkanSheet')
     .addItem('Perbarui Peringkat Bizstar', 'menuPerbaruiPeringkat')
     .addSeparator()
     .addItem('Perbarui Laporan', 'menuGenerateLaporan')
