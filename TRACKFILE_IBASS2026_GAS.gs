@@ -951,6 +951,19 @@ function hitungPeringkat() {
 /* Judul kolom dibuat sama di semua sheet: tebal, abu-abu muda, tanpa warna.
    Dipisah jadi fungsi sendiri supaya sheet yang terlanjur berwarna ikut
    dirapikan waktu menu Siapkan Sheet dijalankan, bukan cuma yang baru dibuat. */
+/* Peringkat dan Rekap ditulis ulang dari nol tiap ada data masuk, jadi apa pun yang
+   diketik tangan di situ pasti hilang tanpa pemberitahuan. Peringatan ini muncul
+   sebelum orang terlanjur mengetik. Sengaja hanya peringatan, bukan kunci mati —
+   supaya Boss tetap bisa menyalin atau menandai sesuatu kalau memang perlu. */
+function lindungiSheet(sh, alasan) {
+  if (!sh) return;
+  try {
+    sh.getProtections(SpreadsheetApp.ProtectionType.SHEET)
+      .forEach(function (pr) { pr.remove(); });
+    sh.protect().setDescription(alasan).setWarningOnly(true);
+  } catch (e) {}
+}
+
 /* Filter bawaan Sheets, dipasang ulang karena yang lama ikut terbawa gaya lama. */
 function pasangFilter(sh, jumlahKolom) {
   if (!sh || sh.getLastRow() < 1) return;
@@ -1217,6 +1230,11 @@ function menuSiapkanSheet() {
     pasangFilter(shPenilaian, PENILAIAN_HEADER.length);
     pasangFilter(shKeaktifan, 9);
 
+    lindungiSheet(ss.getSheetByName(PERINGKAT_SHEET),
+      'Ditulis ulang otomatis tiap penilaian masuk. Ketikan tangan di sini akan hilang.');
+    lindungiSheet(ss.getSheetByName(REKAP_SHEET),
+      'Ditulis ulang otomatis tiap penilaian masuk. Ketikan tangan di sini akan hilang.');
+
     rebuildPeringkat();
     rebuildRekap();
 
@@ -1456,11 +1474,11 @@ function ensureLaporanSheet(ss) {
   if (sh) return sh;
   sh = ss.insertSheet(LAPORAN_SHEET);
   sh.getRange(1, 1, 1, LAP_W).merge();
-  sh.getRange(1, 1).setValue('LAPORAN PERKEMBANGAN — IBASS 2026')
-    .setBackground('#1e3a5f').setFontColor('#e8bf6a').setFontWeight('bold').setFontSize(13);
+  sh.getRange(1, 1).setValue('Laporan Perkembangan IBASS 2026')
+    .setFontWeight('bold').setFontSize(12);
   sh.getRange(2, 1, 1, LAP_W).merge();
-  sh.getRange(2, 1).setValue('Dokumen turunan untuk kepengurusan berikutnya · setiap update ber-stempel waktu · dibuat dari tombol "Perbarui Laporan" di Dashboard Kadiv atau menu "Laporan IBASS" di sheet ini')
-    .setBackground('#13141f').setFontColor('#666688').setFontSize(9).setFontStyle('italic');
+  sh.getRange(2, 1).setValue('Dokumen turunan untuk kepengurusan berikutnya. Tiap pembaruan dicatat waktunya. Dibuat dari tombol Perbarui Laporan di Dashboard Kadiv, atau menu Laporan IBASS di sheet ini.')
+    .setFontColor('#888888').setFontSize(9);
   sh.setFrozenRows(2);
   const widths = [130, 260, 110, 120, 95, 110, 220];
   widths.forEach((w, i) => sh.setColumnWidth(i + 1, w));
@@ -1479,8 +1497,11 @@ function lapRow(sh, values, opt) {
   } else {
     rng.setValues([vals]);
   }
-  if (opt.bg) rng.setBackground(opt.bg);
-  if (opt.fg) rng.setFontColor(opt.fg);
+  /* Sheet dibuat polos: latar gelap dan teks berwarna dibuang, yang tersisa cuma
+     tebal dan ukuran untuk menandai tingkatan. Pemanggil boleh tetap mengirim bg
+     dan fg, nilainya diseragamkan di sini supaya tidak perlu diubah satu-satu. */
+  if (opt.bg) rng.setBackground('#f3f3f3');
+  rng.setFontColor('#000000');
   if (opt.bold) rng.setFontWeight('bold');
   if (opt.size) rng.setFontSize(opt.size);
   if (opt.italic) rng.setFontStyle('italic');
@@ -1493,12 +1514,12 @@ function generateLaporanSheet(ss, catatan, penulis) {
   const now = new Date();
 
   lapRow(sh, ['']); // spacer
-  lapRow(sh, ['UPDATE — ' + tglIndo(now)], { merge: true, bg: '#1e3a5f', fg: '#e8bf6a', bold: true, size: 11 });
-  if (penulis) lapRow(sh, ['Dicatat oleh: ' + penulis], { merge: true, fg: '#666688', italic: true, size: 9 });
+  lapRow(sh, ['Pembaruan ' + tglIndo(now)], { merge: true, bg: true, bold: true, size: 11 });
+  if (penulis) lapRow(sh, ['Dicatat oleh ' + penulis], { merge: true, size: 9 });
 
   // Ringkasan per divisi
-  lapRow(sh, ['RINGKASAN DIVISI'], { merge: true, bg: '#13141f', fg: '#5bc4f5', bold: true, size: 10 });
-  lapRow(sh, ['Divisi', 'Total Kegiatan', 'Selesai', 'Berlangsung', 'Belum', 'Terlambat', 'Batal'], { bg: '#13141f', fg: '#9999bb', bold: true, size: 9 });
+  lapRow(sh, ['Ringkasan divisi'], { merge: true, bg: true, bold: true, size: 10 });
+  lapRow(sh, ['Divisi', 'Total Kegiatan', 'Selesai', 'Berlangsung', 'Belum', 'Terlambat', 'Batal'], { bg: true, bold: true, size: 9 });
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const lateAll = [];
   const cancelAll = [];
@@ -1517,15 +1538,15 @@ function generateLaporanSheet(ss, catatan, penulis) {
   });
 
   // Kegiatan bermasalah = bahan evaluasi
-  lapRow(sh, ['PERLU PERHATIAN — LEWAT DEADLINE'], { merge: true, bg: '#13141f', fg: '#f87171', bold: true, size: 10 });
+  lapRow(sh, ['Lewat tenggat'], { merge: true, bg: true, bold: true, size: 10 });
   if (!lateAll.length) {
-    lapRow(sh, ['Tidak ada — semua kegiatan berjalan sesuai jadwal.'], { merge: true, fg: '#4ecb8d' });
+    lapRow(sh, ['Tidak ada. Semua kegiatan berjalan sesuai jadwal.'], { merge: true });
   } else {
-    lapRow(sh, ['Divisi', 'Kegiatan', 'PIC', 'Deadline', '', '', 'Catatan'], { bg: '#13141f', fg: '#9999bb', bold: true, size: 9 });
+    lapRow(sh, ['Divisi', 'Kegiatan', 'PIC', 'Tenggat', '', '', 'Catatan'], { bg: true, bold: true, size: 9 });
     lateAll.forEach(x => lapRow(sh, [x.divisi, x.r.kegiatan || '—', x.r.pic || '—', x.r.deadline || '—', '', '', x.r.catatan || ''], { wrap: true }));
   }
   if (cancelAll.length) {
-    lapRow(sh, ['KEGIATAN DIBATALKAN'], { merge: true, bg: '#13141f', fg: '#888899', bold: true, size: 10 });
+    lapRow(sh, ['Kegiatan dibatalkan'], { merge: true, bg: true, bold: true, size: 10 });
     cancelAll.forEach(x => lapRow(sh, [x.divisi, x.r.kegiatan || '—', x.r.pic || '—', '', '', '', x.r.catatan || ''], { wrap: true }));
   }
 
@@ -1535,7 +1556,7 @@ function generateLaporanSheet(ss, catatan, penulis) {
     if (pays.length) {
       const total = pays.reduce((a, p) => a + (p.nominal || 0), 0);
       const lunas = pays.filter(p => /lunas/i.test(p.termin || '')).length;
-      lapRow(sh, ['DANA DAP'], { merge: true, bg: '#13141f', fg: '#4ecb8d', bold: true, size: 10 });
+      lapRow(sh, ['Dana DAP'], { merge: true, bg: true, bold: true, size: 10 });
       lapRow(sh, ['Terkumpul ' + rp(total) + ' dari ' + pays.length + ' pembayaran (' + lunas + ' lunas).'], { merge: true });
     }
   } catch (e) {}
@@ -1546,13 +1567,13 @@ function generateLaporanSheet(ss, catatan, penulis) {
     if (pen.length) {
       const perMile = {};
       pen.forEach(p => { const k = p.milestone || '—'; perMile[k] = (perMile[k] || 0) + 1; });
-      lapRow(sh, ['PENILAIAN BIZSTAR'], { merge: true, bg: '#13141f', fg: '#a78bfa', bold: true, size: 10 });
+      lapRow(sh, ['Penilaian Bizstar'], { merge: true, bg: true, bold: true, size: 10 });
       lapRow(sh, [pen.length + ' penilaian masuk — ' + Object.keys(perMile).map(k => k + ': ' + perMile[k]).join(', ') + '.'], { merge: true });
     }
   } catch (e) {}
 
   // Evaluasi manual
-  lapRow(sh, ['CATATAN EVALUASI UNTUK PENERUS'], { merge: true, bg: '#13141f', fg: '#e8bf6a', bold: true, size: 10 });
+  lapRow(sh, ['Catatan evaluasi untuk penerus'], { merge: true, bg: true, bold: true, size: 10 });
   lapRow(sh, [catatan && catatan.trim() ? catatan.trim() : '—'], { merge: true, wrap: true });
 
   // Catat waktu update
