@@ -919,6 +919,7 @@ function hitungPeringkat() {
     if (!o.buddy && o.dept) o.buddy = buddyDept(o.dept);
     return {
       nama: o.nama, dept: o.dept || '', buddy: o.buddy || '',
+      nilaiBuddy: rb, nilaiPanitia: rp,
       kpi: kpi, poin: o.poin, akhir: akhir,
       nBuddy: o.buddyNilai.length, nPanitia: o.panitiaNilai.length,
       milestone: Object.keys(o.milestone).length,
@@ -941,6 +942,14 @@ function hitungPeringkat() {
 /* Judul kolom dibuat sama di semua sheet: tebal, abu-abu muda, tanpa warna.
    Dipisah jadi fungsi sendiri supaya sheet yang terlanjur berwarna ikut
    dirapikan waktu menu Siapkan Sheet dijalankan, bukan cuma yang baru dibuat. */
+/* Filter bawaan Sheets, dipasang ulang karena yang lama ikut terbawa gaya lama. */
+function pasangFilter(sh, jumlahKolom) {
+  if (!sh || sh.getLastRow() < 1) return;
+  const lama = sh.getFilter();
+  if (lama) lama.remove();
+  sh.getRange(1, 1, Math.max(sh.getLastRow(), 2), jumlahKolom).createFilter();
+}
+
 function rapikanJudul(sh, jumlahKolom) {
   if (!sh || jumlahKolom < 1) return;
   sh.getRange(1, 1, 1, jumlahKolom)
@@ -992,8 +1001,11 @@ function bacaRoster() {
     .filter(function (o) { return o.nama; });
 }
 
+/* "Nilai Buddy" dan "Nilai Panitia" sengaja ditaruh sebelum "Nilai KPI" supaya
+   kelihatan nilai akhir itu datang dari mana. Tanpa itu, sumbangan panitia tenggelam
+   di dalam satu angka dan tidak bisa dicek ulang tanpa menghitung tangan. */
 const PERINGKAT_HEADER = ['Peringkat', 'Nama Bizstar', 'Departemen', 'Buddy',
-  'Nilai KPI', 'Poin Keaktifan', 'Nilai Akhir', 'Predikat',
+  'Nilai Buddy', 'Nilai Panitia', 'Nilai KPI', 'Poin Keaktifan', 'Nilai Akhir', 'Predikat',
   'Dinilai Buddy', 'Dinilai Panitia', 'Milestone Terisi', 'Proker Hadir', 'Menunggu Konfirmasi'];
 
 /* Tulis ulang sheet Peringkat dari nol. Dipanggil tiap penilaian masuk, tiap buddy
@@ -1036,6 +1048,8 @@ function rebuildPeringkat() {
     return [
       d.peringkat === '' ? '' : d.peringkat,
       d.nama, d.dept, d.buddy,
+      d.nilaiBuddy === null || d.nilaiBuddy === undefined ? '' : Math.round(d.nilaiBuddy * 100) / 100,
+      d.nilaiPanitia === null || d.nilaiPanitia === undefined ? '' : Math.round(d.nilaiPanitia * 100) / 100,
       d.kpi === null ? '' : Math.round(d.kpi * 100) / 100,
       d.poin,
       d.akhir === null ? '' : Math.round(d.akhir * 100) / 100,
@@ -1044,8 +1058,8 @@ function rebuildPeringkat() {
     ];
   });
   sh.getRange(baris0 + 1, 1, rows.length, W).setValues(rows);
-  sh.getRange(baris0 + 1, 5, rows.length, 3).setNumberFormat('0.00');
-  sh.getRange(baris0 + 1, 6, rows.length, 1).setNumberFormat('0');
+  sh.getRange(baris0 + 1, 5, rows.length, 5).setNumberFormat('0.00');   // nilai buddy s/d nilai akhir
+  sh.getRange(baris0 + 1, 8, rows.length, 1).setNumberFormat('0');      // poin keaktifan
 
   // Yang belum punya nilai dibuat kelabu supaya tidak terbaca sebagai peringkat bawah.
   daftar.forEach(function (d, i) {
@@ -1058,7 +1072,7 @@ function rebuildPeringkat() {
 }
 
 function lebarPeringkat(sh) {
-  [75, 210, 150, 180, 85, 100, 90, 110, 100, 100, 110, 95, 130]
+  [75, 210, 150, 180, 95, 100, 85, 100, 90, 110, 100, 100, 110, 95, 130]
     .forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
 }
 
@@ -1125,18 +1139,22 @@ function rebuildRekap() {
   // ── Per milestone ──
   sh.getRange(baris, 1).setValue('Per milestone').setFontWeight('bold');
   baris++;
-  sh.getRange(baris, 1, 1, 3).setValues([['Milestone', 'Penilaian masuk', 'Bizstar tersentuh']])
+  sh.getRange(baris, 1, 1, 5).setValues([['Milestone', 'Dari buddy', 'Dari panitia',
+    'Penilaian masuk', 'Bizstar tersentuh']])
     .setFontWeight('bold').setBackground('#f3f3f3');
   baris++;
 
   const rowsPen = readPenilaian();
   const msIsi = MILESTONE_LIST.map(function (ms) {
     const cocok = rowsPen.filter(function (r) { return String(r.milestone) === ms; });
+    const dariBuddy = cocok.filter(function (r) {
+      return String(r.role).toLowerCase() === 'buddy';
+    }).length;
     const orang = {};
     cocok.forEach(function (r) { orang[normNama(r.nama_bizstar)] = true; });
-    return [ms, cocok.length, Object.keys(orang).length];
+    return [ms, dariBuddy, cocok.length - dariBuddy, cocok.length, Object.keys(orang).length];
   });
-  sh.getRange(baris, 1, msIsi.length, 3).setValues(msIsi);
+  sh.getRange(baris, 1, msIsi.length, 5).setValues(msIsi);
   baris += msIsi.length + 2;
 
   // ── Belum tersentuh sama sekali ──
@@ -1185,6 +1203,10 @@ function menuSiapkanSheet() {
     rapikanJudul(shPenilaian, PENILAIAN_HEADER.length);
     rapikanJudul(shKeaktifan, 9);
     rapikanJudul(shBizstar, 2);
+
+    // Filter di sheet Penilaian supaya kolom Peran bisa disaring jadi panitia saja.
+    pasangFilter(shPenilaian, PENILAIAN_HEADER.length);
+    pasangFilter(shKeaktifan, 9);
 
     rebuildPeringkat();
     rebuildRekap();
