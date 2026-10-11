@@ -47,6 +47,26 @@ metadata:
   teks kartu Hitungannya + nilai cadangan `js.perProker||1`/`js.maks||5` (keaktifan).
   **Ganti angka = ganti di lima tempat itu + panduan + artefak.**
 
+## SHEET & DEPLOY (2026-10-11)
+- **Apps Script URL BARU**: `.../AKfycbwYYcE5PtvcfaGWTf56ahyd6327s6O5ApzesT7-XtVWcm7brANuQ0qgeGnziYWenwxC/exec`
+  Boss bikin deployment BARU (bukan New version), jadi alamatnya ganti dan kelima file
+  pemanggil harus diarahkan ulang: index.html, penilaian.html, keaktifan/index.html,
+  kadiv/index.html, kadiv/ht/index.html. Lain kali ingatkan pakai ikon pensil ->
+  New version supaya alamatnya tetap.
+- Spreadsheet: **Penilaian Bizstar 2026**, id `1DMjKu1YDnX7UgnqN3UXN-ElHTpLkpj8cyQ8wbvbvJxc`.
+- **Boss tidak mau tampilan bergaya template/AI di sheet, tanpa emoji.** Peringkat sudah
+  dipolos: banner navy yang digabung, warna medali 3 teratas, dan garis tabel dibuang.
+  Tinggal judul biasa + satu baris abu-abu + tabel dengan baris judul dibekukan + filter.
+- **Sheet Bizstar** = daftar nama, diisi tangan, kolom departemen pakai data validation.
+  Web membaca lewat `action=bizstar` (fungsi `muatRoster()` di index.html) dan MENGGANTI
+  isi `BIZSTAR_DB`. Kalau sheet kosong / jaringan mati, daftar bawaan tetap dipakai.
+  Ini pengganti permanen placeholder `HRD-01 [Nama]` — jangan hardcode nama lagi.
+- **Sheet Rekap** = progres per departemen, jumlah penilaian per milestone, dan daftar
+  Bizstar yang belum tersentuh. Dibangun ulang bareng `rebuildPeringkat()`.
+- Menu: Siapkan Sheet Penilaian, Perbarui Peringkat Bizstar, Perbarui Rekap.
+- **Penting**: fungsi menu jalan dari kode yang DISIMPAN, tidak perlu deploy.
+  Yang perlu deploy ulang cuma `doGet`/`doPost` yang dipanggil web.
+
 ## BAHAN PEMAPARAN RTAPUM (2026-09-30)
 - `PEMAPARAN_RTAPUM_IBASS2026.md` + artifact https://claude.ai/artifact/Ca6gjL6WDKvE5vefR3XL9J
   Sasarannya forum HIMA, bukan buddy: kenapa sistemnya ada, cara nilai terbentuk, kenapa
