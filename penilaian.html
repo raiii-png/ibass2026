@@ -2480,9 +2480,56 @@ Object.keys(BIZSTAR_DB).filter(k=>k!=='__ALL__').forEach(dept=>{
 });
 
 /* ══ CONFIG ══ */
-const APPS_URL = 'https://script.google.com/macros/s/AKfycbxCTCMFY1KEBuT6TeiBbMeDgB-JL2o3zOXtdvpDagd1E-tMScq45uxX-nwUqA9qf9Becg/exec';
+const APPS_URL = 'https://script.google.com/macros/s/AKfycbwYYcE5PtvcfaGWTf56ahyd6327s6O5ApzesT7-XtVWcm7brANuQ0qgeGnziYWenwxC/exec';
 /* Token rahasia — wajib sama dengan PENILAIAN_TOKEN di TRACKFILE_IBASS2026_GAS.gs */
 const SUBMIT_TOKEN = 'ibass26-vGDnSmco7cBoju';
+
+/* ══ DAFTAR NAMA DARI SHEET ══
+   Nama Bizstar diambil dari sheet, bukan dipatok di kode, supaya ganti nama cukup
+   lewat spreadsheet. Daftar bawaan di atas tetap dipakai kalau sheet masih kosong
+   atau jaringan sedang mati — layar penilaian tidak boleh gagal dibuka cuma karena
+   nama belum sempat diambil. */
+let rosterDariSheet = false;
+
+async function muatRoster(){
+  try{
+    const r = await fetch(APPS_URL + '?action=bizstar', { cache: 'no-store' });
+    const js = await r.json();
+    if(!js || !js.ok) return;
+    const per = js.perDept || {};
+    const adaIsi = Object.keys(per).some(d => Array.isArray(per[d]) && per[d].length);
+    if(!adaIsi) return;
+
+    Object.keys(BIZSTAR_DB).forEach(k => { delete BIZSTAR_DB[k]; });
+    BIZSTAR_DB['__ALL__'] = [];
+    Object.keys(per).forEach(d => {
+      BIZSTAR_DB[d] = per[d].slice();
+      per[d].forEach(n => BIZSTAR_DB['__ALL__'].push(n));
+    });
+    rosterDariSheet = true;
+    segarkanDaftarBizstar();
+  }catch(e){ /* biarkan — daftar bawaan tetap jalan */ }
+}
+
+/* Dipanggil setelah nama datang, kalau-kalau layarnya sudah terbuka duluan. */
+function segarkanDaftarBizstar(){
+  try{
+    const dept = document.getElementById('deptPenilai');
+    if(currentRole === 'buddy' && dept && dept.value){
+      bizList = BIZSTAR_DB[dept.value] || [];
+      showBizstarPreview();
+      updateP1();
+    }
+    const saring = document.getElementById('panitia-dept-filter');
+    if(currentRole === 'panitia' && saring){
+      renderPanitiaChips(saring.value || '');
+    }
+    const grid = document.getElementById('gridBizstarCatat');
+    if(grid && grid.children.length) isiPilihanBizstar();
+  }catch(e){}
+}
+
+muatRoster();
 
 /* ══ SECURITY: HTML escaper — cegah XSS dari user input ══ */
 function esc(str){ const d=document.createElement('div'); d.textContent=String(str); return d.innerHTML; }
@@ -3175,10 +3222,18 @@ function onDeptChange(){
   updateP1();
 }
 function showBizstarPreview(){
-  if(!bizList.length)return;
-  document.getElementById('bizstarPreviewCard').style.display='block';
-  document.getElementById('bizstarPreviewList').innerHTML=
-    bizList.map((n,i)=>`<span style="color:var(--muted);margin-right:0.5rem">${i+1}.</span>${n}<br>`).join('');
+  const kartu=document.getElementById('bizstarPreviewCard');
+  const isi=document.getElementById('bizstarPreviewList');
+  if(!bizList.length){
+    // Lebih baik dibilang kosong daripada tombolnya mati tanpa sebab.
+    kartu.style.display='block';
+    isi.innerHTML='<span style="color:var(--amber)">Belum ada nama Bizstar untuk departemen ini. '
+      +'Kabari yang pegang spreadsheet.</span>';
+    return;
+  }
+  kartu.style.display='block';
+  isi.innerHTML=
+    bizList.map((n,i)=>`<span style="color:var(--muted);margin-right:0.5rem">${i+1}.</span>${esc(n)}<br>`).join('');
 }
 
 /* ══ VALIDATION PAGE 1 ══ */
