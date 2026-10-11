@@ -3072,6 +3072,7 @@ function denyutkan(tombol){
    Tiap kegiatan +0,25 dan dibatasi +1,0 supaya KPI tetap penentu utama. */
 function rate5el(id, val, cv){
   const name=bizList[bizIdx]; if(!name)return;
+  const lengkapSebelumnya=isComplete(name);
   if(!allScores[name])allScores[name]={};
   const key=PANITIA_KEY_MAP[id]||'a';
   allScores[name][key]=val;
@@ -3085,6 +3086,8 @@ function rate5el(id, val, cv){
   const dispEl=document.getElementById(id+'_v');
   if(dispEl) dispEl.textContent=val;
   updateLive(); checkCurrent();
+  if(!lengkapSebelumnya && isComplete(name)) bukaLanjut();
+  else getar(8);
 }
 
 /* ══ LIVE SCORE ══ */
@@ -3304,7 +3307,7 @@ function renderPanitiaChips(deptFilter){
       // sudah pernah dinilai — disable, tampilkan keterangan
       b.className='chip';
       b.style.cssText='opacity:0.35;cursor:not-allowed;position:relative;';
-      b.textContent=name+' ✓';
+      b.textContent=name+' (sudah)';
       b.disabled=true;
       b.title='Bizstar ini sudah kamu nilai di milestone ini';
     } else {
@@ -4088,7 +4091,7 @@ function resumeSession(){
     if(c.textContent.trim()===milestone){ c.classList.add('on'); }
   });
 
-  showToast('Sesi dipulihkan ✓');
+  showToast('Sesi dipulihkan');
   openApp(d.role);
   goPage(2);
 }
@@ -4154,7 +4157,7 @@ window.renderPanitiaChips = function(deptFilter, searchQ){
     const isSelected  = panitiaSelected.has(name);
     if(isSubmitted){
       b.className='chip'; b.style.cssText='opacity:0.35;cursor:not-allowed;';
-      b.textContent=name+' ✓'; b.disabled=true;
+      b.textContent=name+' (sudah)'; b.disabled=true;
       b.title='Bizstar ini sudah dinilai di milestone ini';
     } else {
       b.className='chip'+(isSelected?' on':'');
@@ -4332,7 +4335,7 @@ function downloadCSV(){
   const a    = document.createElement('a');
   a.href=url; a.download=`IBASS_Penilaian_${milestone.replace(/ /g,'_')}_${penilai.replace(/ /g,'_')}.csv`;
   a.click(); URL.revokeObjectURL(url);
-  showToast('CSV berhasil diunduh ✓');
+  showToast('CSV berhasil diunduh');
 }
 
 /* ── COPY TO CLIPBOARD ── */
@@ -4353,7 +4356,7 @@ function copyToClipboard(){
     lines.push(`${name}: A=${sc.a} C=${sc.b} G=${sc.c} → ${w.toFixed(1)}`);
   });
   navigator.clipboard.writeText(lines.join('\n'))
-    .then(()=>{ showToast('Disalin ke clipboard ✓'); document.getElementById('copyBtn').textContent='✓ Tersalin'; })
+    .then(()=>{ showToast('Disalin ke clipboard'); document.getElementById('copyBtn').textContent='Tersalin'; })
     .catch(()=>showToast('Tidak bisa menyalin'));
 }
 
@@ -4400,7 +4403,7 @@ function updateAbsentUI(){
   const overlay = document.getElementById('absentOverlay');
   const barText = document.getElementById('absentBarText');
 
-  btn.textContent  = isAbsent ? '✓ Tandai Hadir' : 'Tidak Hadir';
+  btn.textContent  = isAbsent ? 'Tandai Hadir' : 'Tidak Hadir';
   btn.classList.toggle('is-absent', isAbsent);
   overlay.classList.toggle('show', isAbsent);
   barText.textContent = isAbsent
