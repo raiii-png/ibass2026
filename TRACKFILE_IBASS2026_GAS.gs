@@ -951,6 +951,48 @@ function hitungPeringkat() {
 /* Judul kolom dibuat sama di semua sheet: tebal, abu-abu muda, tanpa warna.
    Dipisah jadi fungsi sendiri supaya sheet yang terlanjur berwarna ikut
    dirapikan waktu menu Siapkan Sheet dijalankan, bukan cuma yang baru dibuat. */
+/* ── Grafik per departemen di sheet Rekap ──
+   Dibuat sekali saja, tidak tiap penilaian masuk. Grafik Sheets menunjuk rentang sel,
+   jadi angkanya ikut berubah sendiri waktu tabelnya ditulis ulang — tidak perlu
+   dibongkar pasang. Baris tabel departemen selalu di tempat yang sama (judul baris 5,
+   isi baris 6 ke bawah sebanyak jumlah departemen), jadi rentangnya tidak pernah geser.
+
+   Dibungkus try supaya kegagalan menggambar tidak pernah menggagalkan penyimpanan
+   nilai — grafik itu pelengkap, bukan datanya. */
+function pastikanGrafikRekap(sh, barisJudul, jumlahDept) {
+  if (!sh || !jumlahDept) return;
+  try {
+    if (sh.getCharts().length) return;   // sudah ada, rentangnya masih benar
+
+    const dept  = sh.getRange(barisJudul, 1, jumlahDept + 1, 1);   // nama departemen
+    const rata  = sh.getRange(barisJudul, 6, jumlahDept + 1, 1);   // rata-rata nilai
+    const maju  = sh.getRange(barisJudul, 4, jumlahDept + 1, 2);   // sudah + belum dinilai
+
+    sh.insertChart(sh.newChart().asColumnChart()
+      .addRange(dept).addRange(rata)
+      .setNumHeaders(1)
+      .setOption('title', 'Rata-rata nilai akhir per departemen')
+      .setOption('legend', { position: 'none' })
+      .setOption('colors', ['#6b7f99'])
+      .setOption('hAxis', { slantedText: true, slantedTextAngle: 45 })
+      .setOption('width', 460).setOption('height', 260)
+      .setPosition(barisJudul, 9, 0, 0)
+      .build());
+
+    sh.insertChart(sh.newChart().asColumnChart()
+      .addRange(dept).addRange(maju)
+      .setNumHeaders(1)
+      .setOption('title', 'Sudah dinilai dan yang belum')
+      .setOption('isStacked', true)
+      .setOption('legend', { position: 'top' })
+      .setOption('colors', ['#6b7f99', '#d6d6d6'])
+      .setOption('hAxis', { slantedText: true, slantedTextAngle: 45 })
+      .setOption('width', 460).setOption('height', 260)
+      .setPosition(barisJudul + 14, 9, 0, 0)
+      .build());
+  } catch (e) {}
+}
+
 /* Peringkat dan Rekap ditulis ulang dari nol tiap ada data masuk, jadi apa pun yang
    diketik tangan di situ pasti hilang tanpa pemberitahuan. Peringatan ini muncul
    sebelum orang terlanjur mengetik. Sengaja hanya peringatan, bukan kunci mati —
@@ -1106,7 +1148,10 @@ function rebuildRekap() {
   const ss = penilaianSS();
   let sh = ss.getSheetByName(REKAP_SHEET);
   if (!sh) sh = ss.insertSheet(REKAP_SHEET);
-  sh.clear();
+  /* clearContents, bukan clear: clear() ikut membuang format tapi grafik tetap
+     tinggal — yang penting di sini isinya saja yang disegarkan. */
+  sh.clearContents();
+  sh.clearFormats();
 
   const daftar = hitungPeringkat();
   const roster = bacaRoster();
@@ -1156,6 +1201,8 @@ function rebuildRekap() {
   });
   sh.getRange(baris, 1, deptIsi.length, 7).setValues(deptIsi);
   sh.getRange(baris, 6, deptIsi.length, 1).setNumberFormat('0.00');
+  // baris - 1 = baris judul tabel, dipakai grafik sebagai nama kolomnya
+  pastikanGrafikRekap(sh, baris - 1, deptIsi.length);
   baris += deptIsi.length + 2;
 
   // ── Per milestone ──
@@ -1262,6 +1309,22 @@ function menuSiapkanSheet() {
   }
 }
 
+/* Dipakai kalau grafiknya terlanjur kehapus atau posisinya digeser-geser. */
+function menuGambarUlangGrafik() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const sh = penilaianSS().getSheetByName(REKAP_SHEET);
+    if (!sh) { ui.alert('Sheet Rekap belum ada. Jalankan Siapkan Sheet Penilaian dulu.'); return; }
+    sh.getCharts().forEach(function (c) { sh.removeChart(c); });
+    rebuildRekap();
+    ui.alert('Grafik digambar ulang',
+      'Dua grafik di sheet Rekap: rata-rata nilai per departemen, dan perbandingan '
+      + 'sudah dinilai dengan yang belum.', ui.ButtonSet.OK);
+  } catch (err) {
+    ui.alert('Gagal menggambar grafik', String((err && err.message) || err), ui.ButtonSet.OK);
+  }
+}
+
 function menuPerbaruiRekap() {
   const ui = SpreadsheetApp.getUi();
   try {
@@ -1317,6 +1380,7 @@ function onOpen() {
     .addItem('Siapkan Sheet Penilaian', 'menuSiapkanSheet')
     .addItem('Perbarui Peringkat Bizstar', 'menuPerbaruiPeringkat')
     .addItem('Perbarui Rekap', 'menuPerbaruiRekap')
+    .addItem('Gambar Ulang Grafik', 'menuGambarUlangGrafik')
     .addSeparator()
     .addItem('Perbarui Laporan', 'menuGenerateLaporan')
     .addItem('Perbarui Grafik', 'menuPerbaruiGrafik')
