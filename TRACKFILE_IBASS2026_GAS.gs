@@ -892,6 +892,17 @@ function hitungPeringkat() {
     if (!o.dept && a.oleh) o.dept = deptBuddy(a.oleh);
   });
 
+  /* Departemen cuma terbaca dari baris penilaian buddy. Bizstar yang baru dinilai
+     panitia saja jadi tidak punya departemen — padahal panitia biasanya menilai
+     lebih dulu, waktu acara. Daftar Bizstar menutup lubang itu. */
+  try {
+    bacaRoster().forEach(function (r) {
+      if (!r.dept) return;
+      const o = orang[normNama(r.nama)];
+      if (o && !o.dept) o.dept = r.dept;
+    });
+  } catch (e) {}
+
   const rata = function (arr) {
     if (!arr.length) return null;
     return arr.reduce(function (s, v) { return s + v; }, 0) / arr.length;
