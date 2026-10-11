@@ -160,6 +160,7 @@ if(!FITUR_PROKER){
   w.insertBefore(kotak, w.querySelector('.card'));
 }
 
+const SUBMIT_TOKEN='ibass26-vGDnSmco7cBoju';
 const GAS_URL='https://script.google.com/macros/s/AKfycbwYYcE5PtvcfaGWTf56ahyd6327s6O5ApzesT7-XtVWcm7brANuQ0qgeGnziYWenwxC/exec';
 const $=id=>document.getElementById(id);
 const esc=s=>{const d=document.createElement('div');d.textContent=String(s==null?'':s);return d.innerHTML;};
@@ -237,7 +238,8 @@ $('kirim').onclick=async()=>{
   if(!proker){ pesan('Nama prokernya belum diisi.',false); $('proker').focus(); return; }
   const b=$('kirim'); b.disabled=true; b.innerHTML='<span class="spinner"></span> Mengirim…';
   try{
-    const js=await keServer({action:'keaktifanlapor',nama,dept:$('dept').value,proker,
+    const js=await keServer({action:'keaktifanlapor',token:SUBMIT_TOKEN,
+      nama,dept:$('dept').value,proker,
       tanggal:$('tanggal').value,bukti:$('bukti').value.trim()});
     try{ localStorage.setItem('ibass_keaktifan_nama',nama); }catch(e){}
     const bd=buddyDept($('dept').value);
