@@ -458,6 +458,12 @@ function doPost(e) {
 
     // ── Bizstar melaporkan kehadirannya di proker HIMA lain ──
     if (action === 'keaktifanlapor') {
+      /* Catatan kehadiran menambah nilai, jadi tidak boleh bisa ditulis siapa saja
+         yang kebetulan tahu alamat ini. Tokennya sama dengan yang dipakai kiriman
+         penilaian. Ini menahan tulisan iseng dan pindaian acak, bukan orang yang
+         memang membuka kode halaman — untuk itu perlu login, dan login bikin buddy
+         tidak bisa mengisi cepat lewat HP. */
+      if (body.token !== PENILAIAN_TOKEN) return jsonErr('Token salah');
       if (!body.nama || !body.proker) return jsonErr('Nama dan nama proker wajib diisi');
       const sh = keaktifanSheet();
       const nama = String(body.nama).trim(), proker = String(body.proker).trim();
@@ -482,6 +488,7 @@ function doPost(e) {
 
     // ── Buddy mengonfirmasi: benar hadir atau tidak ──
     if (action === 'keaktifankonfirm') {
+      if (body.token !== PENILAIAN_TOKEN) return jsonErr('Token salah');
       if (!body.id) return jsonErr('id kosong');
       const sh = keaktifanSheet();
       const last = sh.getLastRow();
@@ -897,9 +904,11 @@ function hitungPeringkat() {
      lebih dulu, waktu acara. Daftar Bizstar menutup lubang itu. */
   try {
     bacaRoster().forEach(function (r) {
-      if (!r.dept) return;
-      const o = orang[normNama(r.nama)];
-      if (o && !o.dept) o.dept = r.dept;
+      // slot() sekalian membuat barisnya kalau orang ini belum pernah dinilai,
+      // supaya Peringkat memuat semua Bizstar — yang kosong tampil "Belum dinilai"
+      // dan jatuh ke bawah, bukan hilang dari daftar seolah tidak ada orangnya.
+      const o = slot(r.nama);
+      if (r.dept && !o.dept) o.dept = r.dept;
     });
   } catch (e) {}
 

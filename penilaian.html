@@ -3339,11 +3339,6 @@ function renderPanitiaSelected(){
   list.innerHTML=Array.from(panitiaSelected)
     .map((n,i)=>`<span style="color:var(--muted);margin-right:0.5rem">${i+1}.</span>${n}<br>`).join('');
 }
-function onPanitiaDeptFilter(){
-  const dept=document.getElementById('panitia-dept-filter').value;
-  renderPanitiaChips(dept);
-}
-
 /* ══ PAGES ══ */
 /* ══ MENU BUDDY & KONFIRMASI KEHADIRAN PROKER ══
    Dua tugas buddy dipisah: mengisi penilaian KPI, dan mencatat kehadiran
@@ -3480,7 +3475,8 @@ async function catatManual(){
   kabar('Menyimpan…', 'var(--muted)');
   try{
     const r = await fetch(APPS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'keaktifanlapor', nama, dept:deptSekarang(), proker,
+      body:JSON.stringify({action:'keaktifanlapor', token:SUBMIT_TOKEN,
+        nama, dept:deptSekarang(), proker,
         tanggal, bukti:'', status:'Hadir', oleh})});
     const js = await r.json();
     if(!js.ok) throw new Error(js.error||'ditolak');
@@ -3728,7 +3724,7 @@ async function putuskanHadir(id, status){
   if(item){ item.status=status; item.oleh=(status==='Menunggu'?'':nama); gambarKonfirmasi(); }
   try{
     const r=await fetch(APPS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'keaktifankonfirm',id,status,oleh:nama})});
+      body:JSON.stringify({action:'keaktifankonfirm',token:SUBMIT_TOKEN,id,status,oleh:nama})});
     const js=await r.json();
     if(!js.ok) throw new Error(js.error||'ditolak');
   }catch(e){
@@ -3829,10 +3825,7 @@ function renderDots(){
     const sc=allScores[name]||{};
     const filled=isComplete(name);
     d.className='biz-dot'+(i===bizIdx?' active':filled?' done':'');
-    d.onclick=()=>saveCurrent(()=>{
-      const arah = i>bizIdx ? -1 : 1;
-      tutupLanjut(); loadBizCard(i); geserKartu(arah); gulungKeKartu();
-    });
+    d.onclick=()=>pindahBizstar(i);
     container.appendChild(d);
   });
 }
@@ -3853,18 +3846,28 @@ function saveCurrent(cb){
   if(cb)cb();
 }
 
+/* Satu pintu untuk pindah Bizstar.
+   Sebelumnya ada empat jalan yang masing-masing punya salinan sendiri: tombol
+   Berikutnya, titik progres di atas kartu, geser layar, dan panah papan ketik.
+   Akibatnya hitung mundur "Selesai" tidak dibatalkan lewat sebagian jalan itu —
+   orang pindah sendiri 2 detik kemudian dan satu Bizstar terlewat tanpa dinilai. */
+function pindahBizstar(tujuan){
+  if(tujuan < 0 || tujuan >= bizList.length || tujuan === bizIdx) return;
+  tutupLanjut();
+  const arah = tujuan > bizIdx ? -1 : 1;
+  saveCurrent(()=>{
+    loadBizCard(tujuan);
+    geserKartu(arah);
+    gulungKeKartu();
+  });
+}
+
 function nextBiz(){
-  saveCurrent(()=>{
-    if(bizIdx<bizList.length-1){
-      loadBizCard(bizIdx+1); geserKartu(-1); gulungKeKartu();
-    } else { goPage(3); }
-  });
+  if(bizIdx < bizList.length-1){ pindahBizstar(bizIdx+1); return; }
+  tutupLanjut();
+  saveCurrent(()=>goPage(3));
 }
-function prevBiz(){
-  saveCurrent(()=>{
-    if(bizIdx>0){ loadBizCard(bizIdx-1); geserKartu(1); gulungKeKartu(); }
-  });
-}
+function prevBiz(){ pindahBizstar(bizIdx-1); }
 
 function toggleCat(){
   const body=document.getElementById('catBody');
@@ -4184,12 +4187,12 @@ document.addEventListener('keydown', e=>{
   // Arrow keys → navigate Bizstar
   if(e.key==='ArrowRight' || e.key==='ArrowDown'){
     e.preventDefault();
-    if(bizIdx < bizList.length-1){ triggerSlide('left'); saveCurrent(()=>loadBizCard(bizIdx+1)); }
+    pindahBizstar(bizIdx+1);
     return;
   }
   if(e.key==='ArrowLeft' || e.key==='ArrowUp'){
     e.preventDefault();
-    if(bizIdx > 0){ triggerSlide('right'); saveCurrent(()=>loadBizCard(bizIdx-1)); }
+    pindahBizstar(bizIdx-1);
     return;
   }
 
@@ -4235,26 +4238,6 @@ document.addEventListener('keydown', e=>{
 });
 
 /* ── CARD TRANSITION ── */
-function triggerSlide(dir){
-  const wrap = document.getElementById('bizCardWrap');
-  wrap.classList.remove('slide-left','slide-right');
-  void wrap.offsetWidth; // reflow
-  wrap.classList.add('slide-'+dir);
-}
-
-/* Override nextBiz/prevBiz for animation */
-const _origNextBiz = nextBiz;
-window.nextBiz = function(){
-  saveCurrent(()=>{
-    if(bizIdx<bizList.length-1){ triggerSlide('left'); loadBizCard(bizIdx+1); }
-    else{ goPage(3); }
-  });
-};
-const _origPrevBiz = prevBiz;
-window.prevBiz = function(){
-  saveCurrent(()=>{ if(bizIdx>0){ triggerSlide('right'); loadBizCard(bizIdx-1); }});
-};
-
 /* ── STATS IN REVIEW ── */
 function buildStats(){
   const isBuddy = currentRole==='buddy';
@@ -4427,7 +4410,7 @@ window.renderDots = function(){
     else if(filled)    cls += ' done';
     d.className = cls;
     d.title = name + (isAbsent ? ' (Tidak Hadir)' : filled ? ' (Lengkap)' : '');
-    d.onclick = ()=>saveCurrent(()=>loadBizCard(i));
+    d.onclick = ()=>pindahBizstar(i);
     container.appendChild(d);
   });
 };
