@@ -676,8 +676,8 @@ function keaktifanSheet() {
   if (!sh) {
     sh = ss.insertSheet(KEAKTIFAN_SHEET);
     sh.getRange(1, 1, 1, 9).setValues([['id', 'waktu lapor', 'nama bizstar', 'departemen',
-      'proker', 'tanggal', 'bukti', 'status', 'dikonfirmasi oleh']]).setFontWeight('bold');
-    sh.setFrozenRows(1);
+      'proker', 'tanggal', 'bukti', 'status', 'dikonfirmasi oleh']]);
+    rapikanJudul(sh, 9);
     [90, 150, 170, 120, 230, 100, 240, 110, 150]
       .forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
   }
@@ -702,11 +702,8 @@ function ensurePenilaianSheet(ssAbaikan) {
   let sheet = ss.getSheetByName(PENILAIAN_SHEET);
   if (sheet) return sheet;
   sheet = ss.insertSheet(PENILAIAN_SHEET);
-  const header = sheet.getRange(1, 1, 1, PENILAIAN_HEADER.length);
-  header.setValues([PENILAIAN_HEADER])
-    .setBackground('#1e3a5f').setFontColor('#5bc4f5')
-    .setFontWeight('bold').setFontSize(10);
-  sheet.setFrozenRows(1);
+  sheet.getRange(1, 1, 1, PENILAIAN_HEADER.length).setValues([PENILAIAN_HEADER]);
+  rapikanJudul(sheet, PENILAIAN_HEADER.length);
   const widths = [140, 70, 150, 110, 110, 150, 90, 110, 80, 80, 100, 70, 80, 90, 220, 220];
   widths.forEach((w, i) => sheet.setColumnWidth(i + 1, w));
   return sheet;
@@ -930,6 +927,19 @@ function hitungPeringkat() {
   return daftar;
 }
 
+/* Judul kolom dibuat sama di semua sheet: tebal, abu-abu muda, tanpa warna.
+   Dipisah jadi fungsi sendiri supaya sheet yang terlanjur berwarna ikut
+   dirapikan waktu menu Siapkan Sheet dijalankan, bukan cuma yang baru dibuat. */
+function rapikanJudul(sh, jumlahKolom) {
+  if (!sh || jumlahKolom < 1) return;
+  sh.getRange(1, 1, 1, jumlahKolom)
+    .setBackground('#f3f3f3')
+    .setFontColor('#000000')
+    .setFontWeight('bold')
+    .setFontSize(10);
+  sh.setFrozenRows(1);
+}
+
 /* ── Daftar nama Bizstar ──
    Diisi tangan di sheet, bukan di kode, supaya ganti nama tidak perlu ubah web.
    Web membacanya lewat action=bizstar saat dibuka; kalau sheet masih kosong web
@@ -940,9 +950,8 @@ function bizstarSheet() {
   if (sh) return sh;
 
   sh = ss.insertSheet(BIZSTAR_SHEET);
-  sh.getRange(1, 1, 1, 2).setValues([['Nama Bizstar', 'Departemen']])
-    .setFontWeight('bold').setBackground('#f3f3f3');
-  sh.setFrozenRows(1);
+  sh.getRange(1, 1, 1, 2).setValues([['Nama Bizstar', 'Departemen']]);
+  rapikanJudul(sh, 2);
   sh.setColumnWidth(1, 240);
   sh.setColumnWidth(2, 160);
 
@@ -1000,7 +1009,8 @@ function rebuildPeringkat() {
 
   const baris0 = 4;
   sh.getRange(baris0, 1, 1, W).setValues([PERINGKAT_HEADER])
-    .setFontWeight('bold').setBackground('#f3f3f3');
+    .setBackground('#f3f3f3').setFontColor('#000000')
+    .setFontWeight('bold').setFontSize(10);
   sh.setFrozenRows(baris0);
 
   if (!daftar.length) {
@@ -1155,9 +1165,16 @@ function menuSiapkanSheet() {
     const ss = penilaianSS();
     const sebelum = ss.getSheets().map(function (sh) { return sh.getName(); });
 
-    ensurePenilaianSheet(ss);
-    keaktifanSheet();
-    bizstarSheet();
+    const shPenilaian = ensurePenilaianSheet(ss);
+    const shKeaktifan = keaktifanSheet();
+    const shBizstar = bizstarSheet();
+
+    // Sheet yang dibuat versi lama masih berjudul navy dengan teks biru —
+    // dirapikan di sini supaya seragam dengan yang lain.
+    rapikanJudul(shPenilaian, PENILAIAN_HEADER.length);
+    rapikanJudul(shKeaktifan, 9);
+    rapikanJudul(shBizstar, 2);
+
     rebuildPeringkat();
     rebuildRekap();
 
