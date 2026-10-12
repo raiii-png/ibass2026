@@ -1,0 +1,679 @@
+---
+name: ibass-project-state
+description: "State lengkap proyek IBASS 2026 — arsitektur, fitur, file, GAS, keputusan produk, dan titik resume (per 2026-08-22)"
+metadata: 
+  node_type: memory
+  type: project
+  originSessionId: 5b58bde3-339d-4414-b122-b7aaba92099c
+  modified: 2026-08-05T18:48:00.594Z
+---
+
+# Proyek IBASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
+
+## KONDISI TERAKHIR (2026-08-22 sore, commit ce0d8fd)
+- **Fitur proker DIBUKA lagi** (`FITUR_PROKER = true` di `index.html` dan
+  `keaktifan/index.html`). Sempat ditutup buat presentasi contoh, sudah selesai.
+  Saklarnya tetap dipakai kalau mau ditutup lagi.
+- **HANYA BUDDY YANG MENCATAT — hybrid dibatalkan** (keputusan ketuplak Fikri, 22 Agu).
+  Alasannya: Bizstar tidak boleh tahu ada nilai tambahan, dan buddy toh selalu ikut proker
+  HIMA sebagai fungsionaris jadi sudah lihat sendiri siapa yang datang; kalau berhalangan
+  tinggal minta daftar di grup departemen (cara Fakhri tahun lalu). JANGAN tawarkan lagi
+  jalur lapor mandiri Bizstar tanpa Boss yang minta.
+  - Saklar `LAPOR_BIZSTAR = false` di index.html menyembunyikan kartu link untuk Bizstar;
+    `keaktifan/index.html` FITUR_PROKER = false (pesannya netral, tidak menjanjikan dibuka).
+  - Menu jadi **"Catat Proker"** (dulu "Konfirmasi Proker"), kartu isian **"Catat Kehadiran"**:
+    pilih Bizstar dari kartu nama `BIZSTAR_DB[dept]`, nama proker, tanggal -> POST
+    `keaktifanlapor` dengan `status:'Hadir'` + `oleh`. GAS langsung menandai Hadir dan
+    memanggil rebuildPeringkat. Penolakan catatan kembar (orang+proker sama) tetap jalan.
+- **Pilih nama buddy di layar Catat Proker juga pakai kartu** (`gridBuddyKonf`), sama seperti
+  form penilaian. Select `pilihBuddy` sudah dihapus; state-nya di variabel `buddyKonfNama`.
+- **Townhall 3 dikunci permanen** — chip-nya `class="chip kunci"` (dashed, redup),
+  tombolnya `disabled`, TANPA catatan apa pun di layar — Boss minta penjelasannya dibuang,
+  cukup terkunci saja. `resumeSession()` membuang sesi lama ber-Townhall 3.
+  Boss sengaja tidak mau bilang acaranya apa — kalau ditanya, jawab "nanti juga tau".
+- **Pilih nama buddy = kartu nama** (`.nama-grid` / `.nama-btn`, `gridNamaBuddy`),
+  bukan ketik dan bukan dropdown. Riwayat sudah dua kali: input+datalist -> `<select>`
+  -> kartu. Boss tidak suka dua yang pertama ("ribet", "layoutnya nggak suka").
+  Ada kartu "Nama lain" -> baru muncul kolom ketik. Panitia tetap mengetik.
+- **JANGAN sebut "Google Sheets"/"sheet" di teks yang dilihat user.** Sudah dibersihkan
+  dua kali (pesan sukses + panduan dalam web). Pakai "tersimpan" / "tabel peringkat".
+  Kadiv dashboard boleh tetap menyebut Google Sheets — di situ memang alatnya.
+- Pesan sukses sekarang: "N penilaian tersimpan." + (kalau ada) "M yang tidak hadir
+  tidak ikut dikirim."
+- **Poin keaktifan turun jadi +1 per proker, mentok +5** (dulu +2 / +10). Alasan Boss:
+  "itu nilai plus aja", bukan penentu peringkat. Batas ikut turun biar bobotnya kecil
+  terhadap KPI 0-100 dan cerita "lima proker sudah penuh" tetap jalan. Angkanya ada di
+  `KEAKTIFAN_POIN`/`KEAKTIFAN_MAKS` (GAS), `POIN_PROKER`/`POIN_PROKER_MAKS` (index.html),
+  teks kartu Hitungannya + nilai cadangan `js.perProker||1`/`js.maks||5` (keaktifan).
+  **Ganti angka = ganti di lima tempat itu + panduan + artefak.**
+
+## SHEET & DEPLOY (2026-10-11)
+- **Apps Script URL BARU**: `.../AKfycbwYYcE5PtvcfaGWTf56ahyd6327s6O5ApzesT7-XtVWcm7brANuQ0qgeGnziYWenwxC/exec`
+  Boss bikin deployment BARU (bukan New version), jadi alamatnya ganti dan kelima file
+  pemanggil harus diarahkan ulang: index.html, penilaian.html, keaktifan/index.html,
+  kadiv/index.html, kadiv/ht/index.html. Lain kali ingatkan pakai ikon pensil ->
+  New version supaya alamatnya tetap.
+- Spreadsheet: **Penilaian Bizstar 2026**, id `1DMjKu1YDnX7UgnqN3UXN-ElHTpLkpj8cyQ8wbvbvJxc`.
+- **Boss tidak mau tampilan bergaya template/AI di sheet, tanpa emoji.** Peringkat sudah
+  dipolos: banner navy yang digabung, warna medali 3 teratas, dan garis tabel dibuang.
+  Tinggal judul biasa + satu baris abu-abu + tabel dengan baris judul dibekukan + filter.
+- **Sheet Bizstar** = daftar nama, diisi tangan, kolom departemen pakai data validation.
+  Web membaca lewat `action=bizstar` (fungsi `muatRoster()` di index.html) dan MENGGANTI
+  isi `BIZSTAR_DB`. Kalau sheet kosong / jaringan mati, daftar bawaan tetap dipakai.
+  Ini pengganti permanen placeholder `HRD-01 [Nama]` — jangan hardcode nama lagi.
+- **Sheet Rekap** = progres per departemen, jumlah penilaian per milestone, dan daftar
+  Bizstar yang belum tersentuh. Dibangun ulang bareng `rebuildPeringkat()`.
+- Menu: Siapkan Sheet Penilaian, Perbarui Peringkat Bizstar, Perbarui Rekap.
+- **Penting**: fungsi menu jalan dari kode yang DISIMPAN, tidak perlu deploy.
+  Yang perlu deploy ulang cuma `doGet`/`doPost` yang dipanggil web.
+
+## BAHAN PEMAPARAN RTAPUM (2026-09-30)
+- `PEMAPARAN_RTAPUM_IBASS2026.md` + artifact https://claude.ai/artifact/Ca6gjL6WDKvE5vefR3XL9J
+  Sasarannya forum HIMA, bukan buddy: kenapa sistemnya ada, cara nilai terbentuk, kenapa
+  buddy yang mencatat, status apa adanya, tabel angka, antisipasi pertanyaan forum.
+  Beda peran dari `PANDUAN_BUDDY_IBASS2026.md` yang isinya cara pakai.
+- **JEBAKAN ANGKA — jangan dikira bug**: label "Bobot 15/20/25%" di form buddy berjumlah 60,
+  form panitia 15/15/10 berjumlah 40. Itu bobot relatif antar tiga kriteria DI DALAM satu form:
+  `kpi = (A*15 + C*20 + G*25)/60` untuk buddy, `(A*15 + C*15 + G*10)/40` untuk panitia —
+  dua-duanya menghasilkan skala 0-100. Baru setelah itu GAS menggabung `rb*0.7 + rp*0.3`.
+  Jadi 70/30 dan 15/20/25 adalah dua lapisan berbeda. Labelnya ambigu tapi SENGAJA belum
+  diubah: Boss sudah membriefing buddy dengan tampilan itu. Jangan ubah tanpa diminta.
+- Sisa pekerjaan yang masih sama: nama Bizstar asli belum masuk (masih `HRD-01 [Nama]`),
+  dan Apps Script belum di-deploy ulang sehingga tombol Catat Hadir belum bisa menyimpan.
+
+## RASA PAKAI LAYAR PENILAIAN (2026-08-22 malam)
+- **Bar "Selesai"** (`#lanjutBar`, fungsi `bukaLanjut`/`tutupLanjut`): naik dari bawah
+  begitu tiga nilai satu Bizstar terisi, menyebut siapa berikutnya, auto-pindah 2,2 detik.
+  Dibatalkan oleh tombol "Tetap di sini", menggulung layar, atau fokus ke kolom catatan;
+  nama yang ditahan masuk `lanjutDitahan` dan tidak ditawari lagi.
+  Pemicunya di `rate()` — bandingkan `isComplete()` SEBELUM dan sesudah menulis nilai.
+- `getar()` (navigator.vibrate) 8ms tiap nilai, pola [8,45,14] saat satu orang beres.
+- `denyutkan()` — cincin di angka yang barusan ditekan, karena angka pilihan menyala
+  bersama angka di bawahnya jadi susah dibedakan.
+- Geser kiri/kanan di `#bizCardWrap` untuk pindah Bizstar (ambang 34px, rasio 1.6 ke
+  gerak vertikal). `geserKartu()` + `gulungKeKartu()` dipakai juga oleh next/prev/titik.
+- `kurangiGerak()` menjaga prefers-reduced-motion di semua animasi baru.
+- Pintasan papan ketik disembunyikan di layar sentuh (`hover:none and pointer:coarse`).
+- **Pelajaran verifikasi**: panel browser sering tersembunyi -> rendering dijeda, jadi
+  transisi CSS dan requestAnimationFrame TIDAK jalan. Ukur kelas/DOM, jangan ukur
+  opacity/transform sebagai bukti animasi. Semua alur baru wajib punya jaring pengaman
+  setTimeout kalau bergantung pada rAF (lihat `openRoleSelect`).
+
+## NETLIFY — MENGHABISKAN KREDIT (2026-08-22)
+- Repo GitHub `raiii-png/ibass2026` masih tersambung ke **project Netlify `ibass2026`**
+  (site id `4e29c3c3-94f6-4c1e-b6b0-cf92075d1147`), jadi TIAP PUSH memicu build dan
+  memakan kredit Boss. Yang dipakai beneran cuma GitHub Pages.
+- **Connector Netlify TIDAK bisa memutus repo** — operasinya cuma deploy, ganti nama,
+  env var, forms, access control. CLI netlify tidak terpasang, tidak ada token.
+  Jadi Boss yang harus klik sendiri: app.netlify.com -> project ibass2026 ->
+  Project configuration -> Build & deploy -> Continuous deployment -> **Stop builds**.
+- Tim Netlify Boss = **plan Free**, slug `mr-raffi-maenaki`, dibuat **27 April 2026** —
+  jadi siklus tagihannya kemungkinan besar berakhir tiap **tanggal 27**, bukan tanggal 1.
+  Itu jawaban "kok belum recharge": belum waktunya. Cek pastinya di Team settings -> Billing.
+- **Ternyata project `ibass2026` BELUM PERNAH deploy** ("Project has not yet been deployed",
+  update terakhir 6 Juli) — jadi bukan itu yang menyedot kredit. Kredit tim juga SUDAH
+  habis: banner "running on operational credits, production deploys and Agent Runners are
+  paused". Tersangka lain: kadivibass2026, kpiadbis, absensihimaadbis, mykisah-raffi,
+  + 3 nama acak. Cek tab Deploys masing-masing.
+
+## CARA TAYANG (jangan lupa lagi)
+- Kerja di worktree `claude/...` TIDAK otomatis tayang. GitHub Pages menyajikan **main**.
+  Urutannya: commit di branch -> `git -C <repo utama> merge <branch>` -> `git push origin main`
+  -> Pages rebuild ~1 menit. Pernah bikin Boss bingung "kok link nggak berubah" (22 Agu):
+  3 commit nyangkut di worktree branch selama beberapa jam.
+- Cek tayang beneran: `curl -s "https://raiii-png.github.io/ibass2026/?cb=$(date +%s)" | grep -c <penanda>`.
+
+## PERINGKAT + KONFIRMASI PER BUDDY (2026-08-22, commit 827ae06) — KONDISI TERAKHIR
+- **Sheet `Peringkat`** dibangun `rebuildPeringkat()` di file penilaian (`penilaianSS()`),
+  BUKAN di Track File. Nilai Akhir = nilai KPI (0–100) + poin keaktifan (maks +10).
+  Kalau satu Bizstar dinilai buddy DAN panitia: `BOBOT_BUDDY` 0.7 / `BOBOT_PANITIA` 0.3.
+  Kolom: Peringkat, Nama, Departemen, Buddy, Nilai KPI, Poin, Nilai Akhir, Predikat,
+  jumlah penilai buddy/panitia, milestone terisi, proker hadir, menunggu konfirmasi.
+  Juara 1–3 diwarnai; baris "belum dinilai" kelabu di bawah; blok kedua
+  **"Terbaik di Tiap Departemen"**. Rebuild otomatis tiap `savePenilaian` &
+  `keaktifankonfirm` (dibungkus try/catch), plus menu `Perbarui Peringkat Bizstar`
+  dan endpoint `?action=peringkat` (`&segarkan=1` untuk sekalian menulis sheet).
+- **Konfirmasi Proker dirombak**: buddy pilih nama dari dropdown 8 buddy (`BUDDY_2026`),
+  departemen kebaca sendiri -> muncul kartu **link khusus** `keaktifan/?dept=X&buddy=Y`
+  + tombol Salin Link / Salin Pesan WA. Daftar laporan disaring per departemen; yang dari
+  departemen lain TETAP ditampilkan di bawah pemisah "Departemen lain" (biar tidak hilang
+  kalau Bizstar salah pilih dept). Opsi "Bukan salah satu di atas" -> ketik nama sendiri,
+  semua laporan ditampilkan.
+- `keaktifan/index.html` membaca `?dept=`/`?buddy=`, mengisi dropdown departemen, dan
+  menampilkan kartu "Buddy Kamu". Departemen sekarang WAJIB diisi.
+- Form penilaian: `namaPenilai` punya datalist 8 buddy; ketik nama buddy -> departemen terisi
+  otomatis (`namaPenilaiBerubah()`).
+- **`BUDDY_2026` ada di TIGA file** — `index.html`, `keaktifan/index.html`,
+  `TRACKFILE_IBASS2026_GAS.gs`. Ganti orang = ganti di ketiganya. Isinya sama persis dengan
+  `AC_BUDDY_SEED` di kadiv/index.html.
+- Ejaan **IBASS** (bukan I-BASS) di seluruh proyek. Folder Drive lama tidak ditinggal:
+  `folderDrive(namaBaru, namaLama)` me-rename folder lama kalau ketemu.
+- Skrip presentasi buddy: `PANDUAN_BUDDY_IBASS2026.md` + artefak
+  https://claude.ai/code/artifact/7af6146b-d4ad-4680-9788-75b61dd456ef
+
+## BUG KRITIS YANG SUDAH DIPERBAIKI (2026-08-22) — JANGAN DIULANG
+- `PENILAIAN_HEADER` ditambah kolom `'Skor KPI'` pada commit 621e626 (2026-08-20 19:24) tanpa
+  menambah nilainya di baris `savePenilaian` -> 15 nilai dimasukkan ke range 16 kolom ->
+  `setValues` selalu melempar. Web mengirim dengan `mode:'no-cors'` jadi errornya TIDAK
+  kelihatan: **semua penilaian yang dikirim 20–22 Agustus hilang**. Sudah dites ulang dengan
+  Sheets tiruan (44 assertion lolos, `scratchpad/test_peringkat.js`).
+- Aturan: kalau menambah kolom di `PENILAIAN_HEADER`, WAJIB menambah nilainya di `savePenilaian`.
+- `readPenilaian()` sekarang memetakan kolom lewat NAMA header + menambal baris pra-20-Agustus
+  yang catatannya bergeser satu kolom.
+
+## PENDING (per 2026-08-22 subuh) — TITIK RESUME
+1. **Boss harus Deploy -> Manage deployments -> New version** supaya `?action=peringkat`,
+   perbaikan `savePenilaian`, dan `keaktifan*` hidup. Lalu F5 spreadsheet biar menu
+   "Laporan IBASS -> Perbarui Peringkat Bizstar" muncul.
+2. **`BIZSTAR_DB` di index.html MASIH PLACEHOLDER** (`HRD-01 [Nama]` dst). Harus diisi nama
+   asli SEBELUM buddy mulai mengisi KPI — kalau tidak, nilai masuk atas nama placeholder.
+   Daftar nama Bizstar belum ada di mana pun di laptop (sudah dicari di Downloads).
+3. Peringkat belum ditampilkan di dashboard kadiv — Boss cuma minta "di sheet", jadi sengaja
+   tidak dibuat. Tawarkan kalau nanti diminta.
+
+## KEAKTIFAN JADI MENU TERPISAH (2026-08-21/22)
+- Halaman baru **`keaktifan/index.html`** -> `raiii-png.github.io/ibass2026/keaktifan/`. Sublink
+  khusus **Bizstar**: isi Nama, Departemen, Nama Proker HIMA, Tanggal Kehadiran, Bukti
+  (tempel link atau upload lewat `action:'uploadfile'`).
+- **Buddy punya 2 kartu menu** di web penilaian: **Isi Penilaian** (KPI murni — Adaptive,
+  Collaborate, Growth; tidak ada lagi kartu keaktifan nempel di situ) dan **Konfirmasi Proker**
+  (laporan Bizstar dikelompokkan per orang, yang belum dicek di atas, tombol Hadir / Tidak).
+- **Rubrik keaktifan = hadir atau tidak saja.** +2 tiap proker HIMA yang dikonfirmasi hadir,
+  maksimal +10 (`KEAKTIFAN_POIN` / `KEAKTIFAN_MAKS` di GAS). Panitia atau sekadar datang, sama.
+- Hanya **proker HIMA**. Acara UKM / di luar HIMA tidak dihitung, kegiatan IBASS sendiri juga tidak.
+- GAS: sheet **`Keaktifan`** terpisah dari sheet Penilaian + 3 action — `keaktifanlapor`
+  (Bizstar setor), `keaktifankonfirm` (buddy Hadir/Tidak), `keaktifan` (daftar + rekap poin).
+- Tombol Hadir/Tidak optimistic UI tapi **di-rollback kalau simpan gagal**, supaya buddy tidak
+  mengira sudah tersimpan padahal koneksi putus.
+
+## MODEL YANG SUDAH DITOLAK BOSS — JANGAN DIULANG
+- **"Kedalaman peran"** / "seberapa dalam keterlibatan di kegiatan luar" -> dibuang total.
+- **Skala 2,5** -> tidak dipakai.
+- **Kartu keaktifan di dalam form penilaian KPI** -> harus menu sendiri.
+- **Halaman lapor proker untuk panitia** (sempat dibuat lalu di-revert, commit 3026d1e) ->
+  yang lapor itu Bizstar, yang menilai/konfirmasi itu buddy.
+
+## FILE PENILAIAN DIPISAH DARI TRACK FILE (2026-08-21)
+- Nilai pindah ke **spreadsheet sendiri** (biar yang bisa lihat cuma inti + sebagian kadiv);
+  Track File kadiv tetap di spreadsheet lama.
+- **TETAP SATU Apps Script**, tetap di spreadsheet Track File. `penilaianSS()` baca Script
+  Property `PENILAIAN_SS_KEY`; kalau kosong -> pakai spreadsheet aktif. **JANGAN pasang salinan
+  script di sheet baru** — alamat deployment jadi beda sementara web masih menunjuk alamat lama,
+  data terpecah tanpa kelihatan.
+- Menu Sheets: `Pisahkan File Penilaian (buat baru)` / `Pakai File Penilaian yang Sudah Ada`
+  (tempel link sheet yang sudah terlanjur dibuat, data lama ikut pindah) / `Lihat Lokasi File Penilaian`.
+
+## HT: PANGGILAN HANTU & MASUK CEPAT (2026-08-06, uji Boss ke-3)
+- **Bug**: buka HT → langsung "memanggil" + bergetar padahal belum ada yang dikasih link.
+  Sebab: `sejak=0` saat masuk → server kirim SELURUH 120 baris terakhir saluran, termasuk
+  `ring`/`ringall` dari sesi & uji sebelumnya → diputar seolah panggilan baru. Sama untuk
+  `sejakSuara=0` (potongan suara lama bisa ikut terputar).
+- **Perbaikan lapis 1 (utama)**: flag `sapaanPertama` — sinkron pertama setelah masuk hanya
+  mengadopsi `terakhir`/`terakhirSuara` lalu MEMBUANG `pesan` & `suara`. `masukHT()` mereset
+  sapaanPertama=true, sejak=0, sejakSuara=0. `sejakSuara` ikut dikirim saat sapaan pertama.
+- **Lapis 2 (defense in depth)**: GAS kini menyertakan `waktu` tiap pesan; `terimaPanggilan()`
+  mengabaikan ring >45 dtk. Pesan TANPA waktu tetap diterima (kompatibel server versi lama).
+- **Masuk lebih cepat**: `dorong()` — begitu ada sinyal di outbox, poll dijadwalkan 120ms lagi
+  (bukan menunggu jeda normal); `antre()` memanggilnya otomatis. Jeda saat menyambung
+  700ms (dulu 1200), saat ada outbox 400ms (dulu 900). Diuji dengan server tiruan berlatensi
+  800ms: tawaran terkirim 2,5 dtk setelah masuk.
+- UX: nama diingat → tombol "Masuk sebagai <nama>"; pengguna baru → autofocus kolom nama.
+- **CATATAN PENTING**: jangan kembalikan `sejak=0` tanpa flag sapaanPertama — itu sumber
+  panggilan hantu. Dan jangan tambah getar untuk kejadian otomatis apa pun.
+
+## HT: GETAR & PINDAH SALURAN (2026-08-06, uji Boss ke-2)
+- Boss: suara sudah LANCAR. Sisa keluhan: pindah Wi-Fi→kuota jadi lemot + HP tiba-tiba bergetar.
+- **Sumber getar mendadak**: `terimaSuaraHemat()` memanggil `navigator.vibrate(40)` tiap potongan
+  suara masuk. Waktu Boss pindah kuota → mode hemat menyala → tiap orang bicara HP bergetar.
+  SUDAH DIHAPUS. **Aturan: getar HANYA untuk panggilan** (ring/ringall) dan haptic tombol PTT
+  (16ms, aksi sendiri). Pesan teks tetap bergetar (memang notifikasi). Jangan tambah getar
+  untuk suara/kejadian otomatis.
+- **Pemulihan pindah jaringan**: `gantiJaringanPada` dicatat saat event `online`/`connection change`.
+  Kalau disconnected terjadi <20 dtk setelah itu, masa tunggu 6 dtk dipangkas jadi 1,2 dtk
+  (jalur lama pasti mati). `segarkanSemua()` SENGAJA tidak memaksa peer yang masih `connected` —
+  memaksa ICE restart di sambungan sehat justru memutus suara sebentar.
+- **pindahSaluran()** ditulis ulang: tangkap `saluranLama` → ubah tampilan DULU (terasa instan)
+  → tutup peer → `serverSync({keluar:true, room:saluranLama})` (pamit di tempat yang benar;
+  extra di-Object.assign terakhir jadi menimpa room) → `putaran()` langsung, jeda 900.
+  `sejak` TIDAK direset (id global naik terus; reset bikin sinyal basi diproses ulang).
+  Flag `sedangPindah` mencegah dobel-tap.
+
+## HT: PERBAIKAN SUARA PUTUS-PUTUS (2026-08-06)
+- Boss uji 2 HP: suara MASUK (jalur sehat) tapi putus-putus di sinyal lemah.
+- **Penyebab utama**: `onconnectionstatechange` memperlakukan `disconnected` sama dengan
+  `failed` → `tutupPeer()` langsung. Padahal `disconnected` itu TRANSIEN dan umumnya pulih
+  sendiri; membongkar berarti handshake ulang lewat GAS polling = 5-10 dtk hening tiap
+  gangguan kecil. JANGAN kembalikan perilaku ini.
+- Penanganan sekarang bertingkat: disconnected → tunggu 6 dtk (timerPulih) → `segarkanJalur()`
+  (ICE restart, peer TIDAK dibongkar; yang bukan pemulai kirim kind:"segarkan" minta lawan
+  yang restart) → baru `tutupPeer` kalau 12 dtk tetap gagal. `p.mulai` disimpan di objek peer.
+- Ketahanan suara: `perbaikiSdp()` menyisipkan useinbandfec=1, usedtx=1, maxaveragebitrate=24000
+  ke baris fmtp Opus (dipakai di offer DAN answer); `batasiLaju()` set maxBitrate 28000 +
+  networkPriority high. Diuji: browser menerima SDP, dua peer tetap tersambung (regresi aman).
+- `online` event + `navigator.connection change` → `segarkanSemua()` (pindah Wi-Fi↔kuota).
+- `mulaiPantauMutu()` tiap 3 dtk baca getStats inbound-rtp (packetsLost/Received) → mutu
+  kuat/sedang/lemah, tampil sebagai 3 batang di samping nama. 4× berturut parah tanpa peer
+  sehat → mode hemat dinyalakan lebih awal.
+- Mode hemat: suara diputar BERURUTAN (antrianPutar/putarBerikutnya), tidak tumpang-tindih.
+
+## HT: HASIL DEBUG "TIDAK KONEK" (2026-08-06)
+- **Akar masalah**: server tidak punya action `ht` — Boss deploy SEBELUM HT dibuat. Kedua HP
+  gagal absen → tak pernah saling terlihat. Gejalanya dulu tampil menyesatkan sebagai
+  "Sambungan lemah"; sekarang banner menyebut apa adanya + instruksi deploy.
+- **TIDAK ADA TURN gratis yang hidup** (diuji di browser: openrelay.metered.ca 80/443/tcp,
+  freeturn.net, freestun.net, expressturn → tak satu pun menghasilkan kandidat `relay`).
+  STUN saja hanya dapat host+srflx → dua HP di seluler (CGNAT/symmetric) sering gagal.
+  Kalau nanti perlu betul-betul real-time di seluler: harus TURN berbayar (metered.ca free
+  tier 50GB butuh daftar+API key) — tambahkan ke array ICE di kadiv/ht/index.html.
+- **Solusi dipakai: MODE HEMAT otomatis.** 14 dtk tanpa peer connected → `setModeHemat(true)`:
+  PTT merekam (20kbps) → base64 → `serverSync({suara})` → sheet `HT_V` (dipangkas tiap 40 baris,
+  hanya 12 baris terakhir dibaca) → HP lain auto-play + masuk riwayat. Balik ke suara langsung
+  otomatis begitu ada peer connected.
+- **Bug yang ketemu saat uji**: permintaan suara awalnya hanya dikirim kalau HP SENDIRI mode
+  hemat → suara staf yang terblokir tak pernah sampai ke kadiv yang lancar. Diperbaiki:
+  `if(modeHemat||daftarOnline.length) body.sejakSuara=...`.
+- Pelajaran alat: uji WebRTC/GAS lewat javascript_tool di browser; curl menyesatkan untuk GAS.
+
+## RANJAU YANG SUDAH DIJINAKKAN (2026-08-06)
+- **update.bat DULU menimpa index.html** dengan `Downloads/PENILAIAN_IBASS_2026 (1).html` (12 Juni).
+  Ini sumber "penilaian tiba-tiba hilang". Sekarang update.bat: cek isi index.html dulu (harus ada
+  teks "Penilaian Bizstar"), tolak+beri instruksi pulih kalau bukan, lalu `git add -A` push apa adanya
+  dan menyegarkan penilaian.html. Salinan usang `PENILAIAN_IBASS_2026 (1).html` sudah dihapus dari repo.
+- **curl BUKAN alat uji yang sahih untuk GET ke GAS** — balasannya "Halaman Tidak Ditemukan" (kunci
+  redirect sekali pakai). Dari browser semua GET (dap/penilaian/loadstate/read) JSON OK. Uji GET
+  selalu lewat javascript_tool di browser; POST via curl tetap sahih.
+- Roster 18 = 17 panitia + **Nadzril Fauzan Lelan P (Supervisor)**, ditambah sengaja 12 Jul.
+  Nur Hafiizh sudah keluar (difilter FN_KELUAR). Jangan dikira bug.
+- Ikon situs (SVG data-URI bintang emas) terpasang di 3 halaman.
+
+## FITUR HT (per 2026-08-06) — radio suara panitia
+- **Halaman terpisah `kadiv/ht/index.html`** → `raiii-png.github.io/ibass2026/kadiv/ht/?ch=Divisi`.
+  Sengaja dipisah: staff cuma dapat HT, tidak melihat data dashboard. Tab "HT" di 5 divisi
+  dashboard (`renderHT/htLink/htSalin`, konstanta HT_DIV_NAMA) untuk buka + salin link.
+- **Suara langsung antar-HP (WebRTC mesh)**, server GAS hanya mempertemukan. Bukan pesan suara.
+  STUN Google+Cloudflare, TANPA TURN → di jaringan seluler tertentu bisa gagal nyambung
+  (kalau sering gagal, tambahkan TURN berbayar). Pemulai = nama yang lebih kecil (nama<lawan).
+- **GAS `action:'ht'`** = satu panggilan untuk 3 hal: setor sinyal + absen + ambil sinyal masuk.
+  Sheet `HT` (id,waktu,room,dari,ke,kind,data) + `HT_ON` (room,nama,terakhir,status).
+  `htNextId()` pakai LockService+ScriptProperties `ht_counter` (id selalu naik, anti-terlewat).
+  Pesan room `__SEMUA__` = panggilan darurat menembus semua saluran. Presensi kedaluwarsa 20 dtk.
+  Balasan: {pesan, terakhir, online (saluran sama), semua (semua saluran)}.
+- Fitur pembeda dari HT fisik: **riwayat percakapan terekam otomatis & bisa diputar ulang**
+  (MediaRecorder per peer, mulai saat ada suara, berhenti setelah sunyi 1,2 dtk; maks 25,
+  blob URL di-revoke), **pesan teks cepat** untuk tempat berisik, **salin catatan percakapan**,
+  panggil orang tertentu (`to`=nama, data='pribadi'), status Siap/Di Lokasi/Sibuk.
+- Diverifikasi: WebRTC dua peer tersambung + audio dua arah; rekam-putar ulang; teks masuk+getar;
+  salin catatan; 5 tab HT di dashboard; nol error console. Server: **butuh deploy New version**
+  (action 'ht' belum ada di deployment saat fitur ini dibuat).
+- Screenshot Browser pane sering gagal ("pane not displayed") — verifikasi pakai javascript_tool
+  (DOM + computed style), bukan screenshot.
+
+## PENAMAAN: "IBASS" TANPA STRIP (per 2026-08-04)
+- Boss minta nama di UI kedua web = **IBASS 2026** (bukan "I-BASS"). Sudah diganti 44 tempat
+  (index.html 4, kadiv/index.html 40). Jangan tulis "I-BASS" lagi di teks yang user lihat.
+- Nama folder Drive & sheet di GAS SENGAJA dibiarkan ("Track File I-BASS 2026", "Bukti
+  Pembayaran I-BASS 2026") — kalau diganti, GAS bikin folder/sheet BARU dan file lama terputus.
+- `.claude/static_server.js` sekarang di dalam repo (dulu di scratchpad yang hilang tiap sesi);
+  launch.json menunjuk ke sana. ROOT = folder repo, sudah handle directory index (/kadiv/).
+
+## STRUKTUR FILE & LINK (per 2026-07-21) — BACA DULU
+- **Penilaian Bizstar** = `index.html` (root) → `raiii-png.github.io/ibass2026/`.
+  Cadangan identik: `penilaian.html` (restore ke index.html kalau ketimpa).
+- **Dashboard Kadiv** = `kadiv/index.html` → `raiii-png.github.io/ibass2026/kadiv/`.
+  **INI FILE DASHBOARD YANG DIEDIT** (sesi 11 dipindah dari DASHBOARD_KADIV_IBASS2026.html
+  supaya link tak tertukar penilaian). `DASHBOARD_KADIV_IBASS2026.html` sekarang HANYA
+  redirect stub ke `./kadiv/` — jangan taruh dashboard di sana lagi.
+- Antigravity pernah menimpa index.html dengan dashboard 2×. Kalau title index.html bukan
+  "Penilaian Bizstar" → ketimpa, restore dari penilaian.html.
+- static_server.js (scratchpad sesi 3e5bbe96) sudah handle directory index → preview `/kadiv/` jalan.
+
+## KEAMANAN KUNCI AI (per 2026-07-11) — PENTING
+- **Kunci Gemini TIDAK ADA lagi di HTML/repo.** Semua panggilan AI lewat proxy GAS:
+  `aiCall(payload)` di dashboard → `gasPost(GAS_URL,{action:'ai',payload})` → GAS
+  `UrlFetchApp` ke Gemini pakai kunci dari **Script Properties `GEMINI_KEY`**.
+- Upload file besar (audio/video >18MB): `action:'aifileinit'` bikin tiket upload di server,
+  file mengalir langsung browser→Google. Status file: GET `?action=aifilestatus&name=...`.
+- **Kunci tipe `AQ...` (AI Studio express) kadaluarsa tiap beberapa hari.** Kalau AI mati:
+  user cukup ganti VALUE Script Property GEMINI_KEY (Project Settings → Script properties)
+  — TANPA redeploy, langsung aktif. Jangan pernah taruh kunci di HTML lagi.
+- Kunci-kunci lama yang bocor di riwayat git akan direvoke user (hapus service account
+  `ais-gemini-key-*` di console.cloud.google.com Credentials, project ibass-2026).
+
+## Sesi 8 (2026-07-11 malam, Boss tidur — kerja mandiri): 6 fitur + fix kritis
+- **Background dicerahkan** (2 panitia komplain gelap): gradasi canvas galaxy `#22406f→#0b1c3c`,
+  token `--bg` dkk naik, kabut intro ikut. Jangan digelapkan lagi.
+- **Pubdok tab "Referensi"** (untuk Tika): `renderPdReferensi/pdGenReferensi` — 3 konsep desain
+  feed IG via aiCall (JSON), palet hex visual, link pencarian Pinterest. Storage `ibass_pd_ref`.
+- **Acara tab "Penilaian"**: `renderAcPenilaian/acPenLoad/acPenCopyBelum` — fetch `?action=penilaian`,
+  roster buddy editable (`ibass_ac_buddy`), status per milestone (AC_MILESTONES 5), salin WA.
+- **Logistik foto bukti**: `lgUploadBukti/lgCompressImage` (canvas 1280px JPEG) → GAS
+  `action:uploadbukti` → Drive folder "Bukti Pembayaran I-BASS 2026" (anyone-with-link) → URL.
+- **Edit nama agenda rundown**: tombol ✎ sekarang selalu tampil per baris (dulu hanya di mode Atur).
+- **Sync antar-perangkat**: GAS sheet STATE (hidden, key/json/updated) + `action:savestate` /
+  `?action=loadstate`. Dashboard: `STATE_KEYS` (lg_items, ac_data, ac_notes, fn_income, fn_manual,
+  fn_npanitia, fn_roster, ac_buddy, sk_history, pd_captions), intersepsi `localStorage.setItem`
+  → `statePush` debounce 2.5s; `statePullAll()` di `openApp` (timestamp menang yang baru) →
+  `reinitCurrentDiv()`. Track File: `tfAutoLoad(div)` saat buka tab tugas (throttle 60 dtk).
+- **FIX KRITIS: `index.html` APPS_URL masih URL GAS lama yang MATI** — penilaian yang disubmit
+  selama ini hilang. Sudah diganti ke URL baru.
+- Auto-sync script laptop Boss commit+push sendiri tiap jam (a4b3c0b dkk) — cek `git log` dulu
+  sebelum commit manual, sering sudah ter-commit.
+
+## Sesi 9 (2026-07-11 siang): RAB editable + roster panitia asli
+- **Nama item RAB per sesi bisa diedit** — kolom Item jadi input teks (override `ovr.nama`
+  di `ibass_fn2`, `fnSetItem` handle field 'nama' string; kosong = balik ke default).
+  `ibass_fn2` masuk STATE_KEYS (ikut sync antar-perangkat).
+- **Roster 18 panitia asli** (`FN_ROSTER_SEED`, fallback `fnRoster()`) — nama lengkap dicocokkan
+  dari daftar workshirt Boss + mastersheet KPI (`KPI HIMA ADBIS 2026 .csv` di Downloads) +
+  nama pembayar form DAP. **BELUM KETEMU nama lengkap: "Dyba" dan "Tika (Acara)"** — masih
+  panggilan, Boss harus konfirmasi. (Tika Pubdok = Yulia Dwi Kartika, dari data pembayar form.)
+- **Daftar "Belum bayar sama sekali" tampil di kartu DAP** (`fnBelumBayarList`, info-box amber).
+  Per 07-11: Tri Utami Widyaningsih, Aqila Diana Sofi, Dyba, Tika (Acara), Tommy Rizkya.
+- `fnNormName`/`acPenNorm` buang tanda baca (kasus "Khotibul Umam Al 'Isyrafi").
+
+## Sesi 9 (2026-07-11 malam): GAS FULL LIVE + RAB proposal + LPJ
+- **GAS SUDAH DIOTORISASI & DEPLOY (semua endpoint hijau per 2026-07-11 malam):**
+  ai (proxy Gemini), uploadbukti (→Drive), savestate/loadstate (sync). JANGAN suruh
+  Boss re-deploy lagi kecuali kode .gs berubah.
+- Sesi RAB "PROP" (RAB Proposal Resmi, 22 item, total Rp11.980.000, flag ref:true —
+  di-skip fnCalcAll). Tombol +Item / × per divisi per sesi (`fnAddRabItem/fnDelRabItem/
+  fnItemsFor`; custom = entri `cu-*` di fnData, hapus default = flag hapus).
+- **LPJ**: `fnBuatLPJ()` (dokumen cetak putih + lampiran nota via Drive thumbnail) dan
+  `fnCopyLPJ()` (salin tabel text/html via ClipboardItem → paste di template HIMA Word/GDocs
+  jadi tabel). Tombol di Finance → Laporan.
+- Fix: [object Object] di daftar belum-bayar, kamera otomatis saat Sudah Beli tanpa bukti
+  (klik file input dalam gesture), toast wrap di HP (max-width 92vw).
+- Roster DAP per divisi (FN_ROSTER_SEED objek {n,d}, 18 panitia dari proposal) + tabel
+  Kas&DAP dikelompokkan per divisi + fnRosterStatus() matching longgar.
+- Referensi Pubdok diverifikasi end-to-end dengan AI asli (konsep + palet + link Pinterest).
+
+## Sesi 10 (2026-07-12): RAB = proposal, referensi bergambar, checklist Hari-H
+- **RAB per sesi DIGANTI TOTAL**: 22 item proposal didistribusi ke sesi pemakaian
+  (OR 125rb: admin+poster; TWN1 4.525rb: idcard+workshirt panitia+pin+cuecard+rundown;
+  TWN2 6.745rb: workshirt peserta+hadiah; TWN3 483rb: confetti+selempang+sertifikat+hadiah;
+  PMT1 102rb: sticky+plakat; ITV/PMT2 kosong). fnCalcAll = 11.980.000 = RAB Proposal.
+  Id lama or-*/tw* mati; id baru or2-*, t1-*, t2-*, t3-*, p1-*.
+- **Referensi Pubdok bergambar**: GAS `action:imgsearch` (scrape Bing Images via UrlFetchApp,
+  balik {img,thumb,sumber,judul}×12). Klien: `pdRefCariGambar(q)` render grid #pdref-grid,
+  klik gambar → sumber asli; keyword chip = tombol pencarian; auto-load setelah generate.
+  **BUTUH DEPLOY NEW VERSION GAS** (tanpa authorize ulang — scope sudah ada).
+- **Logistik tab "Hari-H"**: checklist barang per sesi, status Belum→Disiapkan→Dibawa→Kembali,
+  tarik otomatis dari Pengadaan (`lgHhImport`), salin WA. Storage `ibass_lg_harih` (ikut sync).
+
+## Sesi 10b (2026-07-12 malam): fix total dobel + roster update + grafik
+- **Fix Total RAB 23,96jt → 11,98jt**: renderFnLaporan & fnCopyLaporan skip s.ref (sesi PROP
+  referensi tidak dihitung/ditampilkan dobel; fnCalcAll sudah skip dari sebelumnya).
+- **Nur Hafiizh Puta Iskandar KELUAR dari panitia** → roster 17 orang. FN_KELUAR (norm names)
+  difilter permanen di fnRoster() (roster tersimpan lama ikut bersih). fnNPanitia default =
+  panjang roster (17); nilai '18' lama dimigrasi otomatis.
+- **AC_BUDDY_SEED**: 8 buddy resmi per dept (Ayu/Secre, Nursyfa/Finance, Eghina/HRD,
+  Akram/Advocacy, Razwa/ExtAff, Tyara/MEIN, Marzya/Entre, Anggun/ACT) — default
+  acBuddyRoster; matching longgar tetap jalan walau nama diketik sebagian.
+- **GAS `updateGrafik(ss)`**: sheet GRAFIK berisi tabel status per divisi + chart kolom
+  bertumpuk + donat "Selesai per Divisi", dibangun ulang tiap action:sync (setelah
+  rebuildRekap), try/catch supaya tidak ganggu sync. BUTUH deploy New version
+  (bareng imgsearch — user belum deploy dua-duanya per 2026-07-12 malam).
+
+## Sesi 10c (2026-07-12 malam): Nadzril, typo-matching, penilaian per dept, denda DAP
+- **Nadzril Fauzan Lelan P (Supervisor Internal) MASUK roster DAP** divisi 'Supervisor'
+  (dia bayar lunas via form, sebelumnya nyasar ke "Pembayar Lain"). Roster = 18
+  (17 panitia + supervisor). FN_DIVISI_URUTAN + 'Supervisor'.
+- **fnNamaMirip()**: matching nama toleran typo — ≥2 kata sama = cocok
+  (kasus nyata: form "Thykha" vs roster "Thyka"). Dipakai fnRosterStatus.
+- **Penilaian Acara dirombak per departemen**: AC_BUDDY_SEED objek {d,n} 8 dept;
+  kartu per dept = nama buddy + chip status 5 milestone (✓ hijau) + daftar calon
+  Bizstar yang sudah dinilai (diambil dari data penilaian masuk, otomatis).
+  acBuddyRoster backward-compat string; textarea format "Nama, Departemen".
+- **Deadline + denda DAP**: fnDapConf (`ibass_fn_dap_conf`, ikut STATE_KEYS) —
+  t1 default '2026-07-13', t2 kosong (diisi nanti), denda 2000/hari. fnDendaFor(m):
+  belum bayar T1 (< Rp115.000) & lewat t1 → hari telat × denda; T2 juga kalau t2 diisi.
+  Tampil merah di kolom status + ikut teks "Salin Belum Bayar". Input tanggal di kartu DAP.
+
+## Sesi 10d (2026-07-13): total RAB 12.075.000 + referensi format-aware
+- **Total RAB final = Rp12.075.000** (rekap resmi "III. Estimasi Anggaran" di proposal).
+  Proposal INKONSISTEN: tabel rincian Acara total 247rb tapi rekap 342rb — selisih 95rb
+  = 1 plakat. Solusi: Plakat qty 2 (satu per pematerian): PROP pr-a4 qty 2,
+  PMT2 dapat p2-a1 Plakat 95rb. Jangan "perbaiki" balik ke 11.980.000.
+- **Referensi Pubdok dirombak**: prompt bahasa natural anak desain (larangan kata AI:
+  "memukau", "menawan", dll + contoh gaya benar), konsep wajib sesuai format
+  (carousel = alur slide, story = vertikal 5 detik, reels = kebaca di thumbnail).
+  `pdRefFormatTerm(jenis)` → kata kunci gambar otomatis bawa format ("instagram carousel"
+  dll, tidak dobel kalau sudah ada), `pdRefPortrait` → grid story/reels tampil portrait 200px.
+
+## Sesi 10e (2026-07-13): referensi per platform + LPJ v2 standar
+- **Referensi contoh dari orang lain per platform**: `pdRefCariGambar(q, situs)` — chip
+  Semua/Instagram/TikTok/Pinterest di grid, filter via `site:instagram.com` dll di query
+  Bing. Kartu gambar menampilkan hostname sumber. State: pdRefQ/pdRefSitus.
+- **LPJ v2 (fnBuatLPJ) standar organisasi**: kop HIMA double-border, tabel info kegiatan,
+  I. Ringkasan, II. Pemasukan, III. Pengeluaran DIKELOMPOKKAN per kategori + subtotal +
+  kolom "Nota N" silang ke lampiran, IV. Anggaran vs Realisasi per divisi (dari fnItemsFor,
+  skip s.ref), V. Lampiran nota bernomor, kalimat penutup, "Bandung, tgl", 3 ttd
+  (Bendahara/Ketupel/Mengetahui). SELURUH dokumen contenteditable — bendahara bisa edit
+  langsung sebelum cetak.
+
+## Sesi 10f (2026-07-13): referensi = alat kerja kadiv + pengaman Track File
+- **Referensi Pubdok jadi alat kerja** (kacamata kadiv: jobdesc-nya nge-brief anggota desainer):
+  prompt tambah "slides" (wajib utk carousel, isi per slide konkret) + "cta"; `pdRefUkuran(jenis)`
+  (spek px pasti); kartu konsep render slide breakdown + ukuran; tombol **"Salin Brief Desainer"**
+  (`pdCopyBrief(i)` — brief WA lengkap + link moodboard); **Moodboard** (`pdMoodboardSimpan/Hapus/Html`,
+  storage `ibass_pd_moodboard` ikut STATE_KEYS, tombol "+ Simpan" di tiap gambar grid, maks 60).
+- **Pengaman Track File** (keluhan Boss: list hilang saat refresh):
+  1. Flag `ibass_tf_dirty_<div>` — diset saat ada perubahan, dihapus HANYA setelah sync
+     terkonfirmasi ok. `tfAutoLoad` SKIP + kirim ulang kalau flag ada → isian lokal tidak
+     pernah ditimpa server basi. Status bar tampil "Belum tersimpan ke Sheet".
+  2. GAS sync: sebelum menimpa, salin data lama ke sheet hidden `CADANGAN_<divisi>`
+     (baris 1 = stempel waktu, baris 2 header, baris 3+ data).
+  3. Endpoint `?action=cadangan&divisi=X` + tombol **"Pulihkan Cadangan"** di tab Track File
+     (`tfPulihkanCadangan` — confirm → tfSave → sync balik).
+- STATE_KEYS sekarang juga punya `ibass_fn_dap_conf` (deadline+denda DAP, dibuat sesi HP).
+- **GAS masih menunggu SATU deploy New version** (imgsearch + grafik + cadangan sekaligus).
+
+## Sesi 10g (2026-07-13): DAP Termin 2
+- Broadcast Finance: T1 Rp115rb (batas 13 Jul), T2 Rp100rb (13 Jul–9 Agu), denda Rp2.000/hari.
+  Link form di broadcast (forms.gle/N6pQJgS6...) = form LAMA yang sama (dicek: resolve ke
+  /d/e/1FAIpQLSddFMUpw7... identik dengan forms.gle/EjrAUNzfu62...) — TIDAK perlu ganti DAP_FORM_ID.
+- `fnDapPerOrang` sekarang parse flag `t1`/`t2` per orang (dari teks termin, fallback nominal
+  115rb/100rb/215rb). Kas & DAP: chip T1 ✓/— dan T2 ✓/— per baris, info box "Belum bayar
+  Termin 1 (N)" dan "Belum bayar Termin 2 (N) · batas 9 Agustus".
+- `fnDapConf().t2` default '2026-08-09'. `fnDendaFor` dihitung per termin yang BELUM dibayar
+  (pakai flag, bukan total — orang yang bayar T2 duluan tidak kena denda T2).
+- `fnCopyBelumBayar`: header batas per termin + denda, status per orang "T1 sudah · T2 BELUM",
+  rekap "X lunas · Y belum T1 · Z belum T2".
+
+## Sesi 10h (2026-07-13): RAB Resmi (final)
+- Boss kasih total RAB FINAL **Rp10.877.000** (rincian item belum pasti — finance sesuaikan nanti).
+  JANGAN karang harga item. Dibuat field `fnRabResmi()` (`ibass_fn_rab_resmi`, default 10877000,
+  editable via fnEditRabResmi prompt, ikut STATE_KEYS/sync).
+- Ringkasan & Laporan headline sekarang pakai RAB Resmi (bukan jumlah item). Ringkasan tampilkan
+  kartu selisih: RAB resmi vs jumlah rincian item saat ini + petunjuk "sesuaikan di RAB per Sesi".
+- Item proposal (jumlah 12.075.000 / atau 11.980.000 sebelum plakat×2) tetap sbg titik awal;
+  finance edit qty/harga/hapus/tambah sampai jumlah rincian = RAB resmi.
+
+## Sesi 10i (2026-07-13): tombol menu di Google Sheet
+- Grafik dulu HANYA dibangun saat action:sync — kalau Boss hapus/edit baris manual di sheet,
+  grafik tetap pakai angka lama. Solusi: menu kustom lewat `onOpen()`.
+- Menu "Laporan I-BASS" sekarang punya: Perbarui Laporan | **Perbarui Grafik**
+  (`menuPerbaruiGrafik` = rebuildRekap + updateGrafik + alert jumlah kegiatan/selesai) |
+  **Reset Data Track File** (`menuResetTrackFile` = konfirmasi YES/NO → clearContent baris
+  DATA_START_ROW ke bawah di 5 sheet divisi + REKAP → updateGrafik).
+- Menu muncul setelah kode disimpan di editor + spreadsheet di-reload (onOpen simple trigger,
+  tidak butuh deploy web app). Reset hanya membersihkan SHEET — dashboard kadiv yang masih
+  menyimpan daftar lama harus tekan "Muat dari Sheets" (tfLoadFromSheets menimpa lokal).
+
+## Sesi 11 (2026-07-21): index.html pulih + upload file Track File + penilaian se-tema
+- **KRITIS TERJADI LAGI: Antigravity menimpa index.html dengan dashboard (19 Jul)** —
+  link penilaian "hilang". Dipulihkan dari `penilaian.html` (kopi identik, GAS URL+token benar).
+  ATURAN: `index.html` = Penilaian, `DASHBOARD_KADIV_IBASS2026.html` = dashboard,
+  `penilaian.html` = cadangan (jaga tetap identik dengan index). Kalau penilaian hilang lagi,
+  cek dulu title index.html.
+- Link resmi: penilaian `raiii-png.github.io/ibass2026/`, dashboard
+  `raiii-png.github.io/ibass2026/DASHBOARD_KADIV_IBASS2026.html`, repo `github.com/raiii-png/ibass2026`.
+- **Track File upload file**: GAS `action:uploadfile` (mime bebas, folder Drive "Berkas Track
+  File I-BASS 2026", anyone-with-link) + dashboard `tfUploadFile(div, input)` (maks 8MB,
+  FileReader base64) — tombol "Unggah File" di form, kolom link tetap sebagai opsi.
+  **GAS BUTUH DEPLOY New version** untuk uploadfile (+ menu grafik/reset sesi 10i sekalian).
+- **Penilaian se-tema dashboard**: token :root → navy cerah (#0d1c3a dst) + --gold/--gold2,
+  radius 6px, canvas galaxy gradasi terang (#22406f→#0b1c3c), fog rgba(13,28,58), layer
+  "ROYAL GRANDEUR" di akhir <style> (eyebrow emas, kartu lift, tombol kilau emas, fokus emas,
+  s10 46px/s5 56px + mobile lebih besar, biz-dot done emas, prog-fill emas, vignette, fadeUp).
+  `penilaian.html` disamakan dengan index.html setelah edit.
+- Screenshot Browser pane MACET di halaman penilaian (canvas partikel intro) — verifikasi
+  pakai computed style / elemen uji via javascript_tool, bukan screenshot.
+- static_server.js dibuat ulang di scratchpad sesi 3e5bbe96 (launch.json diarahkan ke sana).
+
+## Sesi 11b (2026-07-21): link kadiv + latar penilaian tak hitam
+- **Dashboard dipindah `DASHBOARD_KADIV_IBASS2026.html` → `kadiv/index.html`** (git mv). Link
+  bersih `raiii-png.github.io/ibass2026/kadiv/`. Path lama = redirect stub (meta refresh +
+  location.replace ke ./kadiv/). CLAUDE.md/README/_redirects/static_server diupdate.
+- **Fix latar penilaian hitam saat "masuk"**: penilaian punya DUA fungsi galaxy — intro (sudah
+  dicerahkan sesi 11) DAN `draw()` latar berjalan (baris ~2533) yang MASIH `#010306` near-black.
+  draw() diganti gradasi navy `#22406f→#152c54→#0b1c3c` (sama dashboard). penilaian.html disamakan.
+- localStorage penilaian & dashboard TETAP (origin sama github.io), pindah folder tak hapus data.
+
+## PENDING pagi Boss (2026-07-11):
+1. Paste .gs terbaru → di editor RUN fungsi apa saja (mis. doGet) → dialog izin → Allow
+   (UrlFetchApp + Drive) → Deploy New version. Tanpa ini: AI, foto bukti, sync state MATI
+   (error "tidak memiliki izin UrlFetchApp"). Fitur lama tetap jalan.
+2. Hapus 3 service account `ais-gemini-key-*` LAMA di console.cloud.google.com Credentials
+   (revoke kunci bocor di riwayat git) — sisakan yang dipakai Script Property.
+3. Hapus repo `kadivibass2026/kadivibass2026.github.io` + organisasinya (Danger Zone) — batal dipakai.
+
+## Sesi 9 (2026-07-11 siang): roster panitia + wajib nota + referensi multi-platform
+- **Roster 18 panitia RESMI** (`FN_ROSTER_SEED`, objek `{n,d}`) dari Proposal I-BASS 2026 —
+  Kas & DAP menampilkan status per orang DIKELOMPOKKAN per divisi (Inti/Acara/Pubdok/Logistik)
+  + "Pembayar Lain". `fnRosterStatus()` mencocokkan pembayar↔roster (longgar, greedy exact dulu).
+  Kamus panggilan: Sofi=Aghni Alicia Sofi, Tami=Tri Utami Widyaningsih, Dyba=Nadya Badzlin,
+  Tika Acara=Thyka Agusthy Dwi Yumandha, Vina=Oktavina Rizky Alana, Tika Pubdok=Yulia Dwi
+  Kartika, Nichol=Nicholas Saputra, Rikep=Rizky Akmal Fadhillah, Tibul=Khotibul Umam Al Isyrafi,
+  Tommy=Tommy Rizkya, +Nur Hafiizh Puta Iskandar (Logistik). Format edit roster: "Nama, Divisi".
+- **Wajib nota**: `lgSetStatus` menolak "Sudah Beli" tanpa `bukti` → buka form bukti,
+  `lgAfterBukti(idx)` (dipanggil lgSaveBukti & lgUploadBukti) otomatis menuntaskan status.
+- **Referensi Pubdok multi-platform**: `pdRefPlatforms(q)` → IG/TikTok/Behance/Dribbble/IG-tag
+  per konsep + kartu "Jelajah Inspirasi Umum". RAB nama item sudah editable (sesi HP) —
+  `ibass_fn2` masuk STATE_KEYS.
+- Verifikasi via jsdom (browser tools terputus): `test_dashboard.js` di scratchpad — pola
+  berguna untuk test headless tanpa Chrome.
+- Proposal PDF: `C:/Users/mrraf/Downloads/PROPOSAL IBASS 2026 terbaru 1.pdf` (teks diekstrak
+  pakai pdf-parse; susunan panitia di halaman 8-10).
+
+## Arsitektur
+- **Single-file HTML** (semua CSS + JS inline) — bukan framework, murni vanilla.
+- **localStorage** untuk semua data persisten (tidak ada backend database).
+- **Google Gemini 2.5 Flash API** untuk fitur AI (transkripsi, notulen, caption, storyboard, cut plan).
+  - Key tersimpan di file HTML (`GEMINI_KEY`), jangan tulis di memory/docs.
+  - Key AKTIF (dites 2026-07-03, HTTP 200).
+- **Google Apps Script** sebagai middleware dashboard ↔ Google Sheets + Google Docs.
+  - GAS URL dipakai dengan `mode:'no-cors'` untuk POST (write-only), normal fetch untuk GET.
+  - Form DAP ID: `1Ko8M-oRQisCxnOO5KDQXF2g8sS854yurR_qSxfJrYyE`.
+
+## File Utama
+1. **`index.html`** (dulunya `PENILAIAN_IBASS_2026 (1).html`) — Web penilaian Bizstar.
+   - Intro animasi: bintang meledak → membentuk kastil (Canvas 2D particle system).
+   - Form penilaian KPI per milestone (Buddy, Workshop, dll — "Interview" sudah dihapus).
+   - `APPS_URL` + `SUBMIT_TOKEN` sudah diisi — jalur kirim ke GAS aktif.
+   - **Hosted:** `raiii-png.github.io/ibass2026` (GitHub Pages).
+
+2. **`DASHBOARD_KADIV_IBASS2026.html`** — Dashboard untuk 5 divisi:
+   - **Sekretaris**: rekaman audio (2 HP) + rekam rapat online (Meet/Zoom via getDisplayMedia + mic digabung), transkrip + notulen via Gemini, kirim ke Google Docs, tab Laporan Perkembangan → GDocs persisten.
+   - **Pubdok**: video cut tool, caption generator (prompt natural, tanpa klise AI), storyboard, Upload Konten (`pd-trackfile`).
+   - **Logistik**: manajemen barang + bukti pembayaran (link foto/nota), filter status+sesi, salin daftar belanja, integrasi otomatis ke Finance.
+   - **Acara**: rundown interaktif + countdown timer, nama sesi bisa di-rename kadiv, jam mulai per sesi.
+   - **Finance**: RAB pre-loaded (81 item), Kas & DAP (`fn-trackfile`), seed 9 pembayaran DAP (Rp1.535.000), pemasukan lain + pengeluaran manual.
+   - **Track File**: tab di semua 5 divisi (panel id `{prefix}-tugas`), auto-sync 2 dtk ke GAS/Sheets.
+   - **Panduan**: tab di semua 5 divisi, step-by-step per fitur.
+   - Pattern: `switchTab(prefix, id, el)` untuk tab, `initX()` per divisi dari `openApp(div)`.
+
+3. **`TRACKFILE_IBASS2026_GAS.gs`** — Google Apps Script:
+   - GET: `?action=read/rekap/dap/penilaian/laporanurl`
+   - POST: `action:sync/addItem/setup` + `submissions` (penilaian) + `action:laporan` + `action:createDoc`
+   - Handler laporan: append ke Google Doc persisten, stempel waktu WIB.
+   - Handler createDoc: notulen → Google Docs baru.
+
+## UI — «Royal Grandeur» V8 (per 2026-07-05)
+- **PENTING: redesign Graphite (Syne/Inter/indigo) DITOLAK** — user lebih suka Cinzel/Cinzel Decorative/Raleway, tema kastil Disney/magic, navy + emas. JANGAN ganti font/tema.
+- Intro: kastil emas line-art SVG (stroke-dashoffset, `pathLength="1"`) + 10 partikel debu magis + galaxy.
+  JANGAN pakai `drop-shadow` filter di SVG animasi — glow pakai `::before` radial-gradient.
+- V8 layer: vignette, segel divisi bundar cincin ganda, tab aktif EMAS + underline menyala, card-label emas + garis, tombol kilau menyapu, kas-hero aura emas, fadeUp animasi panel, hover lift.
+- `openDivisiSelect()` delay 950ms (fade intro) — screenshot otomatis harus tunggu >1s.
+- TANPA EMOJI di seluruh UI. Simbol tipografis (✎ × ↑ ↓ ▸ ✓) boleh.
+- Semua jargon teknis ("Gemini", "API", "localStorage") tidak ada di UI.
+
+## Keputusan produk (kumulatif)
+- **Track File AKTIF** di 5 divisi — panel id `{sk,pd,lg,ac,fn}-tugas`. Jangan pakai `-trackfile` untuk Track File: `fn-trackfile` = Kas&DAP, `pd-trackfile` = Upload Konten.
+- **Arsip Surat Sekretaris DIHAPUS** (tab, panel, semua fungsi skSurat*).
+- **Pubdok: Briefing DIHAPUS**. Caption prompt ditulis ulang: natural, tanpa klise AI, tanpa emoji.
+- **Acara: nama sesi bisa diganti** — `acLabel(k)`, `acRenameSesi()`, input `#ac-sesi-nama`.
+- **Logistik: bukti pembayaran** — field `bukti` di data barang, inline quick-add saat "Sudah Beli", link di tabel + laporan. Ditambahkan sesi ke-6 (2026-07-05).
+- **Seed 9 pembayaran DAP asli** (total Rp1.535.000): `fnDapPay()` fallback ke `DAP_SEED`.
+- **Rekam Rapat Online**: `startRecordOnline()` → `getDisplayMedia` + mic via AudioContext.
+- **Laporan Perkembangan**: tab Sekretaris → POST GAS → Google Doc persisten.
+
+## Riwayat sesi
+| Sesi | Tanggal | Device | Commit/PR | Ringkasan |
+|------|---------|--------|-----------|-----------|
+| 1-2 | 07-02 | Laptop | `1f2c94b` | Integrasi DAP, Kas Finance, fitur kadiv, UI V6 |
+| 3 | 07-03 | Laptop | `d721c89` | Redesign Graphite — DITOLAK |
+| 4 | 07-03 | Laptop | `ae44c3b` | Revert → Royal Magic, panduan, arsip/briefing hapus, seed DAP |
+| 5 | 07-03 | Remote+HP | PR #1-#7 | Penilaian→GAS, rekam online, laporan, Track File aktif, UI V8 |
+| 6 | 07-05 | Laptop | `458591e`,`fc26dcc` | Bukti pembayaran Logistik, fix loop SR, kunci AI baru, rekam online terverifikasi |
+
+## Sesi 7 (2026-07-10) — GAS beres total, Finance live dari form
+- **GAS URL BARU** (deployment baru dari sesi Antigravity): `AKfycbxCTCMFY1KEBuT6TeiBbMeDgB-JL2o3zOXtdvpDagd1E-tMScq45uxX-nwUqA9qf9Becg`.
+  Yang lama (`AKfycbx5iNCi...`) MATI. `tfGetUrl()` sekarang SELALU pakai konstanta `GAS_URL`
+  dan auto-hapus URL nyangkut di localStorage.
+- **Track File → Sheets JALAN** (POST sync dibalas `{"ok":true}`). Bug sebelumnya: kode
+  ter-deploy ≠ repo (error "action is not defined") → fixed dengan paste ulang + redeploy.
+- **DAP parsing fix di GAS**: cek 'bukti'/'upload'/Array SEBELUM 'nama' — judul pertanyaan
+  upload form mengandung kata "nama" sehingga ID file menimpa nama asli. Sekarang 13 nama
+  asli + link bukti transfer semua muncul.
+- **Finance auto-update**: `fnDapAutoStart()` fetch diam-diam saat Finance dibuka + tiap 60 dtk
+  (hanya saat tab visible), notif "X pembayaran baru masuk". Selalu menimpa data lama.
+- **Fitur roster + salin belum bayar**: `fnRoster()` (localStorage `ibass_fn_roster`, satu nama
+  per baris, auto-set jumlah panitia), `fnCopyBelumBayar()` — teks WA 3 seksi: belum bayar
+  sama sekali (dari roster), belum lunas (+ kurang berapa), sudah lunas.
+- **Kunci AI diganti lagi (10 Jul)**, notulen diverifikasi end-to-end. Ingat: kunci `AQ...`
+  umurnya pendek — kalau AI mati (401), minta Boss buat kunci baru. Kunci permanen `AIza`
+  gagal dibuat (Cloud Console ruwet buat Boss) — jangan paksa, cukup ganti kunci saat mati.
+- **Push ke origin/main sukses** (`848c655`) setelah Boss klik Allow di GitHub secret scanning.
+  Tiap push baru dengan kunci baru akan kena blok lagi — kasih link unblock ke Boss.
+- Catatan: ada branch cloud `claude/*` di remote dari sesi HP — belum di-merge, abaikan
+  kecuali Boss menyebutnya.
+- **HOSTING: Boss pakai `kadivibass2026.netlify.app`** (dashboard = halaman utama, dibuat
+  sesi Antigravity). Versi di sana BUILD RUSAK (panggil `gasPost` yang tak ada → semua
+  kirim gagal "Gagal kirim"). Deploy ulang GAGAL: kredit akun Netlify habis
+  ("account credit usage exceeded", plan gratis). RENCANA saat kredit reset (awal bulan):
+  deploy sekali isi `netlify_site/_redirects` (proxy 200! ke GitHub Pages) via MCP Netlify
+  (siteId `9982f851-f4e6-4ad4-ba42-c20b66eed2e8`) — setelah itu Netlify jadi cermin
+  otomatis GitHub selamanya tanpa build. `netlify.toml` publish=netlify_site sudah di repo.
+- **Hosting sepenuhnya GitHub Pages** (Netlify DILEPAS 2026-08-06 atas permintaan Boss: file
+  netlify.toml/_redirects/netlify_site/.netlify dihapus dari repo). Auto-sync laptop push tiap jam.
+- localStorage per origin: data Track File yang diketik di netlify.app tidak muncul di
+  github.io — pakai tombol "Muat dari Sheets" untuk menarik data dari sheet.
+
+## ⏭️ Resume (per 2026-07-05)
+
+**Status: semua fitur selesai, commit `fc26dcc` (main).**
+
+Sesi ke-6 (07-05):
+- **Bukti pembayaran Logistik** — field `bukti` di form, inline quick-add (`lgAddBukti/lgSaveBukti`), link "Lihat Bukti" di tabel, link di laporan pengeluaran.
+- **Rekam Rapat Online TERVERIFIKASI end-to-end** di browser (mock getDisplayMedia + mic → gabung → rekam → stop → transkripsi Gemini 200 → hasil tampil).
+- **Fix loop SR**: preview real-time berhenti retry kalau izin mikrofon `not-allowed` (dulu infinite loop, banjir warning).
+- **Kunci AI diganti** (2026-07-05, dites 200). PENTING: kunci format `AQ...` = token sementara,
+  expired ±2 hari (yang lama mati 401 pada 07-05). Kalau AI mati lagi → minta Boss buat kunci
+  baru. Boss ingin kunci PERMANEN format `AIza...` dari aistudio.google.com/apikey —
+  Boss harus buat sendiri (login Google), lalu Claude pasang di `GEMINI_KEY`.
+
+**GAS status:** user bilang sudah re-deploy (2026-07-05). Perlu ditest:
+- Tombol "Cek Pembayaran Baru" di Finance (9 respons asli dari form)
+- Laporan Perkembangan → cek Google Doc terbuat
+- Submit penilaian dari `raiii-png.github.io/ibass2026` → cek sheet "Penilaian"
+
+**Catatan penting:**
+- User ("Boss") sering edit paralel dari HP — SELALU baca file HTML dulu sebelum edit.
+- User suka bilang "lanjut ke web kadiv sampai tahap sempurna" — artinya test semua fitur dan perbaiki kekurangan.
+- GitHub: user `raiii-png`, repo `ibass2026`.
+- Verifikasi via server statis lokal (`.claude/launch.json`, port 8321).
+
+**Why:** Memory ini adalah sumber konteks utama supaya sesi baru (laptop atau HP) langsung nyambung tanpa tanya ulang.
+
+**How to apply:** Baca file ini → Read file HTML terbaru (user sering edit paralel) → lanjutkan dari state di atas.

@@ -47,6 +47,34 @@ metadata:
   teks kartu Hitungannya + nilai cadangan `js.perProker||1`/`js.maks||5` (keaktifan).
   **Ganti angka = ganti di lima tempat itu + panduan + artefak.**
 
+## AUDIT MENYELURUH (2026-10-12) — LUBANG YANG DITUTUP
+- **BAHAYA POLA FILE INI**: `index.html` punya belasan fungsi yang ditulis DUA KALI —
+  definisi dasar di tengah file, lalu ditimpa `window.X = ...` di bawah. Menambal yang
+  atas = tambalan mati. Ini yang bikin panitia kelewat dan perbaikan gulung layar tidak
+  jalan. SEBELUM menambal fungsi apa pun di file ini, cek dulu:
+  `grep -n "^function NAMA\|^window\.NAMA *=" index.html`.
+  Penimpa yang menyertakan `_origX(...)` aman; yang menulis ulang isinya tidak.
+- Pindah Bizstar sekarang lewat SATU pintu `pindahBizstar(tujuan)` — tombol, titik
+  progres, geser, dan panah papan ketik semua memakainya. Dulu empat salinan terpisah,
+  dua di antaranya tidak membatalkan hitung mundur `lanjutTimer` sehingga satu Bizstar
+  bisa terlewat tanpa dinilai. `window.nextBiz`/`prevBiz` dan `triggerSlide` sudah dibuang.
+- **`keaktifanlapor` + `keaktifankonfirm` sekarang WAJIB token** (`PENILAIAN_TOKEN`).
+  Dulu tanpa pengaman sama sekali padahal langsung menambah poin, dan web dipasang
+  "akses siapa saja". Token ada di kode halaman publik, jadi ini menahan iseng dan
+  pindaian acak, bukan orang yang membuka source. Login Google ditolak karena bikin
+  buddy tidak bisa isi cepat lewat HP — Boss sudah diberi tahu tradeoff-nya.
+- Peringkat kini memuat SEMUA nama dari sheet Bizstar; yang belum dinilai tampil
+  "Belum dinilai", kelabu, urutan paling bawah.
+- Sheet Peringkat & Rekap diberi `protect().setWarningOnly(true)` karena isinya ditimpa
+  ulang tiap data masuk.
+- **Label bobot kriteria sudah diperbaiki**: dulu buddy 15/20/25 (jumlah 60) dan panitia
+  15/15/10 (jumlah 40) — terbaca seolah persen nilai akhir. Sekarang buddy 25/33/42 dan
+  panitia 37,5/37,5/25, berjumlah 100 di tiap form. PERHITUNGAN TIDAK BERUBAH (kodenya
+  tetap /60 dan /40); yang diubah cuma labelnya.
+- Semua sheet termasuk LAPORAN sudah tanpa warna: tebal + `#f3f3f3` saja.
+- Catatan uji: panel browser sering tersembunyi -> rendering dijeda, jadi transisi CSS,
+  smooth scroll, dan rAF TIDAK jalan. Ukur kelas/DOM/nilai hitungan, bukan animasinya.
+
 ## SHEET & DEPLOY (2026-10-11)
 - **Apps Script URL BARU**: `.../AKfycbwYYcE5PtvcfaGWTf56ahyd6327s6O5ApzesT7-XtVWcm7brANuQ0qgeGnziYWenwxC/exec`
   Boss bikin deployment BARU (bukan New version), jadi alamatnya ganti dan kelima file
