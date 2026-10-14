@@ -1045,7 +1045,23 @@ function rapikanJudul(sh, jumlahKolom) {
 function bizstarSheet() {
   const ss = penilaianSS();
   let sh = ss.getSheetByName(BIZSTAR_SHEET);
-  if (sh) return sh;
+
+  /* Sheet yang dibuat versi lama cuma punya dua kolom dan catatannya nyangkut di
+     kolom D. Dulu fungsi ini langsung berhenti kalau sheetnya sudah ada, jadi kolom
+     Line ID tidak pernah muncul di spreadsheet yang terlanjur dibuat duluan.
+     Sekarang dirapikan di tempat, tanpa menyentuh nama yang sudah diketik. */
+  if (sh) {
+    if (String(sh.getRange(1, 3).getValue()).trim() !== 'Line ID') {
+      sh.getRange(1, 3).setValue('Line ID');
+      sh.setColumnWidth(3, 170);
+    }
+    const catatanLama = String(sh.getRange(1, 4).getValue());
+    if (catatanLama.indexOf('Isi satu nama per baris') > -1) sh.getRange(1, 4).clearContent();
+    sh.getRange(1, 5).setValue('Satu nama per baris. Line ID cuma catatan, tidak dipakai web.')
+      .setFontColor('#888888');
+    rapikanJudul(sh, 3);
+    return sh;
+  }
 
   sh = ss.insertSheet(BIZSTAR_SHEET);
   sh.getRange(1, 1, 1, 3).setValues([['Nama Bizstar', 'Departemen', 'Line ID']]);
