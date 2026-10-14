@@ -1034,10 +1034,11 @@ function bizstarSheet() {
   if (sh) return sh;
 
   sh = ss.insertSheet(BIZSTAR_SHEET);
-  sh.getRange(1, 1, 1, 2).setValues([['Nama Bizstar', 'Departemen']]);
-  rapikanJudul(sh, 2);
-  sh.setColumnWidth(1, 240);
+  sh.getRange(1, 1, 1, 3).setValues([['Nama Bizstar', 'Departemen', 'Line ID']]);
+  rapikanJudul(sh, 3);
+  sh.setColumnWidth(1, 260);
   sh.setColumnWidth(2, 160);
+  sh.setColumnWidth(3, 170);
 
   // Departemen dipilih dari daftar supaya tidak ada salah ketik yang bikin
   // nama Bizstar tidak ketemu buddy-nya.
@@ -1048,7 +1049,7 @@ function bizstarSheet() {
     .build();
   sh.getRange(2, 2, 400, 1).setDataValidation(aturan);
 
-  sh.getRange(1, 4).setValue('Isi satu nama per baris. Urutan bebas.')
+  sh.getRange(1, 5).setValue('Satu nama per baris. Line ID cuma catatan, tidak dipakai web.')
     .setFontColor('#888888');
   return sh;
 }
@@ -1271,7 +1272,7 @@ function menuSiapkanSheet() {
     // dirapikan di sini supaya seragam dengan yang lain.
     rapikanJudul(shPenilaian, PENILAIAN_HEADER.length);
     rapikanJudul(shKeaktifan, 9);
-    rapikanJudul(shBizstar, 2);
+    rapikanJudul(shBizstar, 3);
 
     // Filter di sheet Penilaian supaya kolom Peran bisa disaring jadi panitia saja.
     pasangFilter(shPenilaian, PENILAIAN_HEADER.length);
