@@ -77,6 +77,38 @@ metadata:
   **Peringkat Panitia** (peringkat pakai nilai panitia saja — ukuran seragam lintas
   departemen karena penilainya orang yang sama).
 
+## JEBAKAN YANG SUDAH DUA KALI MENGGIGIT (2026-10-14) — BACA SEBELUM EDIT
+- **JANGAN menulis string ber-escape lewat heredoc Bash.** Pola
+  `python - <<'PYEOF' ... '\n' ... PYEOF` di lingkungan ini membuat `
+` berubah jadi
+  BARIS BARU SUNGGUHAN. Di dalam string JavaScript itu = sintaks rusak = SELURUH skrip
+  gagal diparse = web mati total tanpa intro. Sudah terjadi 2x.
+  - Cara aman: tulis skrip Python pakai tool Write, lalu jalankan `python berkas.py`.
+  - Kalau butuh baris baru di string JS: pakai `String.fromCharCode(10)` atau array join,
+    JANGAN `
+` literal lewat shell.
+- **WAJIB setelah tiap edit index.html**: tarik isi <script> lalu `node --check`.
+  ```
+  python -c "import io,re; s=io.open('index.html',encoding='utf-8').read();     b=re.findall(r'<script[^>]*>(.*?)</script>', s, re.S);     io.open('skrip.js','w',encoding='utf-8',newline='').write('
+;
+'.join(b))"
+  node --check skrip.js
+  ```
+  `node --check` langsung pada file .html/.gs TIDAK bisa — ekstensinya ditolak; salin
+  dulu ke .js.
+
+## SILENT FAILURE YANG SUDAH DITUTUP (2026-10-14)
+- Kiriman penilaian dulu pakai `mode:'no-cors'` -> jawaban server tidak terbaca, layar
+  SELALU bilang "Tersimpan" walau server menolak / alamat mati. Ini penyebab laporan
+  Boss "penilaian panitia tidak masuk" (kirimannya ke alamat lama yang sudah mati).
+  Sekarang `Content-Type: text/plain;charset=utf-8` (tidak memicu preflight) dan
+  jawabannya dibaca; gagal -> alert berisi alasan, isian tidak hilang.
+- `getLastRow()` ikut menghitung baris berformat/bekas isi -> penilaian mendarat di
+  baris 7 dengan baris 2-6 kosong, terlihat seperti tidak masuk. Diganti
+  `barisTerakhirBerisi(sheet, kolomPenanda)`; menu Siapkan Sheet membuang baris kosong.
+- Uji server tanpa menulis data: kirim token BENAR dengan data sengaja tidak lengkap —
+  kalau jawabannya soal data (bukan "Token salah"), berarti token cocok.
+
 ## AUDIT MENYELURUH (2026-10-12) — LUBANG YANG DITUTUP
 - **BAHAYA POLA FILE INI**: `index.html` punya belasan fungsi yang ditulis DUA KALI —
   definisi dasar di tengah file, lalu ditimpa `window.X = ...` di bawah. Menambal yang
