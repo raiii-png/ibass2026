@@ -945,6 +945,20 @@ function hitungPeringkat() {
     return String(a.nama).localeCompare(String(b.nama), 'id');
   });
   daftar.forEach(function (d, i) { d.peringkat = d.akhir === null ? '' : i + 1; });
+
+  /* Peringkat versi panitia saja.
+     Nilai buddy tidak bisa dibandingkan lintas departemen karena tiap departemen
+     dinilai orang yang berbeda, dan tiap orang punya standar sendiri. Panitia
+     menilai siapa saja lintas departemen, jadi ukurannya seragam — ini pembanding
+     paling jujur kalau harus memilih satu Best Bizstar dari semua.
+     Kosong untuk yang belum pernah dinilai panitia. */
+  daftar.filter(function (d) {
+    return d.nilaiPanitia !== null && d.nilaiPanitia !== undefined;
+  }).sort(function (a, b) {
+    if (b.nilaiPanitia !== a.nilaiPanitia) return b.nilaiPanitia - a.nilaiPanitia;
+    return String(a.nama).localeCompare(String(b.nama), 'id');
+  }).forEach(function (d, i) { d.peringkatPanitia = i + 1; });
+
   return daftar;
 }
 
@@ -1070,7 +1084,8 @@ function bacaRoster() {
    kelihatan nilai akhir itu datang dari mana. Tanpa itu, sumbangan panitia tenggelam
    di dalam satu angka dan tidak bisa dicek ulang tanpa menghitung tangan. */
 const PERINGKAT_HEADER = ['Peringkat', 'Nama Bizstar', 'Departemen', 'Buddy',
-  'Nilai Buddy', 'Nilai Panitia', 'Nilai KPI', 'Poin Keaktifan', 'Nilai Akhir', 'Predikat',
+  'Nilai Buddy', 'Nilai Panitia', 'Peringkat Panitia',
+  'Nilai KPI', 'Poin Keaktifan', 'Nilai Akhir', 'Predikat',
   'Dinilai Buddy', 'Dinilai Panitia', 'Milestone Terisi', 'Proker Hadir', 'Menunggu Konfirmasi'];
 
 /* Tulis ulang sheet Peringkat dari nol. Dipanggil tiap penilaian masuk, tiap buddy
@@ -1092,7 +1107,9 @@ function rebuildPeringkat() {
   sh.getRange(2, 1).setValue('Diperbarui ' + tglIndo(new Date())
     + '. Nilai akhir = nilai KPI + poin keaktifan (maksimal ' + KEAKTIFAN_MAKS + '). '
     + 'Kalau dinilai buddy dan panitia, buddy ' + Math.round(BOBOT_BUDDY * 100)
-    + ' persen dan panitia ' + Math.round(BOBOT_PANITIA * 100) + ' persen.')
+    + ' persen dan panitia ' + Math.round(BOBOT_PANITIA * 100) + ' persen. '
+    + 'Kolom Peringkat Panitia memakai nilai panitia saja, satu-satunya ukuran yang '
+    + 'seragam lintas departemen karena penilainya orang yang sama.')
     .setFontColor('#888888').setFontSize(9);
 
   const baris0 = 4;
@@ -1115,6 +1132,7 @@ function rebuildPeringkat() {
       d.nama, d.dept, d.buddy,
       d.nilaiBuddy === null || d.nilaiBuddy === undefined ? '' : Math.round(d.nilaiBuddy * 100) / 100,
       d.nilaiPanitia === null || d.nilaiPanitia === undefined ? '' : Math.round(d.nilaiPanitia * 100) / 100,
+      d.peringkatPanitia || '',
       d.kpi === null ? '' : Math.round(d.kpi * 100) / 100,
       d.poin,
       d.akhir === null ? '' : Math.round(d.akhir * 100) / 100,
@@ -1123,8 +1141,11 @@ function rebuildPeringkat() {
     ];
   });
   sh.getRange(baris0 + 1, 1, rows.length, W).setValues(rows);
-  sh.getRange(baris0 + 1, 5, rows.length, 5).setNumberFormat('0.00');   // nilai buddy s/d nilai akhir
-  sh.getRange(baris0 + 1, 8, rows.length, 1).setNumberFormat('0');      // poin keaktifan
+  sh.getRange(baris0 + 1, 5, rows.length, 2).setNumberFormat('0.00');   // nilai buddy, nilai panitia
+  sh.getRange(baris0 + 1, 7, rows.length, 1).setNumberFormat('0');      // peringkat panitia
+  sh.getRange(baris0 + 1, 8, rows.length, 1).setNumberFormat('0.00');   // nilai KPI
+  sh.getRange(baris0 + 1, 9, rows.length, 1).setNumberFormat('0');      // poin keaktifan
+  sh.getRange(baris0 + 1, 10, rows.length, 1).setNumberFormat('0.00');  // nilai akhir
 
   // Yang belum punya nilai dibuat kelabu supaya tidak terbaca sebagai peringkat bawah.
   daftar.forEach(function (d, i) {
@@ -1137,7 +1158,7 @@ function rebuildPeringkat() {
 }
 
 function lebarPeringkat(sh) {
-  [75, 210, 150, 180, 95, 100, 85, 100, 90, 110, 100, 100, 110, 95, 130]
+  [75, 210, 150, 180, 95, 100, 110, 85, 100, 90, 110, 100, 100, 110, 95, 130]
     .forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
 }
 
