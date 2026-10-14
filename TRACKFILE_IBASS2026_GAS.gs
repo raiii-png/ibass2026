@@ -1227,6 +1227,59 @@ function rebuildRekap() {
   sh.getRange(baris, 1, msIsi.length, 5).setValues(msIsi);
   baris += msIsi.length + 2;
 
+  /* ── Kecenderungan penilai ──
+     Satu departemen cuma dinilai satu buddy, dan nilai buddy menentukan 70 persen.
+     Jadi posisi seorang Bizstar di peringkat ikut bergantung pada siapa buddy-nya,
+     bukan cuma pada dirinya. Tabel ini memperlihatkan hal itu apa adanya: kalau
+     rata-rata satu penilai jauh di bawah yang lain, peringkat antar departemen
+     tidak bisa dibaca mentah-mentah. */
+  sh.getRange(baris, 1).setValue('Kecenderungan penilai').setFontWeight('bold');
+  baris++;
+  sh.getRange(baris, 1).setValue('Kalau rata-rata antar penilai selisihnya jauh, bandingkan '
+    + 'Bizstar di dalam departemen yang sama dulu, jangan langsung lintas departemen.')
+    .setFontColor('#888888').setFontSize(9);
+  baris++;
+  sh.getRange(baris, 1, 1, 6).setValues([['Penilai', 'Peran', 'Orang dinilai',
+    'Rata-rata diberi', 'Terendah', 'Tertinggi']])
+    .setFontWeight('bold').setBackground('#f3f3f3');
+  baris++;
+
+  const perPenilai = {};
+  rowsPen.forEach(function (r) {
+    const nm = String(r.penilai || '').trim();
+    if (!nm) return;
+    const nilai = Number(r.skor_weighted);
+    if (isNaN(nilai) || nilai <= 0) return;
+    const k = normNama(nm);
+    if (!perPenilai[k]) {
+      perPenilai[k] = { nama: nm, peran: String(r.role || ''), nilai: [], orang: {} };
+    }
+    perPenilai[k].nilai.push(nilai);
+    perPenilai[k].orang[normNama(r.nama_bizstar)] = true;
+  });
+
+  const kunciPenilai = Object.keys(perPenilai);
+  if (!kunciPenilai.length) {
+    sh.getRange(baris, 1).setValue('Belum ada penilaian yang masuk.').setFontColor('#888888');
+    baris += 2;
+  } else {
+    const isiPenilai = kunciPenilai.map(function (k) {
+      const o = perPenilai[k];
+      const total = o.nilai.reduce(function (t, v) { return t + v; }, 0);
+      return [o.nama, o.peran === 'buddy' ? 'Buddy' : 'Panitia',
+        Object.keys(o.orang).length,
+        Math.round((total / o.nilai.length) * 100) / 100,
+        Math.round(Math.min.apply(null, o.nilai) * 100) / 100,
+        Math.round(Math.max.apply(null, o.nilai) * 100) / 100];
+    }).sort(function (a, b) {
+      if (a[1] !== b[1]) return a[1] === 'Buddy' ? -1 : 1;
+      return b[3] - a[3];
+    });
+    sh.getRange(baris, 1, isiPenilai.length, 6).setValues(isiPenilai);
+    sh.getRange(baris, 4, isiPenilai.length, 3).setNumberFormat('0.00');
+    baris += isiPenilai.length + 2;
+  }
+
   // ── Belum tersentuh sama sekali ──
   sh.getRange(baris, 1).setValue('Belum dinilai sama sekali').setFontWeight('bold');
   baris++;
