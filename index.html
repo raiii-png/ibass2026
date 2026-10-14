@@ -4005,12 +4005,10 @@ async function doSubmit(){
     document.getElementById('successMsg').textContent=`${rows.length} penilaian tersimpan.`;
     document.getElementById('success').classList.add('visible');
   }catch(e){
-    alert('Penilaian belum tersimpan.
-
-' + ((e&&e.message)||'Koneksi bermasalah')
-      + '
-
-Jangan tutup halaman ini, nilainya masih tersimpan sementara. Coba kirim lagi.');
+    const PISAH = String.fromCharCode(10) + String.fromCharCode(10);
+    alert('Penilaian belum tersimpan.' + PISAH
+      + ((e && e.message) || 'Koneksi bermasalah') + PISAH
+      + 'Jangan tutup halaman ini, nilainya masih tersimpan sementara. Coba kirim lagi.');
     lbl.innerHTML='Kirim Semua Penilaian'; btn.disabled=false;
   }
 }
@@ -4542,12 +4540,10 @@ window.doSubmit = async function(){
     document.getElementById('successMsg').textContent=`${rows.length} penilaian tersimpan.${absentNote}`;
     document.getElementById('success').classList.add('visible');
   }catch(e){
-    alert('Penilaian belum tersimpan.
-
-' + ((e&&e.message)||'Koneksi bermasalah')
-      + '
-
-Jangan tutup halaman ini, nilainya masih tersimpan sementara. Coba kirim lagi.');
+    const PISAH = String.fromCharCode(10) + String.fromCharCode(10);
+    alert('Penilaian belum tersimpan.' + PISAH
+      + ((e && e.message) || 'Koneksi bermasalah') + PISAH
+      + 'Jangan tutup halaman ini, nilainya masih tersimpan sementara. Coba kirim lagi.');
     lbl.innerHTML='Kirim Semua Penilaian'; btn.disabled=false;
   }
 };
