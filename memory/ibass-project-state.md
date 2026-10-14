@@ -47,6 +47,36 @@ metadata:
   teks kartu Hitungannya + nilai cadangan `js.perProker||1`/`js.maks||5` (keaktifan).
   **Ganti angka = ganti di lima tempat itu + panduan + artefak.**
 
+## DAFTAR BIZSTAR & KEADILAN SKOR (2026-10-14)
+- **49 nama Bizstar asli sudah masuk**, placeholder `HRD-01 [Nama]` sudah tidak ada.
+  Ada di dua tempat: `BIZSTAR_DB` di index.html/penilaian.html (cadangan, jalan tanpa
+  deploy) dan `DAFTAR_BIZSTAR_2026.tsv` untuk ditempel ke sheet Bizstar (acuan utama).
+  Sebaran: ExtAff 9, HRD 8, MEIN 7, Entre 7, ACT 6, Advo 5, Finance 4, Secre 3.
+  Penulisan nama diseragamkan Title Case; ejaan tidak diubah. "Chentadhinaba" sengaja
+  dibiarkan apa adanya atas permintaan Boss (masih ditanyakan ke orangnya).
+- Sheet Bizstar punya 3 kolom: Nama, Departemen, Line ID. Line ID cuma catatan.
+- Data yang masih perlu dilengkapi Boss: 8 orang tanpa Line ID, 3 Line ID berisi nama
+  (ada spasi), 3 berisi angka seperti nomor HP/NIM.
+- **ANALISIS KEADILAN SKOR** (kalau ditanya lagi, jangan hitung ulang):
+  - Jumlah anggota departemen TIDAK berpengaruh. `rata()` membagi dengan jumlah
+    penilaian yang orang itu terima, bukan jumlah anggota. Terbukti: 8/8/8 = 80,00
+    baik di departemen isi 3 maupun 9.
+  - Yang nyata berpengaruh: SIAPA buddy-nya. Buddy murah hati 9/9/9 = 90,00 vs buddy
+    pelit 7/7/7 = 70,00. Selisih 20 poin murni dari standar penilai.
+  - Dinilai panitia atau tidak = selisih ~3 poin (panitia skala 1-5, "4 dari 5" lebih
+    gampang dicapai daripada "8 dari 10").
+  - Dua form menimbang beda: buddy Growth 42%, panitia Growth 25%. Unggul di Growth
+    bernilai 6,67 poin lebih tinggi di form buddy.
+  - Poin keaktifan maks 5 vs selisih satu tingkat nilai 10 poin -> bisa menyalip separuh.
+  - Saran yang sudah disampaikan: juara per departemen aman; Best Bizstar tunggal
+    lintas departemen sebaiknya lihat kolom Peringkat Panitia.
+- **Sheet Rekap** sekarang: per departemen, per milestone (dipecah buddy/panitia),
+  kecenderungan penilai (rata-rata yang diberi tiap penilai, terendah, tertinggi),
+  belum dinilai sama sekali, + 2 grafik.
+- **Sheet Peringkat** 16 kolom, termasuk Nilai Buddy, Nilai Panitia, dan
+  **Peringkat Panitia** (peringkat pakai nilai panitia saja — ukuran seragam lintas
+  departemen karena penilainya orang yang sama).
+
 ## AUDIT MENYELURUH (2026-10-12) — LUBANG YANG DITUTUP
 - **BAHAYA POLA FILE INI**: `index.html` punya belasan fungsi yang ditulis DUA KALI —
   definisi dasar di tengah file, lalu ditimpa `window.X = ...` di bawah. Menambal yang
