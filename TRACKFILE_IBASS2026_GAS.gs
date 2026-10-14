@@ -485,18 +485,23 @@ function doPost(e) {
       /* Buddy boleh mencatat sendiri (jalur kedua). Kalau yang mengirim menyertakan
          status 'Hadir' berikut namanya, laporan langsung sah tanpa perlu dikonfirmasi
          lagi — yang mencatat memang orang yang berhak mengonfirmasi. */
-      const langsung = String(body.status || '') === 'Hadir' && String(body.oleh || '').trim();
+      /* Buddy boleh menandai hadir ATAU tidak hadir. Dua-duanya keputusan yang sudah
+         pasti, jadi tidak perlu lewat status "Menunggu". Yang tidak hadir tetap
+         tercatat supaya kelihatan sudah diperiksa, tapi tidak menambah poin. */
+      const statusKirim = String(body.status || '');
+      const olehBersih = String(body.oleh || '').trim();
+      const langsung = olehBersih && (statusKirim === 'Hadir' || statusKirim === 'Tidak Hadir');
       // Kolom 3 = nama bizstar, penanda baris berisi.
       const barisBaru = barisTerakhirBerisi(sh, 3) + 1;
       sh.getRange(barisBaru, 1, 1, 9).setValues([[Date.now(), new Date().toISOString(),
         nama, String(body.dept || ''), proker, String(body.tanggal || ''),
         String(body.bukti || ''),
-        langsung ? 'Hadir' : 'Menunggu', langsung ? String(body.oleh).trim() : '']]);
+        langsung ? statusKirim : 'Menunggu', langsung ? olehBersih : '']]);
       /* Proker yang diketik buddy lewat "Proker lain" ikut dimasukkan ke daftar,
          jadi lain kali tinggal ditekan — daftarnya tumbuh sendiri dari pemakaian,
          tidak perlu ada yang mengisi dari pusat. */
       try { tambahProkerKalauBaru(proker); } catch (e3) {}
-      if (langsung) { try { rebuildPeringkat(); rebuildRekap(); } catch (e2) {} }
+      if (langsung) { try { rebuildPeringkat(); rebuildRekapBizstar(); } catch (e2) {} }
       return jsonOk({ tersimpan: true });
     }
 
@@ -515,7 +520,7 @@ function doPost(e) {
           sh.getRange(i + 2, 8, 1, 2).setValues([[
             st, st === 'Menunggu' ? '' : String(body.oleh || 'Buddy')]]);
           // poin berubah → peringkat ikut disegarkan, tapi jangan sampai menggagalkan simpan
-          try { rebuildPeringkat(); rebuildRekap(); } catch (e2) {}
+          try { rebuildPeringkat(); rebuildRekapBizstar(); } catch (e2) {}
           return jsonOk({ id: body.id, status: body.status });
         }
       }
@@ -793,7 +798,7 @@ function savePenilaian(ss, submissions) {
   // Kolom 6 = Nama Bizstar, selalu terisi kalau barisnya memang data.
   const mulai = barisTerakhirBerisi(sheet, 6) + 1;
   sheet.getRange(mulai, 1, rows.length, PENILAIAN_HEADER.length).setValues(rows);
-  try { rebuildPeringkat(); rebuildRekap(); } catch (e) {}
+  try { rebuildPeringkat(); rebuildRekapBizstar(); } catch (e) {}
   return jsonOk({ message: rows.length + ' penilaian tersimpan' });
 }
 
@@ -1274,7 +1279,7 @@ function lebarPeringkat(sh) {
    Dua hal yang sering ditanya menjelang hari-H: departemen mana yang penilaiannya
    belum masuk, dan siapa saja yang belum tersentuh sama sekali. Dihitung dari
    daftar Bizstar di sheet, jadi angkanya baru benar setelah daftar itu diisi. */
-function rebuildRekap() {
+function rebuildRekapBizstar() {
   const ss = penilaianSS();
   let sh = ss.getSheetByName(REKAP_SHEET);
   if (!sh) sh = ss.insertSheet(REKAP_SHEET);
@@ -1472,7 +1477,7 @@ function menuSiapkanSheet() {
       'Ditulis ulang otomatis tiap penilaian masuk. Ketikan tangan di sini akan hilang.');
 
     rebuildPeringkat();
-    rebuildRekap();
+    rebuildRekapBizstar();
 
     const sesudah = ss.getSheets().map(function (sh) { return sh.getName(); });
     const baru = sesudah.filter(function (n) { return sebelum.indexOf(n) === -1; });
@@ -1533,7 +1538,7 @@ function menuHapusBarisUji() {
       total += dibuang;
     });
 
-    if (total) { rebuildPeringkat(); rebuildRekap(); }
+    if (total) { rebuildPeringkat(); rebuildRekapBizstar(); }
     ui.alert('Baris uji coba',
       total ? 'Dihapus: ' + laporan.join(', ') + '. Peringkat sudah dihitung ulang.'
             : 'Tidak ada baris uji coba yang ditemukan.',
@@ -1549,7 +1554,7 @@ function menuGambarUlangGrafik() {
     const sh = penilaianSS().getSheetByName(REKAP_SHEET);
     if (!sh) { ui.alert('Sheet Rekap belum ada. Jalankan Siapkan Sheet Penilaian dulu.'); return; }
     sh.getCharts().forEach(function (c) { sh.removeChart(c); });
-    rebuildRekap();
+    rebuildRekapBizstar();
     ui.alert('Grafik digambar ulang',
       'Dua grafik di sheet Rekap: rata-rata nilai per departemen, dan perbandingan '
       + 'sudah dinilai dengan yang belum.', ui.ButtonSet.OK);
@@ -1561,7 +1566,7 @@ function menuGambarUlangGrafik() {
 function menuPerbaruiRekap() {
   const ui = SpreadsheetApp.getUi();
   try {
-    const hasil = rebuildRekap();
+    const hasil = rebuildRekapBizstar();
     ui.alert('Rekap diperbarui',
       hasil.belum
         ? hasil.belum + ' Bizstar belum punya nilai sama sekali. Daftarnya ada di bagian bawah sheet Rekap.'
