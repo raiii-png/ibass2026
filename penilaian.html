@@ -3992,13 +3992,26 @@ async function doSubmit(){
   }
 
   try{
-    await fetch(APPS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({submissions:rows,token:SUBMIT_TOKEN})});
+    /* Dulu pakai mode 'no-cors'. Dengan mode itu jawaban server tidak bisa dibaca
+       sama sekali, jadi layar selalu bilang "Tersimpan" walaupun server menolak atau
+       alamatnya sudah mati — penilaian hilang tanpa ada yang tahu. Content-Type
+       text/plain tidak memicu preflight, jadi jawabannya bisa dibaca. */
+    const tanggapan = await fetch(APPS_URL,{method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({submissions:rows,token:SUBMIT_TOKEN})});
+    const hasil = await tanggapan.json();
+    if(!hasil || !hasil.ok) throw new Error((hasil&&hasil.error)||'ditolak server');
     if(currentRole==='panitia') saveSubmittedNames(rows.map(r=>r.nama_bizstar));
     document.getElementById('successMsg').textContent=`${rows.length} penilaian tersimpan.`;
     document.getElementById('success').classList.add('visible');
-  }catch{
-    alert('Gagal mengirim. Periksa koneksi internet.');
-    lbl.innerHTML='Kirim Semua Penilaian';btn.disabled=false;
+  }catch(e){
+    alert('Penilaian belum tersimpan.
+
+' + ((e&&e.message)||'Koneksi bermasalah')
+      + '
+
+Jangan tutup halaman ini, nilainya masih tersimpan sementara. Coba kirim lagi.');
+    lbl.innerHTML='Kirim Semua Penilaian'; btn.disabled=false;
   }
 }
 
@@ -4515,13 +4528,26 @@ window.doSubmit = async function(){
   }
 
   try{
-    await fetch(APPS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({submissions:rows,token:SUBMIT_TOKEN})});
+    /* Dulu pakai mode 'no-cors'. Dengan mode itu jawaban server tidak bisa dibaca
+       sama sekali, jadi layar selalu bilang "Tersimpan" walaupun server menolak atau
+       alamatnya sudah mati — penilaian hilang tanpa ada yang tahu. Content-Type
+       text/plain tidak memicu preflight, jadi jawabannya bisa dibaca. */
+    const tanggapan = await fetch(APPS_URL,{method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({submissions:rows,token:SUBMIT_TOKEN})});
+    const hasil = await tanggapan.json();
+    if(!hasil || !hasil.ok) throw new Error((hasil&&hasil.error)||'ditolak server');
     if(currentRole==='panitia') saveSubmittedNames(rows.map(r=>r.nama_bizstar));
     const absentNote = absentList.length ? ` ${absentList.length} yang tidak hadir tidak ikut dikirim.` : '';
     document.getElementById('successMsg').textContent=`${rows.length} penilaian tersimpan.${absentNote}`;
     document.getElementById('success').classList.add('visible');
-  }catch{
-    alert('Gagal mengirim. Periksa koneksi internet.');
+  }catch(e){
+    alert('Penilaian belum tersimpan.
+
+' + ((e&&e.message)||'Koneksi bermasalah')
+      + '
+
+Jangan tutup halaman ini, nilainya masih tersimpan sementara. Coba kirim lagi.');
     lbl.innerHTML='Kirim Semua Penilaian'; btn.disabled=false;
   }
 };
