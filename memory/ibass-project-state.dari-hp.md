@@ -47,6 +47,96 @@ metadata:
   teks kartu Hitungannya + nilai cadangan `js.perProker||1`/`js.maks||5` (keaktifan).
   **Ganti angka = ganti di lima tempat itu + panduan + artefak.**
 
+## DAFTAR BIZSTAR & KEADILAN SKOR (2026-10-14)
+- **49 nama Bizstar asli sudah masuk**, placeholder `HRD-01 [Nama]` sudah tidak ada.
+  Ada di dua tempat: `BIZSTAR_DB` di index.html/penilaian.html (cadangan, jalan tanpa
+  deploy) dan `DAFTAR_BIZSTAR_2026.tsv` untuk ditempel ke sheet Bizstar (acuan utama).
+  Sebaran: ExtAff 9, HRD 8, MEIN 7, Entre 7, ACT 6, Advo 5, Finance 4, Secre 3.
+  Penulisan nama diseragamkan Title Case; ejaan tidak diubah. "Chentadhinaba" sengaja
+  dibiarkan apa adanya atas permintaan Boss (masih ditanyakan ke orangnya).
+- Sheet Bizstar punya 3 kolom: Nama, Departemen, Line ID. Line ID cuma catatan.
+- Data yang masih perlu dilengkapi Boss: 8 orang tanpa Line ID, 3 Line ID berisi nama
+  (ada spasi), 3 berisi angka seperti nomor HP/NIM.
+- **ANALISIS KEADILAN SKOR** (kalau ditanya lagi, jangan hitung ulang):
+  - Jumlah anggota departemen TIDAK berpengaruh. `rata()` membagi dengan jumlah
+    penilaian yang orang itu terima, bukan jumlah anggota. Terbukti: 8/8/8 = 80,00
+    baik di departemen isi 3 maupun 9.
+  - Yang nyata berpengaruh: SIAPA buddy-nya. Buddy murah hati 9/9/9 = 90,00 vs buddy
+    pelit 7/7/7 = 70,00. Selisih 20 poin murni dari standar penilai.
+  - Dinilai panitia atau tidak = selisih ~3 poin (panitia skala 1-5, "4 dari 5" lebih
+    gampang dicapai daripada "8 dari 10").
+  - Dua form menimbang beda: buddy Growth 42%, panitia Growth 25%. Unggul di Growth
+    bernilai 6,67 poin lebih tinggi di form buddy.
+  - Poin keaktifan maks 5 vs selisih satu tingkat nilai 10 poin -> bisa menyalip separuh.
+  - Saran yang sudah disampaikan: juara per departemen aman; Best Bizstar tunggal
+    lintas departemen sebaiknya lihat kolom Peringkat Panitia.
+- **Sheet Rekap** sekarang: per departemen, per milestone (dipecah buddy/panitia),
+  kecenderungan penilai (rata-rata yang diberi tiap penilai, terendah, tertinggi),
+  belum dinilai sama sekali, + 2 grafik.
+- **Sheet Peringkat** 16 kolom, termasuk Nilai Buddy, Nilai Panitia, dan
+  **Peringkat Panitia** (peringkat pakai nilai panitia saja — ukuran seragam lintas
+  departemen karena penilainya orang yang sama).
+
+## JEBAKAN YANG SUDAH DUA KALI MENGGIGIT (2026-10-14) — BACA SEBELUM EDIT
+- **JANGAN menulis string ber-escape lewat heredoc Bash.** Pola
+  `python - <<'PYEOF' ... '\n' ... PYEOF` di lingkungan ini membuat `
+` berubah jadi
+  BARIS BARU SUNGGUHAN. Di dalam string JavaScript itu = sintaks rusak = SELURUH skrip
+  gagal diparse = web mati total tanpa intro. Sudah terjadi 2x.
+  - Cara aman: tulis skrip Python pakai tool Write, lalu jalankan `python berkas.py`.
+  - Kalau butuh baris baru di string JS: pakai `String.fromCharCode(10)` atau array join,
+    JANGAN `
+` literal lewat shell.
+- **WAJIB setelah tiap edit index.html**: tarik isi <script> lalu `node --check`.
+  ```
+  python -c "import io,re; s=io.open('index.html',encoding='utf-8').read();     b=re.findall(r'<script[^>]*>(.*?)</script>', s, re.S);     io.open('skrip.js','w',encoding='utf-8',newline='').write('
+;
+'.join(b))"
+  node --check skrip.js
+  ```
+  `node --check` langsung pada file .html/.gs TIDAK bisa — ekstensinya ditolak; salin
+  dulu ke .js.
+
+## SILENT FAILURE YANG SUDAH DITUTUP (2026-10-14)
+- Kiriman penilaian dulu pakai `mode:'no-cors'` -> jawaban server tidak terbaca, layar
+  SELALU bilang "Tersimpan" walau server menolak / alamat mati. Ini penyebab laporan
+  Boss "penilaian panitia tidak masuk" (kirimannya ke alamat lama yang sudah mati).
+  Sekarang `Content-Type: text/plain;charset=utf-8` (tidak memicu preflight) dan
+  jawabannya dibaca; gagal -> alert berisi alasan, isian tidak hilang.
+- `getLastRow()` ikut menghitung baris berformat/bekas isi -> penilaian mendarat di
+  baris 7 dengan baris 2-6 kosong, terlihat seperti tidak masuk. Diganti
+  `barisTerakhirBerisi(sheet, kolomPenanda)`; menu Siapkan Sheet membuang baris kosong.
+- Uji server tanpa menulis data: kirim token BENAR dengan data sengaja tidak lengkap —
+  kalau jawabannya soal data (bukan "Token salah"), berarti token cocok.
+
+## AUDIT MENYELURUH (2026-10-12) — LUBANG YANG DITUTUP
+- **BAHAYA POLA FILE INI**: `index.html` punya belasan fungsi yang ditulis DUA KALI —
+  definisi dasar di tengah file, lalu ditimpa `window.X = ...` di bawah. Menambal yang
+  atas = tambalan mati. Ini yang bikin panitia kelewat dan perbaikan gulung layar tidak
+  jalan. SEBELUM menambal fungsi apa pun di file ini, cek dulu:
+  `grep -n "^function NAMA\|^window\.NAMA *=" index.html`.
+  Penimpa yang menyertakan `_origX(...)` aman; yang menulis ulang isinya tidak.
+- Pindah Bizstar sekarang lewat SATU pintu `pindahBizstar(tujuan)` — tombol, titik
+  progres, geser, dan panah papan ketik semua memakainya. Dulu empat salinan terpisah,
+  dua di antaranya tidak membatalkan hitung mundur `lanjutTimer` sehingga satu Bizstar
+  bisa terlewat tanpa dinilai. `window.nextBiz`/`prevBiz` dan `triggerSlide` sudah dibuang.
+- **`keaktifanlapor` + `keaktifankonfirm` sekarang WAJIB token** (`PENILAIAN_TOKEN`).
+  Dulu tanpa pengaman sama sekali padahal langsung menambah poin, dan web dipasang
+  "akses siapa saja". Token ada di kode halaman publik, jadi ini menahan iseng dan
+  pindaian acak, bukan orang yang membuka source. Login Google ditolak karena bikin
+  buddy tidak bisa isi cepat lewat HP — Boss sudah diberi tahu tradeoff-nya.
+- Peringkat kini memuat SEMUA nama dari sheet Bizstar; yang belum dinilai tampil
+  "Belum dinilai", kelabu, urutan paling bawah.
+- Sheet Peringkat & Rekap diberi `protect().setWarningOnly(true)` karena isinya ditimpa
+  ulang tiap data masuk.
+- **Label bobot kriteria sudah diperbaiki**: dulu buddy 15/20/25 (jumlah 60) dan panitia
+  15/15/10 (jumlah 40) — terbaca seolah persen nilai akhir. Sekarang buddy 25/33/42 dan
+  panitia 37,5/37,5/25, berjumlah 100 di tiap form. PERHITUNGAN TIDAK BERUBAH (kodenya
+  tetap /60 dan /40); yang diubah cuma labelnya.
+- Semua sheet termasuk LAPORAN sudah tanpa warna: tebal + `#f3f3f3` saja.
+- Catatan uji: panel browser sering tersembunyi -> rendering dijeda, jadi transisi CSS,
+  smooth scroll, dan rAF TIDAK jalan. Ukur kelas/DOM/nilai hitungan, bukan animasinya.
+
 ## SHEET & DEPLOY (2026-10-11)
 - **Apps Script URL BARU**: `.../AKfycbwYYcE5PtvcfaGWTf56ahyd6327s6O5ApzesT7-XtVWcm7brANuQ0qgeGnziYWenwxC/exec`
   Boss bikin deployment BARU (bukan New version), jadi alamatnya ganti dan kelima file
