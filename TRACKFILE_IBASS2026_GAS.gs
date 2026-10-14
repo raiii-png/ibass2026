@@ -80,6 +80,7 @@ const BUDDY_2026 = [
 const PERINGKAT_SHEET = 'Peringkat';
 const BIZSTAR_SHEET   = 'Bizstar';
 const REKAP_SHEET     = 'Rekap';
+const PROKER_SHEET    = 'Proker';
 
 /* Urutan departemen dipakai untuk validasi isian di sheet Bizstar dan untuk
    mengurutkan baris di sheet Rekap. */
@@ -168,6 +169,12 @@ function doGet(e) {
         perDept[o.dept].push(o.nama);
       });
       return jsonOk({ daftar: roster, perDept: perDept, jumlah: roster.length });
+    }
+
+    if (action === 'proker') {
+      // Daftar proker untuk tombol pilihan di menu Catat Proker.
+      const daftar = bacaProker();
+      return jsonOk({ daftar: daftar, jumlah: daftar.length });
     }
 
     if (action === 'peringkat') {
@@ -1119,6 +1126,35 @@ function bizstarSheet() {
   return sh;
 }
 
+/* ── Daftar proker HIMA ──
+   Nama proker diketik tangan juga berantakan: "Aspire 2026", "aspire", "ASPIRE".
+   Penolakan kembar memang mengabaikan besar kecil huruf dan spasi, tapi di sheet
+   dan di rekap tetap terbaca sebagai tulisan yang berbeda-beda. Dengan daftar
+   tetap, buddy tinggal menekan. */
+function prokerSheet() {
+  const ss = penilaianSS();
+  let sh = ss.getSheetByName(PROKER_SHEET);
+  if (sh) return sh;
+
+  sh = ss.insertSheet(PROKER_SHEET);
+  sh.getRange(1, 1, 1, 2).setValues([['Nama Proker', 'Keterangan']]);
+  rapikanJudul(sh, 2);
+  sh.setColumnWidth(1, 260);
+  sh.setColumnWidth(2, 260);
+  sh.getRange(1, 4).setValue('Satu proker per baris. Yang ada di sini muncul sebagai '
+    + 'pilihan di menu Catat Proker.').setFontColor('#888888');
+  return sh;
+}
+
+function bacaProker() {
+  const sh = prokerSheet();
+  const n = sh.getLastRow() - 1;
+  if (n < 1) return [];
+  return sh.getRange(2, 1, n, 1).getValues()
+    .map(function (r) { return String(r[0] || '').trim(); })
+    .filter(function (v) { return v; });
+}
+
 /* Baca daftar Bizstar dari sheet. Baris tanpa nama dilewati. */
 function bacaRoster() {
   const sh = bizstarSheet();
@@ -1392,12 +1428,14 @@ function menuSiapkanSheet() {
     const shPenilaian = ensurePenilaianSheet(ss);
     const shKeaktifan = keaktifanSheet();
     const shBizstar = bizstarSheet();
+    const shProker = prokerSheet();
 
     // Sheet yang dibuat versi lama masih berjudul navy dengan teks biru —
     // dirapikan di sini supaya seragam dengan yang lain.
     rapikanJudul(shPenilaian, PENILAIAN_HEADER.length);
     rapikanJudul(shKeaktifan, 9);
     rapikanJudul(shBizstar, 3);
+    rapikanJudul(shProker, 2);
 
     // Baris kosong yang terlanjur menyelip di atas data dibuang di sini.
     const dibuang = rapikanBarisKosong(shPenilaian, PENILAIAN_HEADER.length)
@@ -1425,7 +1463,8 @@ function menuSiapkanSheet() {
       dibuang ? dibuang + ' baris kosong di atas data dibuang.' : '',
       '',
       'Sheet yang dipakai:',
-      '- ' + BIZSTAR_SHEET + ': daftar nama, diisi tangan',
+      '- ' + BIZSTAR_SHEET + ': daftar nama Bizstar, diisi tangan',
+      '- ' + PROKER_SHEET + ': daftar proker HIMA, diisi tangan',
       '- ' + PENILAIAN_SHEET + ': nilai KPI dari buddy dan panitia',
       '- ' + KEAKTIFAN_SHEET + ': kehadiran proker yang dicatat buddy',
       '- ' + PERINGKAT_SHEET + ': gabungan keduanya, tersusun sendiri',
@@ -1441,6 +1480,48 @@ function menuSiapkanSheet() {
 }
 
 /* Dipakai kalau grafiknya terlanjur kehapus atau posisinya digeser-geser. */
+/* Baris yang dipakai waktu menguji sistem: nama Bizstar diawali "ZZZ" atau penilainya
+   "UJI SISTEM". Dibuang dari sheet Penilaian dan Keaktifan sekaligus, lalu peringkat
+   dihitung ulang. Dihapus dari bawah ke atas supaya nomor barisnya tidak bergeser
+   waktu penghapusan berjalan. */
+function menuHapusBarisUji() {
+  const ui = SpreadsheetApp.getUi();
+  const ujiCoba = function (teks) {
+    const t = String(teks || '').trim().toUpperCase();
+    return t.indexOf('ZZZ') === 0 || t === 'UJI SISTEM';
+  };
+  try {
+    const ss = penilaianSS();
+    let total = 0;
+    const laporan = [];
+
+    [[PENILAIAN_SHEET, [6, 3]], [KEAKTIFAN_SHEET, [3, 9]]].forEach(function (pasangan) {
+      const sh = ss.getSheetByName(pasangan[0]);
+      if (!sh || sh.getLastRow() < 2) return;
+      const kolom = pasangan[1];
+      const lebar = Math.max(kolom[0], kolom[1]);
+      const data = sh.getRange(2, 1, sh.getLastRow() - 1, lebar).getValues();
+      let dibuang = 0;
+      for (let i = data.length - 1; i >= 0; i--) {
+        if (ujiCoba(data[i][kolom[0] - 1]) || ujiCoba(data[i][kolom[1] - 1])) {
+          sh.deleteRow(i + 2);
+          dibuang++;
+        }
+      }
+      if (dibuang) laporan.push(dibuang + ' di ' + pasangan[0]);
+      total += dibuang;
+    });
+
+    if (total) { rebuildPeringkat(); rebuildRekap(); }
+    ui.alert('Baris uji coba',
+      total ? 'Dihapus: ' + laporan.join(', ') + '. Peringkat sudah dihitung ulang.'
+            : 'Tidak ada baris uji coba yang ditemukan.',
+      ui.ButtonSet.OK);
+  } catch (err) {
+    ui.alert('Gagal menghapus', String((err && err.message) || err), ui.ButtonSet.OK);
+  }
+}
+
 function menuGambarUlangGrafik() {
   const ui = SpreadsheetApp.getUi();
   try {
@@ -1512,6 +1593,8 @@ function onOpen() {
     .addItem('Perbarui Peringkat Bizstar', 'menuPerbaruiPeringkat')
     .addItem('Perbarui Rekap', 'menuPerbaruiRekap')
     .addItem('Gambar Ulang Grafik', 'menuGambarUlangGrafik')
+    .addSeparator()
+    .addItem('Hapus Baris Uji Coba', 'menuHapusBarisUji')
     .addSeparator()
     .addItem('Perbarui Laporan', 'menuGenerateLaporan')
     .addItem('Perbarui Grafik', 'menuPerbaruiGrafik')
