@@ -1979,7 +1979,11 @@ input:focus, select:focus, textarea:focus {
         menulis siapa yang ikut, lalu kamu pindahkan ke sini.
       </div>
       <div class="field">
-        <label>Nama Proker HIMA</label>
+        <label>Proker HIMA</label>
+        <div class="nama-grid" id="gridProker"></div>
+      </div>
+      <div class="field" id="prokerLainWrap" style="display:none">
+        <label>Tulis nama prokernya</label>
         <input type="text" id="catatProker" placeholder="Contoh: Aspire 2026" autocomplete="off">
       </div>
       <div class="field">
@@ -2516,6 +2520,20 @@ async function muatRoster(){
   }catch(e){ /* biarkan — daftar bawaan tetap jalan */ }
 }
 
+/* Daftar proker HIMA, sumbernya sheet Proker. Kalau sheetnya masih kosong atau
+   jaringan mati, buddy tetap bisa mengetik sendiri lewat pilihan "Proker lain". */
+let daftarProkerPilihan = [];
+
+async function muatProker(){
+  try{
+    const r = await fetch(APPS_URL + '?action=proker', { cache: 'no-store' });
+    const js = await r.json();
+    if(!js || !js.ok || !Array.isArray(js.daftar)) return;
+    daftarProkerPilihan = js.daftar;
+    isiPilihanProker();
+  }catch(e){ /* biarkan, pilihan "Proker lain" tetap ada */ }
+}
+
 /* Dipanggil setelah nama datang, kalau-kalau layarnya sudah terbuka duluan. */
 function segarkanDaftarBizstar(){
   try{
@@ -2535,6 +2553,7 @@ function segarkanDaftarBizstar(){
 }
 
 muatRoster();
+muatProker();
 
 /* ══ SECURITY: HTML escaper — cegah XSS dari user input ══ */
 function esc(str){ const d=document.createElement('div'); d.textContent=String(str); return d.innerHTML; }
@@ -3453,7 +3472,44 @@ function isiPilihanBizstar(){
     + `<span class="nb-n">Nama lain</span></button>`;
   document.getElementById('bizstarLainWrap').style.display = 'none';
   const bl = document.getElementById('bizstarLain'); if(bl) bl.value = '';
+  isiPilihanProker();
   segarkanJumlahCatat();
+}
+
+let prokerDipilih = '';
+let prokerLainAktif = false;
+
+function isiPilihanProker(){
+  const g = document.getElementById('gridProker');
+  if(!g) return;
+  prokerDipilih = '';
+  prokerLainAktif = false;
+  g.innerHTML = daftarProkerPilihan.map(n=>
+      `<button type="button" class="nama-btn" onclick="pilihProker(this,'${esc(n)}')">`
+      + `<span class="nb-n">${esc(n)}</span></button>`).join('')
+    + `<button type="button" class="nama-btn lain" onclick="pilihProker(this,'lain')">`
+    + `<span class="nb-n">Proker lain</span>`
+    + `<span class="nb-d">yang belum ada di daftar</span></button>`;
+  const wrap = document.getElementById('prokerLainWrap');
+  if(wrap) wrap.style.display = daftarProkerPilihan.length ? 'none' : 'block';
+  if(!daftarProkerPilihan.length) prokerLainAktif = true;
+  const t = document.getElementById('catatProker'); if(t) t.value = '';
+}
+
+function pilihProker(el, nama){
+  document.querySelectorAll('#gridProker .nama-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  const lain = nama === 'lain';
+  prokerLainAktif = lain;
+  prokerDipilih = lain ? '' : nama;
+  document.getElementById('prokerLainWrap').style.display = lain ? 'block' : 'none';
+  if(lain){ const t=document.getElementById('catatProker'); if(t) t.focus(); }
+}
+
+function namaProkerCatat(){
+  if(prokerDipilih) return prokerDipilih;
+  const t = document.getElementById('catatProker');
+  return t ? t.value.trim() : '';
 }
 
 function segarkanJumlahCatat(){
@@ -3507,14 +3563,14 @@ function namaBizstarCatat(){
 async function catatManual(){
   const oleh = buddySekarang();
   const daftar = namaBizstarCatat();
-  const proker = document.getElementById('catatProker').value.trim();
+  const proker = namaProkerCatat();
   const tanggal = document.getElementById('catatTanggal').value;
   const p = document.getElementById('catatPesan');
   const tombol = document.getElementById('tombolCatat');
   const kabar = (teks, warna) => { p.style.color = warna; p.textContent = teks; };
 
   if(!oleh)           return showToast('Pilih namamu dulu di atas');
-  if(!proker)         return kabar('Nama prokernya diisi dulu.', 'var(--amber)');
+  if(!proker)         return kabar('Pilih dulu prokernya.', 'var(--amber)');
   if(!daftar.length)  return kabar('Tandai dulu siapa saja yang datang.', 'var(--amber)');
 
   if(tombol) tombol.disabled = true;
@@ -3546,9 +3602,9 @@ async function catatManual(){
   kabar(bagian.join(', ') + '.' + (gagal.length ? ' Coba lagi yang gagal: ' + gagal.join(', ') : ''), warna);
 
   if(tersimpan){
-    // Prokernya dikosongkan supaya tidak terkirim dua kali tanpa sengaja,
+    // Pilihan prokernya dilepas supaya tidak terkirim dua kali tanpa sengaja,
     // tanggal dibiarkan karena biasanya masih acara yang sama.
-    document.getElementById('catatProker').value = '';
+    isiPilihanProker();
     isiPilihanBizstar();
   }
   muatKonfirmasi();
