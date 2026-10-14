@@ -3604,7 +3604,9 @@ async function catatManual(){
   if(tersimpan){
     // Pilihan prokernya dilepas supaya tidak terkirim dua kali tanpa sengaja,
     // tanggal dibiarkan karena biasanya masih acara yang sama.
-    isiPilihanProker();
+    // Daftar proker diambil ulang: nama yang barusan diketik lewat "Proker lain"
+    // sudah dicatat server, jadi lain kali muncul sebagai tombol.
+    muatProker();
     isiPilihanBizstar();
   }
   muatKonfirmasi();
