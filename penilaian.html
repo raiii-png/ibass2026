@@ -455,6 +455,21 @@ body {
   font-size: 0.75rem; cursor: pointer; padding: 0.2rem 0.4rem;
 }
 .baris-proker-buang:hover { color: var(--red); }
+/* ringkasan proker yang sudah tercatat untuk Bizstar yang sedang dipilih */
+.sudah-ada {
+  border-left: 2px solid var(--bdr2); padding: 0.1rem 0 0.1rem 0.7rem;
+  margin-bottom: 0.7rem;
+}
+.sudah-ada-judul {
+  font-family: 'Cinzel', serif; font-size: 0.5rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem;
+}
+.sudah-ada-item { font-size: 0.68rem; color: var(--text2); line-height: 1.75; }
+.sudah-ada-item .st { font-size: 0.55rem; letter-spacing: 0.06em; }
+.sudah-ada-item .st.ya { color: var(--green); }
+.sudah-ada-item .st.no { color: var(--red); }
+.sudah-ada-item .st.tunggu { color: var(--muted); }
+
 .baris-proker input, .baris-proker select {
   width: 100%; margin-bottom: 0.4rem;
 }
@@ -2021,8 +2036,9 @@ input:focus, select:focus, textarea:focus {
       </div>
 
       <div id="wadahProker" style="display:none">
+        <div id="prokerSudahAda"></div>
         <div class="field" style="margin-bottom:0.4rem">
-          <label>Proker yang dia ikuti</label>
+          <label>Tambah proker yang dia ikuti</label>
           <div id="daftarBarisProker"></div>
         </div>
         <div class="btn-sm-row" style="margin-top:0">
@@ -3536,10 +3552,35 @@ function namaBizstarCatat(){
   return t ? t.value.trim() : '';
 }
 
+/* Apa yang sudah pernah dicatat untuk orang ini, supaya buddy tidak menebak-nebak
+   dan tidak mengisi ulang yang sama. */
+function gambarProkerSudahAda(){
+  const kotak = document.getElementById('prokerSudahAda');
+  if(!kotak) return;
+  const nama = namaBizstarCatat();
+  if(!nama || !Array.isArray(daftarProker)){ kotak.innerHTML=''; return; }
+  const milik = daftarProker.filter(d=>normNama(d.nama)===normNama(nama));
+  if(!milik.length){
+    kotak.innerHTML = '<div class="sudah-ada"><div class="sudah-ada-judul">Sudah tercatat'
+      + '</div><div class="sudah-ada-item" style="color:var(--muted)">Belum ada.</div></div>';
+    return;
+  }
+  const hadir = milik.filter(d=>d.status==='Hadir').length;
+  kotak.innerHTML = '<div class="sudah-ada"><div class="sudah-ada-judul">Sudah tercatat &mdash; '
+    + hadir + ' hadir</div>'
+    + milik.map(d=>{
+        const kelas = d.status==='Hadir' ? 'ya' : (d.status==='Menunggu' ? 'tunggu' : 'no');
+        return '<div class="sudah-ada-item">' + escHtml(d.proker)
+          + ' <span class="st ' + kelas + '">' + escHtml(d.status) + '</span></div>';
+      }).join('')
+    + '</div>';
+}
+
 function segarkanJumlahCatat(){
   const nama = namaBizstarCatat();
   const tanda = document.getElementById('catatNamaTerpilih');
   if(tanda) tanda.textContent = nama ? '\u2014 ' + nama : '';
+  gambarProkerSudahAda();
   const wadah = document.getElementById('wadahProker');
   if(wadah) wadah.style.display = nama ? 'block' : 'none';
   const n = document.querySelectorAll('#daftarBarisProker .baris-proker').length;
@@ -3864,10 +3905,11 @@ function gambarKonfirmasi(){
     return a.nama.localeCompare(b.nama,'id');
   });
 
-  // Bizstar departemenmu vs sisanya. Kalau namamu tidak ada di daftar buddy resmi,
-  // tampilkan semua supaya tidak ada laporan yang tersembunyi.
-  const punyaku = dept ? semua.filter(o=>normNama(o.dept)===normNama(dept)) : semua;
-  const lain    = dept ? semua.filter(o=>normNama(o.dept)!==normNama(dept)) : [];
+  /* Buddy hanya melihat Bizstar departemennya sendiri. Catatan departemen lain
+     memang ada di sheet, tapi tidak ditampilkan di sini — nilai orang lain bukan
+     urusan buddy yang bukan pendampingnya. Kalau nama buddy tidak dikenali daftar
+     resmi, tidak ada yang ditampilkan sama sekali, bukan semuanya. */
+  const punyaku = dept ? semua.filter(o=>normNama(o.dept)===normNama(dept)) : [];
   const belumDicek = punyaku.reduce((n,o)=>n+o.isi.filter(x=>x.status==='Menunggu').length,0);
 
   let html='';
@@ -3884,13 +3926,9 @@ function gambarKonfirmasi(){
   }
   html+=punyaku.map(kartuBizstar).join('');
 
-  if(lain.length){
-    html+='<div class="konf-pisah">Departemen lain</div>'
-      +'<div class="card" style="margin-bottom:0.6rem"><div class="konf-kabar">'
-      +'Laporan ini bukan dari departemenmu &mdash; biar buddy mereka yang cek. '
-      +'Ditampilkan supaya tidak ada yang terlewat kalau ada yang salah pilih departemen.'
-      +'</div></div>'
-      +lain.map(kartuBizstar).join('');
+  if(!dept){
+    html = '<div class="card"><div class="konf-kabar">Nama kamu tidak ada di daftar '
+      + 'buddy, jadi departemennya tidak terbaca. Pilih salah satu nama di atas.</div></div>';
   }
   wadah.innerHTML=html;
 }
