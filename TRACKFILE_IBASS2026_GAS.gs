@@ -144,7 +144,7 @@ function doGet(e) {
           if (!r[0]) return;
           daftar.push({
             id: Number(r[0]), waktu: String(r[1] || ''), nama: String(r[2] || '').trim(),
-            dept: String(r[3] || ''), proker: String(r[4] || ''), tanggal: String(r[5] || ''),
+            dept: String(r[3] || ''), proker: String(r[4] || ''), tanggal: tglPendek(r[5]),
             bukti: String(r[6] || ''), status: String(r[7] || 'Menunggu'), oleh: String(r[8] || '')
           });
         });
@@ -492,6 +492,10 @@ function doPost(e) {
         nama, String(body.dept || ''), proker, String(body.tanggal || ''),
         String(body.bukti || ''),
         langsung ? 'Hadir' : 'Menunggu', langsung ? String(body.oleh).trim() : '']]);
+      /* Proker yang diketik buddy lewat "Proker lain" ikut dimasukkan ke daftar,
+         jadi lain kali tinggal ditekan — daftarnya tumbuh sendiri dari pemakaian,
+         tidak perlu ada yang mengisi dari pusat. */
+      try { tambahProkerKalauBaru(proker); } catch (e3) {}
       if (langsung) { try { rebuildPeringkat(); rebuildRekap(); } catch (e2) {} }
       return jsonOk({ tersimpan: true });
     }
@@ -1146,6 +1150,23 @@ function prokerSheet() {
   return sh;
 }
 
+/* Tambahkan ke sheet Proker kalau namanya belum ada. Pembandingnya mengabaikan
+   besar kecil huruf dan spasi, jadi "aspire 2026" tidak menambah baris baru kalau
+   "Aspire 2026" sudah ada. */
+function tambahProkerKalauBaru(nama) {
+  const bersih = String(nama || '').trim();
+  if (!bersih) return false;
+  const kunci = bersih.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const sudah = bacaProker().some(function (x) {
+    return x.toLowerCase().replace(/[^a-z0-9]/g, '') === kunci;
+  });
+  if (sudah) return false;
+  const sh = prokerSheet();
+  sh.getRange(sh.getLastRow() + 1, 1, 1, 2)
+    .setValues([[bersih, 'Ditambahkan sendiri waktu buddy mencatat']]);
+  return true;
+}
+
 function bacaProker() {
   const sh = prokerSheet();
   const n = sh.getLastRow() - 1;
@@ -1571,6 +1592,25 @@ function menuPerbaruiPeringkat() {
 }
 
 // ─── Laporan Perkembangan (sheet LAPORAN, untuk penerus) ──────────
+/* Sel tanggal di sheet berisi objek Date. Dikirim apa adanya, di layar jadi
+   "Mon Oct 12 2026 00:00:00 GMT+0700 (Waktu Indonesia Barat)" — panjang dan
+   berbahasa Inggris. Di sini dipendekkan jadi "12 Oktober 2026". */
+function tglPendek(v) {
+  const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  if (v instanceof Date && !isNaN(v.getTime())) {
+    const tz = 'Asia/Jakarta';
+    const hari = Utilities.formatDate(v, tz, 'd');
+    const bln = parseInt(Utilities.formatDate(v, tz, 'M'), 10) - 1;
+    const thn = Utilities.formatDate(v, tz, 'yyyy');
+    return hari + ' ' + bulan[bln] + ' ' + thn;
+  }
+  const teks = String(v == null ? '' : v).trim();
+  const cocok = teks.match(/^(\d{4})-(\d{2})-(\d{2})/);   // dari input tanggal di web
+  if (cocok) return Number(cocok[3]) + ' ' + bulan[Number(cocok[2]) - 1] + ' ' + cocok[1];
+  return teks;
+}
+
 function tglIndo(d) {
   const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
