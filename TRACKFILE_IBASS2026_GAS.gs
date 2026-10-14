@@ -479,9 +479,12 @@ function doPost(e) {
          status 'Hadir' berikut namanya, laporan langsung sah tanpa perlu dikonfirmasi
          lagi — yang mencatat memang orang yang berhak mengonfirmasi. */
       const langsung = String(body.status || '') === 'Hadir' && String(body.oleh || '').trim();
-      sh.appendRow([Date.now(), new Date().toISOString(), nama, String(body.dept || ''),
-        proker, String(body.tanggal || ''), String(body.bukti || ''),
-        langsung ? 'Hadir' : 'Menunggu', langsung ? String(body.oleh).trim() : '']);
+      // Kolom 3 = nama bizstar, penanda baris berisi.
+      const barisBaru = barisTerakhirBerisi(sh, 3) + 1;
+      sh.getRange(barisBaru, 1, 1, 9).setValues([[Date.now(), new Date().toISOString(),
+        nama, String(body.dept || ''), proker, String(body.tanggal || ''),
+        String(body.bukti || ''),
+        langsung ? 'Hadir' : 'Menunggu', langsung ? String(body.oleh).trim() : '']]);
       if (langsung) { try { rebuildPeringkat(); rebuildRekap(); } catch (e2) {} }
       return jsonOk({ tersimpan: true });
     }
@@ -716,6 +719,36 @@ function ensurePenilaianSheet(ssAbaikan) {
   return sheet;
 }
 
+/* getLastRow() ikut menghitung baris yang cuma punya format atau pernah diisi lalu
+   dikosongkan, jadi penilaian baru bisa mendarat jauh di bawah dan menyisakan baris
+   kosong di atasnya. Dari luar itu terlihat seperti data tidak masuk. Di sini baris
+   terakhir dicari dari kolom yang pasti terisi kalau barisnya memang data. */
+function barisTerakhirBerisi(sheet, kolomPenanda) {
+  const n = sheet.getLastRow();
+  if (n < 2) return 1;
+  const nilai = sheet.getRange(2, kolomPenanda, n - 1, 1).getValues();
+  for (let i = nilai.length - 1; i >= 0; i--) {
+    if (String(nilai[i][0]).trim() !== '') return i + 2;
+  }
+  return 1;
+}
+
+/* Rapikan baris kosong yang menyelip antara judul dan data pertama. Hanya baris yang
+   benar-benar kosong di semua kolom yang dibuang, jadi tidak ada data yang hilang. */
+function rapikanBarisKosong(sheet, lebar) {
+  const n = sheet.getLastRow();
+  if (n < 2) return 0;
+  const nilai = sheet.getRange(2, 1, n - 1, lebar).getValues();
+  let kosong = 0;
+  while (kosong < nilai.length &&
+         nilai[kosong].every(function (v) { return String(v).trim() === ''; })) kosong++;
+  if (kosong > 0 && kosong < nilai.length) {
+    sheet.deleteRows(2, kosong);
+    return kosong;
+  }
+  return 0;
+}
+
 function savePenilaian(ss, submissions) {
   if (!Array.isArray(submissions) || submissions.length === 0) {
     return jsonErr('Tidak ada data penilaian');
@@ -746,7 +779,9 @@ function savePenilaian(ss, submissions) {
     ];
   });
   // Lebar baris HARUS sama dengan lebar header, kalau tidak setValues menolak diam-diam
-  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, PENILAIAN_HEADER.length).setValues(rows);
+  // Kolom 6 = Nama Bizstar, selalu terisi kalau barisnya memang data.
+  const mulai = barisTerakhirBerisi(sheet, 6) + 1;
+  sheet.getRange(mulai, 1, rows.length, PENILAIAN_HEADER.length).setValues(rows);
   try { rebuildPeringkat(); rebuildRekap(); } catch (e) {}
   return jsonOk({ message: rows.length + ' penilaian tersimpan' });
 }
@@ -1364,6 +1399,10 @@ function menuSiapkanSheet() {
     rapikanJudul(shKeaktifan, 9);
     rapikanJudul(shBizstar, 3);
 
+    // Baris kosong yang terlanjur menyelip di atas data dibuang di sini.
+    const dibuang = rapikanBarisKosong(shPenilaian, PENILAIAN_HEADER.length)
+                  + rapikanBarisKosong(shKeaktifan, 9);
+
     // Filter di sheet Penilaian supaya kolom Peran bisa disaring jadi panitia saja.
     pasangFilter(shPenilaian, PENILAIAN_HEADER.length);
     pasangFilter(shKeaktifan, 9);
@@ -1383,6 +1422,7 @@ function menuSiapkanSheet() {
       'File: ' + ss.getName(),
       '',
       baru.length ? 'Baru dibuat: ' + baru.join(', ') : 'Semua sheet sudah ada sebelumnya.',
+      dibuang ? dibuang + ' baris kosong di atas data dibuang.' : '',
       '',
       'Sheet yang dipakai:',
       '- ' + BIZSTAR_SHEET + ': daftar nama, diisi tangan',
