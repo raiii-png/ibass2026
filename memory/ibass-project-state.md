@@ -10,6 +10,65 @@ metadata:
 
 # Proyek IBASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
 
+## HASIL UJI MENYELURUH (2026-10-18) — DEPLOY MASIH VERSI LAMA
+
+Diuji: sintaks 5 file HTML + .gs (node --check, semua bersih), endpoint live (GET+POST),
+dan alur layar di server statis lokal.
+
+**Yang live TIDAK sama dengan kode di repo. Deploy Apps Script lebih tua dari commit
+d1bfb60.** Bukti (read-only, tanpa menulis data):
+- `?action=proker` menjawab `{ok:true,message:'Track File IBASS 2026 API aktif'}` —
+  itu jawaban fall-through doGet, artinya handler `proker` TIDAK ADA di kode terdeploy.
+  Akibat: daftar proker selalu kosong, buddy harus mengetik tiap nama proker.
+- `?action=keaktifan` mengembalikan `tanggal:"Wed Oct 14 2026 00:00:00 GMT+0700 (...)"`,
+  bukan "14 Oktober 2026" → `tglPendek` belum terdeploy. Tanggal jelek itu terbukti
+  masih muncul di kartu Catat Proker saat diuji di browser.
+- Ikutannya: status 'Tidak Hadir' dari Catat Proker akan mendarat jadi 'Menunggu',
+  `rebuildRekap()` dipanggil tanpa `ss` lalu melempar (ditelan catch) jadi sheet Rekap
+  tidak ikut tersegarkan, dan menu Hapus Baris Uji Coba belum ada.
+- Catatan: baris Rendi 'Tidak Hadir' di sheet BUKAN bukti kode baru — itu hasil tombol
+  'Tidak' di kartu konfirmasi (`keaktifankonfirm`), yang sudah ada di kode lama.
+
+**Sheet Bizstar masih kosong** — `?action=bizstar` → `{daftar:[],jumlah:0}`.
+DAFTAR_BIZSTAR_2026.tsv belum ditempel. Web tetap jalan (jatuh ke `BIZSTAR_DB`, 49 nama
+terbaca benar), tapi sheet Peringkat cuma memuat 2 orang yang punya catatan keaktifan,
+dan angka "belum dinilai" di Rekap tidak bisa dipercaya.
+
+**Baris uji coba masih ada di sheet Keaktifan**: Rendi Kurniawan/'test' dan
+Teuku/'sfsdfse'. Teuku sudah punya +2 poin palsu. ZZZ sudah hilang, dua ini belum.
+
+**Yang terbukti jalan**: token (benar/salah dua-duanya ditangani di live, tiga endpoint
+berpengaman menolak dengan benar); KPI buddy 8/8/8=80,00, 9/7/10=87,50, 6/7/9=75,83;
+payload penilaian 16 kolom = PENILAIAN_HEADER; Catat Proker (buddy Secretary cuma lihat
+3 Bizstar Secretary, Rendi tidak bocor; ringkasan "Sudah tercatat — 2 hadir"; satu baris
+otomatis; tambah/hapus baris menomori ulang; "Simpan 3 Proker"; Hadir/Tidak Hadir
+terkirim benar; pesan campuran "1 tercatat, 2 sudah pernah dicatat"; form bersih lagi);
+Townhall 3 terkunci; BUDDY_2026 identik di tiga file; poin 1/5 seragam di lima tempat;
+halaman keaktifan benar "TIDAK DIPAKAI"; dashboard kadiv bersih tanpa error konsol.
+
+**Temuan kode (belum diperbaiki, bukan penghalang)**:
+- `renderHT` DUA KALI di `kadiv/index.html` (baris 2170 dan 2420). Yang kedua menang —
+  terbukti di browser yang tampil versi "Buka HT Sekarang" ke `kadiv/ht/`. Jadi ~250
+  baris versi PTT inline beserta pemanggil `htsend`/`htpoll` adalah kode mati. Ini
+  persis jebakan "fungsi ditulis dua kali" yang sudah dicatat untuk index.html.
+- Penolakan kembar `keaktifanlapor` tidak melihat status, jadi yang sudah ditandai
+  'Tidak Hadir' tidak bisa diubah jadi 'Hadir' lewat Catat Proker — harus pakai tombol
+  'ubah' di kartu bawah. Jalan, tapi membingungkan.
+- `esc()` tidak meloloskan tanda kutip tapi dipakai di dalam `onclick="...'${esc(n)}'"`
+  dan `value="${esc(n)}"`. Nama proker yang diketik pakai ' atau " merusak baris itu.
+  Tidak ada nama sekarang yang begitu.
+- `putuskanHadir` masih mencari `#pilihBuddy`, select yang sudah dihapus (ada penjaga
+  `if(s)`, jadi aman).
+- `?action=keaktifan` tanpa token → catatan semua departemen terbaca siapa saja yang
+  tahu alamatnya; saringan per departemen cuma di sisi layar. Sesuai keputusan lama.
+- Footer halaman keaktifan masih "Versi 22 Agu".
+
+**Yang harus Boss lakukan supaya kode = live**: timpa `TRACKFILE_IBASS2026_GAS.gs` →
+Save → **Deploy → Kelola deployment → ikon pensil → New version** (JANGAN deployment
+baru, alamatnya ganti) → menu Laporan IBASS: Siapkan Sheet Penilaian, Hapus Baris Uji
+Coba → tempel DAFTAR_BIZSTAR_2026.tsv ke sheet Bizstar → Perbarui Peringkat & Rekap →
+refresh keras di web.
+
 ## KONDISI TERAKHIR (2026-08-22 sore, commit ce0d8fd)
 - **Fitur proker DIBUKA lagi** (`FITUR_PROKER = true` di `index.html` dan
   `keaktifan/index.html`). Sempat ditutup buat presentasi contoh, sudah selesai.
