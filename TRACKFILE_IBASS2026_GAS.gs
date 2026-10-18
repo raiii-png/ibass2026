@@ -474,14 +474,7 @@ function doPost(e) {
       if (!body.nama || !body.proker) return jsonErr('Nama dan nama proker wajib diisi');
       const sh = keaktifanSheet();
       const nama = String(body.nama).trim(), proker = String(body.proker).trim();
-      // Tolak laporan kembar dari orang yang sama
-      if (sh.getLastRow() > 1) {
-        const rapikan = function (s) { return String(s).toLowerCase().replace(/[^a-z0-9]/g, ''); };
-        const nb = rapikan(nama), pb = rapikan(proker);
-        const adaKembar = sh.getRange(2, 1, sh.getLastRow() - 1, 5).getValues()
-          .some(function (r) { return rapikan(r[2]) === nb && rapikan(r[4]) === pb; });
-        if (adaKembar) return jsonOk({ kembar: true });
-      }
+
       /* Buddy boleh mencatat sendiri (jalur kedua). Kalau yang mengirim menyertakan
          status 'Hadir' berikut namanya, laporan langsung sah tanpa perlu dikonfirmasi
          lagi — yang mencatat memang orang yang berhak mengonfirmasi. */
@@ -491,6 +484,26 @@ function doPost(e) {
       const statusKirim = String(body.status || '');
       const olehBersih = String(body.oleh || '').trim();
       const langsung = olehBersih && (statusKirim === 'Hadir' || statusKirim === 'Tidak Hadir');
+
+      /* Orang + proker yang sama tidak boleh jadi dua baris — poinnya dobel.
+         Tapi menolak mentah-mentah bikin salah tandai tidak bisa dibetulkan lewat
+         Catat Proker: yang terlanjur 'Tidak Hadir' mentok di situ. Jadi kalau buddy
+         mengirim keputusan yang BERBEDA, baris lamanya diperbarui, bukan ditolak. */
+      if (sh.getLastRow() > 1) {
+        const rapikan = function (s) { return String(s).toLowerCase().replace(/[^a-z0-9]/g, ''); };
+        const nb = rapikan(nama), pb = rapikan(proker);
+        const isi = sh.getRange(2, 1, sh.getLastRow() - 1, 8).getValues();
+        for (let i = 0; i < isi.length; i++) {
+          if (rapikan(isi[i][2]) !== nb || rapikan(isi[i][4]) !== pb) continue;
+          const statusLama = String(isi[i][7] || 'Menunggu');
+          if (langsung && statusLama !== statusKirim) {
+            sh.getRange(i + 2, 8, 1, 2).setValues([[statusKirim, olehBersih]]);
+            try { rebuildPeringkat(); rebuildRekapBizstar(); } catch (e2) {}
+            return jsonOk({ diperbarui: true, dari: statusLama, status: statusKirim });
+          }
+          return jsonOk({ kembar: true });
+        }
+      }
       // Kolom 3 = nama bizstar, penanda baris berisi.
       const barisBaru = barisTerakhirBerisi(sh, 3) + 1;
       sh.getRange(barisBaru, 1, 1, 9).setValues([[Date.now(), new Date().toISOString(),
