@@ -12,6 +12,13 @@ metadata:
 
 ## HASIL UJI MENYELURUH (2026-10-18) — DEPLOY MASIH VERSI LAMA
 
+Asalnya: sesi **IBASS 3** (worktree agitated-carson-2f7300) berhenti karena error tepat
+setelah Boss bilang "oke coba cek dan test lagi dan cari lubang kalo ada" — permintaan
+itu belum sempat dikerjakan di sana. Sesi ini yang mengerjakannya. Commit terakhir IBASS 3
+(73eaf29) sudah masuk main dan worktree-nya bersih, jadi tidak ada pekerjaan yang hilang.
+Daftar serah terimanya waktu itu: timpa .gs + Save, Hapus Baris Uji Coba, Siapkan Sheet
+Penilaian, refresh keras — tiga yang pertama terbukti BELUM dijalankan.
+
 Diuji: sintaks 5 file HTML + .gs (node --check, semua bersih), endpoint live (GET+POST),
 dan alur layar di server statis lokal.
 
@@ -46,22 +53,27 @@ terkirim benar; pesan campuran "1 tercatat, 2 sudah pernah dicatat"; form bersih
 Townhall 3 terkunci; BUDDY_2026 identik di tiga file; poin 1/5 seragam di lima tempat;
 halaman keaktifan benar "TIDAK DIPAKAI"; dashboard kadiv bersih tanpa error konsol.
 
-**Temuan kode (belum diperbaiki, bukan penghalang)**:
-- `renderHT` DUA KALI di `kadiv/index.html` (baris 2170 dan 2420). Yang kedua menang —
-  terbukti di browser yang tampil versi "Buka HT Sekarang" ke `kadiv/ht/`. Jadi ~250
-  baris versi PTT inline beserta pemanggil `htsend`/`htpoll` adalah kode mati. Ini
-  persis jebakan "fungsi ditulis dua kali" yang sudah dicatat untuk index.html.
-- Penolakan kembar `keaktifanlapor` tidak melihat status, jadi yang sudah ditandai
-  'Tidak Hadir' tidak bisa diubah jadi 'Hadir' lewat Catat Proker — harus pakai tombol
-  'ubah' di kartu bawah. Jalan, tapi membingungkan.
-- `esc()` tidak meloloskan tanda kutip tapi dipakai di dalam `onclick="...'${esc(n)}'"`
-  dan `value="${esc(n)}"`. Nama proker yang diketik pakai ' atau " merusak baris itu.
-  Tidak ada nama sekarang yang begitu.
-- `putuskanHadir` masih mencari `#pilihBuddy`, select yang sudah dihapus (ada penjaga
-  `if(s)`, jadi aman).
-- `?action=keaktifan` tanpa token → catatan semua departemen terbaca siapa saja yang
-  tahu alamatnya; saringan per departemen cuma di sisi layar. Sesuai keputusan lama.
-- Footer halaman keaktifan masih "Versi 22 Agu".
+**Temuan kode SUDAH DIBERESKAN (commit dcb0b5e dan 560050e, 18 Okt)**:
+- `renderHT` ganda di `kadiv/index.html` dibuang — 276 baris versi PTT inline beserta
+  `htsend`/`htpoll` dan CSS `.ht-ptt`/`htPulse`. Yang tampil memang selalu versi link ke
+  `kadiv/ht/`. Halaman `kadiv/ht/` tidak disentuh, punya gaya sendiri.
+- Tolakan kembar `keaktifanlapor` sekarang MEMPERBARUI baris lama kalau keputusannya
+  berbeda (jawaban `{diperbarui:true}`), dan tetap menolak kalau tandanya sama supaya
+  poin tidak dobel. Layar menghitung terpisah: "N tercatat, N diubah, N sudah sama".
+- Tanda kutip: `esc()`/`escHtml()` sekarang juga meloloskan `"` dan `'` jadi entity,
+  TAPI itu tidak cukup untuk nilai di dalam `onclick="pilihX(this,'...')"` — browser
+  membaca entity balik jadi `'` SEBELUM membaca barisnya sebagai kode. Untuk itu ada
+  **`escArg()`** terpisah (`&`→`&amp;`, `\`→`\\`, `'`→`\'`, `"`→`&quot;`), dipakai di
+  tiga kartu nama: `pilihNamaBuddy`, `pilihBuddyKonf`, `pilihBizstarCatat`.
+  Kalau nanti menambah kartu dengan nama dari sheet, pakai `escArg`, bukan `esc`.
+- `putuskanHadir` tidak lagi mencari `#pilihBuddy` (dropdown yang sudah diganti kartu);
+  sekarang layarnya dibawa ke `#gridBuddyKonf`.
+- Label versi halaman keaktifan jadi "Versi 18 Okt".
+- `penilaian.html` sudah disamakan lagi dengan `index.html` (byte per byte).
+
+**Masih dibiarkan (sengaja)**: `?action=keaktifan` tanpa token, jadi catatan semua
+departemen terbaca siapa saja yang tahu alamatnya; saringan per departemen cuma di sisi
+layar. Sesuai keputusan lama — login bikin buddy tidak bisa isi cepat lewat HP.
 
 **Yang harus Boss lakukan supaya kode = live**: timpa `TRACKFILE_IBASS2026_GAS.gs` →
 Save → **Deploy → Kelola deployment → ikon pensil → New version** (JANGAN deployment
