@@ -2022,7 +2022,8 @@ input:focus, select:focus, textarea:focus {
       <div class="card-label">Catat Kehadiran</div>
       <div style="font-size:0.7rem;color:var(--text2);line-height:1.7;margin-bottom:0.7rem">
         Pilih satu Bizstar, lalu tulis semua proker yang dia ikuti. Tandai mana yang
-        hadir dan mana yang tidak, baru simpan sekaligus.
+        hadir dan mana yang tidak, baru simpan sekaligus. Salah tandai? Catat ulang
+        proker yang sama dengan tanda yang benar.
       </div>
 
       <div class="field">
@@ -2613,8 +2614,27 @@ function segarkanDaftarBizstar(){
 muatRoster();
 muatProker();
 
-/* ══ SECURITY: HTML escaper — cegah XSS dari user input ══ */
-function esc(str){ const d=document.createElement('div'); d.textContent=String(str); return d.innerHTML; }
+/* ══ SECURITY: HTML escaper — cegah XSS dari user input ══
+   textContent sendiri tidak meloloskan tanda kutip, padahal hasilnya sering
+   ditaruh DI DALAM atribut, misalnya value="${esc(n)}". Nama yang mengandung
+   " merusak atribut itu kalau tidak ikut diloloskan. */
+function esc(str){
+  const d=document.createElement('div'); d.textContent=String(str);
+  return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* Untuk nilai yang ditaruh DI DALAM kode, bukan sekadar di atribut —
+   onclick="pilihX(this,'...')". Di situ esc() TIDAK cukup: browser membaca balik
+   &#39; jadi ' SEBELUM membaca barisnya sebagai kode, jadi kutipnya tetap memutus
+   string. Yang dibutuhkan kutip yang diloloskan untuk kode (\'), bukan entity.
+   Nama Bizstar datang dari sheet, jadi "O'Brien" bukan hal mustahil. */
+function escArg(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;')
+    .replace(/\\/g,'\\\\')
+    .replace(/'/g,"\\'")
+    .replace(/"/g,'&quot;');
+}
 
 /* ══ STATE ══ */
 let currentRole = '';
@@ -3264,7 +3284,7 @@ function isiPilihanNamaBuddy(){
   const g=document.getElementById('gridNamaBuddy');
   if(!g || g.children.length) return;
   g.innerHTML = BUDDY_2026.map(b=>
-      `<button type="button" class="nama-btn" onclick="pilihNamaBuddy(this,'${esc(b.n)}')">`
+      `<button type="button" class="nama-btn" onclick="pilihNamaBuddy(this,'${escArg(b.n)}')">`
       + `<span class="nb-n">${esc(b.n)}</span><span class="nb-d">${esc(b.d)}</span></button>`
     ).join('')
     + `<button type="button" class="nama-btn lain" onclick="pilihNamaBuddy(this,'')">`
@@ -3478,7 +3498,7 @@ function isiPilihanBuddy(){
   const g = document.getElementById('gridBuddyKonf');
   if(!g || g.children.length) return;
   g.innerHTML = BUDDY_2026.map(b=>
-      `<button type="button" class="nama-btn" onclick="pilihBuddyKonf(this,'${esc(b.n)}')">`
+      `<button type="button" class="nama-btn" onclick="pilihBuddyKonf(this,'${escArg(b.n)}')">`
       + `<span class="nb-n">${esc(b.n)}</span><span class="nb-d">${esc(b.d)}</span></button>`
     ).join('')
     + `<button type="button" class="nama-btn lain" onclick="pilihBuddyKonf(this,'lain')">`
@@ -3522,7 +3542,7 @@ function isiPilihanBizstar(){
   bizstarCatat = ''; bizstarLainAktif = false;
   const daftar = dept ? (BIZSTAR_DB[dept] || []) : [];
   g.innerHTML = daftar.map(n=>
-      `<button type="button" class="nama-btn" onclick="pilihBizstarCatat(this,'${esc(n)}')">`
+      `<button type="button" class="nama-btn" onclick="pilihBizstarCatat(this,'${escArg(n)}')">`
       + `<span class="nb-n">${esc(n)}</span></button>`).join('')
     + `<button type="button" class="nama-btn lain" onclick="pilihBizstarCatat(this,'lain')">`
     + `<span class="nb-n">Nama lain</span></button>`;
@@ -3683,7 +3703,7 @@ async function catatManual(){
 
   if(tombol) tombol.disabled = true;
   const dept = deptSekarang();
-  let tersimpan = 0; const kembar = [], gagal = [];
+  let tersimpan = 0, diperbarui = 0; const kembar = [], gagal = [];
 
   for(let i = 0; i < isi.length; i++){
     const b = isi[i];
@@ -3696,6 +3716,7 @@ async function catatManual(){
           status: b.hadir ? 'Hadir' : 'Tidak Hadir', oleh})});
       const js = await r.json();
       if(!js || !js.ok) gagal.push(b.proker);
+      else if(js.diperbarui) diperbarui++;   // sudah ada, tapi keputusannya diganti
       else if(js.kembar) kembar.push(b.proker);
       else tersimpan++;
     }catch(e){ gagal.push(b.proker); }
@@ -3705,13 +3726,14 @@ async function catatManual(){
 
   const bagian = [];
   if(tersimpan) bagian.push(tersimpan + ' proker tercatat');
-  if(kembar.length) bagian.push(kembar.length + ' sudah pernah dicatat');
+  if(diperbarui) bagian.push(diperbarui + ' diubah');
+  if(kembar.length) bagian.push(kembar.length + ' sudah sama');
   if(gagal.length) bagian.push(gagal.length + ' gagal');
   const warna = gagal.length ? 'var(--red)' : (kembar.length ? 'var(--amber)' : 'var(--green)');
   kabar(bagian.join(', ') + ' untuk ' + nama + '.'
     + (gagal.length ? ' Coba lagi: ' + gagal.join(', ') : ''), warna);
 
-  if(tersimpan){
+  if(tersimpan || diperbarui){
     muatProker();
     document.getElementById('daftarBarisProker').innerHTML = '';
     nomorBaris = 0;
@@ -3937,8 +3959,10 @@ async function putuskanHadir(id, status){
   const nama=buddySekarang();
   if(!nama){
     showToast('Pilih namamu dulu di atas');
-    const s=document.getElementById('pilihBuddy'); if(s){ s.focus(); }
-    window.scrollTo({top:0,behavior:'smooth'});
+    // Nama buddy sekarang kartu, bukan dropdown — bawa layarnya ke kartu itu.
+    const g=document.getElementById('gridBuddyKonf');
+    if(g) g.scrollIntoView({behavior:'smooth',block:'center'});
+    else window.scrollTo({top:0,behavior:'smooth'});
     return;
   }
   try{ localStorage.setItem('ibass_buddy_nama',nama); }catch(e){}
@@ -3958,7 +3982,10 @@ async function putuskanHadir(id, status){
   }
 }
 
-function escHtml(s){ const d=document.createElement('div'); d.textContent=String(s==null?'':s); return d.innerHTML; }
+function escHtml(s){
+  const d=document.createElement('div'); d.textContent=String(s==null?'':s);
+  return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 function goPage(n){
   [1,2,3].forEach(i=>{
