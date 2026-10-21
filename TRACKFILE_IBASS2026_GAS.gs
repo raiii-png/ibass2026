@@ -783,6 +783,28 @@ function savePenilaian(ss, submissions) {
     return jsonErr('Tidak ada data penilaian');
   }
   const sheet = ensurePenilaianSheet(ss);
+
+  /* Satu penilai cuma boleh menilai satu Bizstar sekali per milestone.
+     Waktu Pematerian 1 ada buddy yang terkirim dua kali dengan isi sama persis, jadi
+     kolom "Dinilai Buddy" jadi 2 dan hitungan Rekap ikut dobel. Kuncinya harus di
+     sini, bukan cuma di layar: kunci di layar bisa dilewati dengan membuka dari HP
+     lain. Yang sudah ada tidak ditimpa — kalau memang perlu dibetulkan, barisnya
+     dihapus dulu di sheet, baru dikirim ulang. */
+  const sudahAda = {};
+  readPenilaian().forEach(function (r) {
+    sudahAda[kunciPenilaian(r.role, r.penilai, r.milestone, r.nama_bizstar)] = true;
+  });
+  const dobel = [];
+  submissions = submissions.filter(function (s) {
+    const k = kunciPenilaian(s.role, s.penilai, s.milestone, s.nama_bizstar);
+    if (sudahAda[k]) { dobel.push(String(s.nama_bizstar || '')); return false; }
+    sudahAda[k] = true;   // dobel di dalam satu kiriman juga ikut tersaring
+    return true;
+  });
+  if (!submissions.length) {
+    return jsonOk({ message: 'Semua sudah pernah dikirim', tersimpan: 0, dobel: dobel });
+  }
+
   /* Poin keaktifan yang SUDAH dikonfirmasi buddy saat penilaian ini masuk.
      Kolom "Skor Akhir" jadi terisi sejak awal; sheet Peringkat tetap menghitung
      ulang dari data terbaru, jadi kalau ada konfirmasi susulan peringkatnya ikut. */
@@ -812,7 +834,15 @@ function savePenilaian(ss, submissions) {
   const mulai = barisTerakhirBerisi(sheet, 6) + 1;
   sheet.getRange(mulai, 1, rows.length, PENILAIAN_HEADER.length).setValues(rows);
   try { rebuildPeringkat(); rebuildRekapBizstar(); } catch (e) {}
-  return jsonOk({ message: rows.length + ' penilaian tersimpan' });
+  return jsonOk({ message: rows.length + ' penilaian tersimpan', tersimpan: rows.length, dobel: dobel });
+}
+
+/* Satu penilaian = satu penilai menilai satu Bizstar di satu milestone, dari satu
+   peran. Nama dibandingkan tanpa besar kecil huruf dan spasi, sama seperti di
+   tempat lain, supaya "fakhri haidar" dan "Fakhri Haidar" terbaca orang yang sama. */
+function kunciPenilaian(peran, penilai, milestone, bizstar) {
+  return [String(peran || '').toLowerCase(), normNama(penilai),
+    String(milestone || '').trim(), normNama(bizstar)].join('|');
 }
 
 /* Baca sheet Penilaian lewat NAMA kolom, bukan urutan tetap — baris lama yang
@@ -1374,6 +1404,54 @@ function rebuildRekapBizstar() {
   sh.getRange(baris, 1, msIsi.length, 5).setValues(msIsi);
   baris += msIsi.length + 2;
 
+  /* ── Buddy per milestone ──
+     Siapa yang sudah mengisi dan siapa yang belum, supaya tidak perlu menanyai
+     satu per satu di grup. Angkanya jumlah Bizstar yang sudah dia nilai (bukan
+     jumlah baris), jadi kiriman dobel tidak membuatnya terlihat lebih rajin.
+     Penilaian dihitung milik buddy departemen itu walau yang mengisi orang lain
+     — yang penting departemennya sudah dinilai. */
+  sh.getRange(baris, 1).setValue('Buddy per milestone').setFontWeight('bold');
+  baris++;
+  sh.getRange(baris, 1).setValue('Angka = jumlah Bizstar yang sudah dia nilai. '
+    + 'Kosong = belum mengisi.').setFontColor('#888888').setFontSize(9);
+  baris++;
+  sh.getRange(baris, 1, 1, 2 + MILESTONE_LIST.length)
+    .setValues([['Buddy', 'Departemen'].concat(MILESTONE_LIST)])
+    .setFontWeight('bold').setBackground('#f3f3f3');
+  baris++;
+
+  const isiBuddy = BUDDY_2026.map(function (b) {
+    return [b.n, b.d].concat(MILESTONE_LIST.map(function (ms) {
+      const orang = {};
+      rowsPen.forEach(function (r) {
+        if (String(r.role).toLowerCase() !== 'buddy' || String(r.milestone) !== ms) return;
+        const punyaDia = normNama(r.penilai) === normNama(b.n)
+          || String(r.dept_penilai || '').trim() === b.d;
+        if (punyaDia) orang[normNama(r.nama_bizstar)] = true;
+      });
+      const n = Object.keys(orang).length;
+      return n || '';
+    }));
+  });
+  sh.getRange(baris, 1, isiBuddy.length, isiBuddy[0].length).setValues(isiBuddy);
+  baris += isiBuddy.length;
+
+  /* Teks pengingat untuk milestone terakhir yang sudah ada isinya — tinggal salin
+     ke grup. Milestone yang belum dimulai siapa pun tidak dianggap terlambat. */
+  let msAktif = -1;
+  MILESTONE_LIST.forEach(function (ms, i) {
+    if (isiBuddy.some(function (r) { return r[2 + i] !== ''; })) msAktif = i;
+  });
+  if (msAktif > -1) {
+    const belumIsi = isiBuddy.filter(function (r) { return r[2 + msAktif] === ''; });
+    sh.getRange(baris, 1).setValue(belumIsi.length
+      ? 'Belum mengisi ' + MILESTONE_LIST[msAktif] + ': '
+        + belumIsi.map(function (r) { return r[0] + ' (' + r[1] + ')'; }).join(', ') + '.'
+      : 'Semua buddy sudah mengisi ' + MILESTONE_LIST[msAktif] + '.')
+      .setFontColor(belumIsi.length ? '#000000' : '#888888');
+  }
+  baris += 3;
+
   /* ── Kecenderungan penilai ──
      Satu departemen cuma dinilai satu buddy, dan nilai buddy menentukan 70 persen.
      Jadi posisi seorang Bizstar di peringkat ikut bergantung pada siapa buddy-nya,
@@ -1561,6 +1639,66 @@ function menuHapusBarisUji() {
   }
 }
 
+/* Buang penilaian yang terkirim lebih dari sekali — penilai, milestone, Bizstar,
+   dan perannya sama. Yang dipertahankan kiriman PERTAMA. Ini untuk membersihkan
+   yang terlanjur masuk sebelum kunci dobel di savePenilaian terpasang; setelah itu
+   seharusnya tidak ada lagi yang perlu dibuang. Tanya dulu sebelum menghapus. */
+function menuBuangPenilaianDobel() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const sh = penilaianSS().getSheetByName(PENILAIAN_SHEET);
+    if (!sh || sh.getLastRow() < 3) {
+      ui.alert('Penilaian dobel', 'Tidak ada penilaian dobel.', ui.ButtonSet.OK);
+      return;
+    }
+    const lebar = Math.max(sh.getLastColumn(), PENILAIAN_HEADER.length);
+    const semua = sh.getRange(1, 1, sh.getLastRow(), lebar).getValues();
+    const head = semua[0].map(function (h) { return String(h || '').trim().toLowerCase(); });
+    const kol = function (judul, cadangan) {
+      const i = head.indexOf(judul);
+      return i > -1 ? i : cadangan;
+    };
+    const iPeran = kol('peran', 1), iPenilai = kol('penilai', 2);
+    const iMs = kol('milestone', 4), iNama = kol('nama bizstar', 5);
+
+    const dilihat = {};
+    const buang = [];          // nomor baris di sheet
+    const ringkas = {};        // "Penilai — Milestone" -> jumlah
+    for (let i = 1; i < semua.length; i++) {
+      const r = semua[i];
+      if (!String(r[iNama] || '').trim()) continue;
+      const k = kunciPenilaian(r[iPeran], r[iPenilai], r[iMs], r[iNama]);
+      if (dilihat[k]) {
+        buang.push(i + 1);
+        const label = String(r[iPenilai]).trim() + ' — ' + String(r[iMs]).trim();
+        ringkas[label] = (ringkas[label] || 0) + 1;
+      } else {
+        dilihat[k] = true;
+      }
+    }
+
+    if (!buang.length) {
+      ui.alert('Penilaian dobel', 'Tidak ada penilaian dobel.', ui.ButtonSet.OK);
+      return;
+    }
+    const daftar = Object.keys(ringkas).map(function (l) { return l + ': ' + ringkas[l]; });
+    const jawab = ui.alert('Buang penilaian dobel?',
+      buang.length + ' baris akan dihapus. Kiriman pertama tetap disimpan.\n\n'
+      + daftar.join('\n'), ui.ButtonSet.YES_NO);
+    if (jawab !== ui.Button.YES) return;
+
+    // dari bawah ke atas, supaya nomor baris di atasnya tidak bergeser
+    buang.sort(function (a, b) { return b - a; })
+      .forEach(function (n) { sh.deleteRow(n); });
+    rebuildPeringkat();
+    rebuildRekapBizstar();
+    ui.alert('Penilaian dobel', buang.length + ' baris dibuang. Peringkat dan Rekap sudah '
+      + 'dihitung ulang.', ui.ButtonSet.OK);
+  } catch (err) {
+    ui.alert('Gagal membuang', String((err && err.message) || err), ui.ButtonSet.OK);
+  }
+}
+
 function menuGambarUlangGrafik() {
   const ui = SpreadsheetApp.getUi();
   try {
@@ -1653,6 +1791,7 @@ function onOpen() {
     .addItem('Gambar Ulang Grafik', 'menuGambarUlangGrafik')
     .addSeparator()
     .addItem('Hapus Baris Uji Coba', 'menuHapusBarisUji')
+    .addItem('Buang Penilaian Dobel', 'menuBuangPenilaianDobel')
     .addSeparator()
     .addItem('Perbarui Laporan', 'menuGenerateLaporan')
     .addItem('Perbarui Grafik', 'menuPerbaruiGrafik')
