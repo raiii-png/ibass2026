@@ -2087,6 +2087,18 @@ input:focus, select:focus, textarea:focus {
         <p class="sec-desc" id="p1desc">Isi data penilai dan pilih sesi yang akan dinilai.</p>
       </div>
 
+      <!-- Tawaran lanjut sesi. Dulu ini ada di dalam blok panitia, jadi buddy yang
+           tabnya tertutup di tengah jalan tidak pernah ditawari dan nilainya seperti
+           hilang. Sekarang di luar, dipakai dua peran. -->
+      <div id="resumeBanner">
+        <div class="resume-title">Sesi Tersimpan</div>
+        <div class="resume-desc" id="resumeDesc">Ditemukan sesi sebelumnya. Lanjutkan atau mulai baru?</div>
+        <div class="resume-btns">
+          <button class="btn btn-ghost" style="flex:1;font-size:0.56rem" onclick="clearSavedSession()"><span>Mulai Baru</span></button>
+          <button class="btn" style="flex:1;font-size:0.56rem" onclick="resumeSession()"><span>Lanjutkan →</span></button>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-label">Penilai</div>
         <div class="field" id="fieldPilihNama" style="display:none">
@@ -2132,14 +2144,6 @@ input:focus, select:focus, textarea:focus {
 
       <!-- PANITIA: filter dept → pilih nama Bizstar -->
       <div id="panitiaPickerWrap" style="display:none">
-        <div id="resumeBanner">
-          <div class="resume-title">Sesi Tersimpan</div>
-          <div class="resume-desc" id="resumeDesc">Ditemukan sesi sebelumnya. Lanjutkan atau mulai baru?</div>
-          <div class="resume-btns">
-            <button class="btn btn-ghost" style="flex:1;font-size:0.56rem" onclick="clearSavedSession()"><span>Mulai Baru</span></button>
-            <button class="btn" style="flex:1;font-size:0.56rem" onclick="resumeSession()"><span>Lanjutkan →</span></button>
-          </div>
-        </div>
         <div class="card">
           <div class="card-label">Filter Department</div>
           <div class="field">
@@ -3315,7 +3319,7 @@ function namaPenilaiBerubah(){
     if(b && sel && sel.value!==b.d){ sel.value=b.d; onDeptChange(); return; }
   }
   updateP1();
-  if(currentRole==='panitia') checkResumeForPanitia();
+  checkResume();
 }
 
 function onDeptChange(){
@@ -3325,6 +3329,7 @@ function onDeptChange(){
     showBizstarPreview();
   }
   updateP1();
+  checkResume();
 }
 function showBizstarPreview(){
   const kartu=document.getElementById('bizstarPreviewCard');
@@ -4352,46 +4357,59 @@ function resumeSession(){
     renderPanitiaSelected();
   }
 
-  // restore milestone chip
+  /* Tandai lagi chip milestone-nya. Dibandingkan lewat isi onclick, bukan tulisan di
+     tombol — tombolnya tertulis "PMT 1" sementara nilainya "Pematerian 1", jadi
+     perbandingan teks tidak pernah cocok untuk dua milestone pematerian. */
   document.querySelectorAll('#milestoneChips .chip').forEach(c=>{
-    if(c.textContent.trim()===milestone){ c.classList.add('on'); }
+    const oc = c.getAttribute('onclick') || '';
+    c.classList.toggle('on', milestone !== '' && oc.indexOf("'"+milestone+"'") > -1);
   });
 
   showToast('Sesi dipulihkan');
   openApp(d.role);
+  /* Buddy punya menu dua tugas, dan openApp berhenti di situ — kalau dibiarkan,
+     layar penilaiannya tertutup menu dan tombol Lanjutkan seolah tidak berbuat apa-apa.
+     Jadi untuk buddy layarnya dibuka sendiri di sini. */
+  if(d.role==='buddy' && FITUR_PROKER) mulaiPenilaian();
+  // tandai lagi kartu nama buddy-nya supaya kelihatan siapa yang sedang menilai
+  document.querySelectorAll('#gridNamaBuddy .nama-btn').forEach(b=>{
+    const oc = b.getAttribute('onclick') || '';
+    b.classList.toggle('on', !!d.penilai && oc.indexOf("'"+escArg(d.penilai)+"'") > -1);
+  });
   goPage(2);
 }
 
-/* Extend openApp to check autosave for buddy */
 const _origOpenApp = openApp;
 window.openApp = function(role){
   _origOpenApp(role);
   startTimer();
-  // check autosave
-  const saved = loadAutosave();
-  if(saved && saved.role===role && role==='buddy'){
-    const penilai = document.getElementById('namaPenilai').value;
-    if(saved.penilai && saved.bizList.length){
-      // show resume prompt as toast
-    }
-  }
+  // Nama penilai biasanya sudah terisi dari simpanan browser, jadi tawarannya bisa
+  // langsung muncul begitu layar dibuka — tidak perlu menunggu orangnya mengetik.
+  checkResume();
 };
 
-/* Patch: check autosave on panitia name/milestone change */
-function checkResumeForPanitia(){
+/* Tawarkan sesi yang belum selesai, untuk buddy maupun panitia.
+   Cukup nama penilainya yang cocok — kalau HP buddy menutup tab di tengah jalan, dia
+   belum tentu ingat sesi mana yang tadi dia buka, dan keterangannya sudah menyebut
+   milestone-nya. Simpanan dibuang begitu kiriman berhasil, jadi yang masih tersisa
+   di sini pasti pekerjaan yang belum terkirim. */
+function checkResume(){
+  const banner = document.getElementById('resumeBanner');
   const saved = loadAutosave();
-  if(!saved || saved.role!=='panitia') return;
   const penilai = document.getElementById('namaPenilai').value.trim();
-  const ms = milestone;
-  if(penilai && ms && saved.penilai===penilai && saved.milestone===ms && saved.bizList.length>0){
-    const age = Math.round((Date.now()-saved.ts)/60000);
-    document.getElementById('resumeDesc').textContent =
-      `Sesi "${ms}" oleh ${penilai} — ${saved.bizList.length} Bizstar, ${age < 1 ? 'baru saja' : age+' menit lalu'}.`;
-    document.getElementById('resumeBanner').classList.add('visible');
-  } else {
-    document.getElementById('resumeBanner').classList.remove('visible');
-  }
+  const cocok = saved && saved.role===currentRole && penilai
+    && normNama(saved.penilai)===normNama(penilai) && saved.bizList.length>0;
+  if(!cocok){ banner.classList.remove('visible'); return; }
+
+  const menit = Math.round((Date.now()-saved.ts)/60000);
+  const dinilai = Object.keys(saved.allScores||{}).length;
+  document.getElementById('resumeDesc').textContent =
+    `${saved.milestone||'Sesi'} — ${dinilai} dari ${saved.bizList.length} Bizstar sudah diisi, `
+    + `${menit < 1 ? 'baru saja' : menit+' menit lalu'}.`;
+  banner.classList.add('visible');
 }
+// nama lama, masih dipakai beberapa pemanggil
+function checkResumeForPanitia(){ checkResume(); }
 
 /* ── SEARCH BIZSTAR (PANITIA) ── */
 function onBizSearch(){
@@ -4610,7 +4628,7 @@ function copyToClipboard(){
 const _origSetMilestone = setMilestone;
 window.setMilestone = function(el,val){
   _origSetMilestone(el,val);
-  if(currentRole==='panitia') checkResumeForPanitia();
+  checkResume();
 };
 
 /* Patch triggerAutosave into rate & rate5el */
@@ -4791,6 +4809,9 @@ window.doSubmit = async function(){
     const absentNote = absentList.length ? ` ${absentList.length} yang tidak hadir tidak ikut dikirim.` : '';
     document.getElementById('successMsg').textContent=`${rows.length} penilaian tersimpan.${absentNote}`;
     document.getElementById('success').classList.add('visible');
+    /* Sudah mendarat di server, simpanan sementaranya tidak diperlukan lagi. Kalau
+       dibiarkan, orang yang sama nanti ditawari melanjutkan sesi yang sudah selesai. */
+    clearSavedSession();
   }catch(e){
     const PISAH = String.fromCharCode(10) + String.fromCharCode(10);
     alert('Penilaian belum tersimpan.' + PISAH
