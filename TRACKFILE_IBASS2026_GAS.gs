@@ -81,6 +81,7 @@ const PERINGKAT_SHEET = 'Peringkat';
 const BIZSTAR_SHEET   = 'Bizstar';
 const REKAP_SHEET     = 'Rekap';
 const PROKER_SHEET    = 'Proker';
+const SESI_SHEET      = 'Penilaian per Sesi';
 
 /* Urutan departemen dipakai untuk validasi isian di sheet Bizstar dan untuk
    mengurutkan baris di sheet Rekap. */
@@ -833,7 +834,11 @@ function savePenilaian(ss, submissions) {
   // Kolom 6 = Nama Bizstar, selalu terisi kalau barisnya memang data.
   const mulai = barisTerakhirBerisi(sheet, 6) + 1;
   sheet.getRange(mulai, 1, rows.length, PENILAIAN_HEADER.length).setValues(rows);
-  try { rebuildPeringkat(); rebuildRekapBizstar(); } catch (e) {}
+  // Masing-masing dibungkus sendiri: satu yang gagal tidak boleh menahan yang lain,
+  // dan tidak boleh menggagalkan simpan — nilainya sudah aman di sheet Penilaian.
+  try { rebuildPeringkat(); } catch (e) {}
+  try { rebuildRekapBizstar(); } catch (e) {}
+  try { rebuildPerSesi(); } catch (e) {}
   return jsonOk({ message: rows.length + ' penilaian tersimpan', tersimpan: rows.length, dobel: dobel });
 }
 
@@ -1533,6 +1538,118 @@ function rebuildRekapBizstar() {
   return { dept: deptIsi.length, belum: belum.length };
 }
 
+/* ── Penilaian per Sesi ──
+   Sheet Penilaian adalah catatan mentah: tiap kiriman ditempel di bawah menurut jam
+   masuknya, jadi begitu Townhall dan Pematerian bergabung isinya bercampur. Sheet ini
+   menata ulang isi yang sama jadi satu blok per sesi, urut sesuai jadwal. Di dalam
+   blok, urut departemen lalu nama Bizstar — penilaian buddy dan panitia untuk orang
+   yang sama jadi berdampingan.
+   Ditulis ulang tiap penilaian masuk. Yang dibetulkan tetap sheet Penilaian; ketikan
+   di sini akan hilang. */
+const SESI_KOLOM = ['Departemen', 'Nama Bizstar', 'Peran', 'Penilai',
+  'Adaptive', 'Collaborative', 'Growth', 'Skor KPI', 'Kelebihan', 'Perlu Perbaikan', 'Waktu'];
+
+function rebuildPerSesi() {
+  const ss = penilaianSS();
+  let sh = ss.getSheetByName(SESI_SHEET);
+  if (!sh) {
+    // Taruh tepat di sebelah sheet Penilaian supaya gampang ditemukan.
+    const pen = ss.getSheetByName(PENILAIAN_SHEET);
+    sh = pen ? ss.insertSheet(SESI_SHEET, pen.getIndex()) : ss.insertSheet(SESI_SHEET);
+  }
+  const filterLama = sh.getFilter();
+  if (filterLama) filterLama.remove();
+  sh.clearContents();
+  sh.clearFormats();
+  sh.setFrozenRows(0);
+
+  const semua = readPenilaian();
+  const W = SESI_KOLOM.length;
+
+  /* Departemen Bizstar. Baris buddy membawanya sendiri (Dept Penilai), baris panitia
+     tidak — panitia menilai lintas departemen. Jadi diambil dari daftar Bizstar dulu,
+     lalu dari baris buddy untuk orang yang sama. */
+  const deptOf = {};
+  try {
+    bacaRoster().forEach(function (o) { if (o.dept) deptOf[normNama(o.nama)] = o.dept; });
+  } catch (e) {}
+  semua.forEach(function (r) {
+    const k = normNama(r.nama_bizstar);
+    const d = String(r.dept_penilai || '').trim();
+    if (!deptOf[k] && String(r.role).toLowerCase() === 'buddy' && d && d !== '—') deptOf[k] = d;
+  });
+
+  sh.getRange(1, 1).setValue('Penilaian per Sesi — IBASS 2026').setFontWeight('bold');
+  sh.getRange(2, 1).setValue('Diperbarui ' + tglIndo(new Date()) + '. Ditata dari sheet '
+    + 'Penilaian dan ditulis ulang tiap penilaian masuk — kalau ada yang perlu dibetulkan, '
+    + 'ubah di sheet Penilaian. Adaptive, Collaborative, Growth apa adanya: buddy skala '
+    + '1–10, panitia 1–5. Skor KPI sudah 0–100.')
+    .setFontColor('#888888').setFontSize(9);
+
+  // Urut jadwal. Sesi yang tidak ada di jadwal tetap ditampilkan di belakang,
+  // supaya tidak ada penilaian yang hilang dari pandangan.
+  const urutan = MILESTONE_LIST.slice();
+  const sesiDari = function (r) { return String(r.milestone || '').trim() || 'Tanpa sesi'; };
+  semua.forEach(function (r) { if (urutan.indexOf(sesiDari(r)) === -1) urutan.push(sesiDari(r)); });
+
+  const posDept = function (d) {
+    const i = DEPT_LIST.indexOf(d);
+    return i === -1 ? DEPT_LIST.length : i;
+  };
+
+  let baris = 4;
+  urutan.forEach(function (ms) {
+    const isi = semua.filter(function (r) { return sesiDari(r) === ms; })
+      .map(function (r) {
+        const peran = String(r.role).toLowerCase() === 'buddy' ? 'Buddy' : 'Panitia';
+        const kpi = Number(r.skor_weighted);
+        return {
+          dept: deptOf[normNama(r.nama_bizstar)] || '',
+          baris: [
+            deptOf[normNama(r.nama_bizstar)] || '',
+            String(r.nama_bizstar || '').trim(), peran,
+            String(r.penilai || '').trim(),
+            r.skor_adaptive_raw, r.skor_collab_raw, r.skor_growth_raw,
+            isNaN(kpi) ? '' : Math.round(kpi * 100) / 100,
+            r.kelebihan || '', r.perbaikan || '',
+            String(r.waktu || '').slice(0, 16)
+          ]
+        };
+      })
+      .sort(function (a, b) {
+        if (posDept(a.dept) !== posDept(b.dept)) return posDept(a.dept) - posDept(b.dept);
+        const n = String(a.baris[1]).localeCompare(String(b.baris[1]), 'id');
+        if (n) return n;
+        return a.baris[2] === b.baris[2] ? 0 : (a.baris[2] === 'Buddy' ? -1 : 1);
+      });
+
+    // Judul blok: nama sesi, lalu ringkasan di sebelahnya.
+    const dariBuddy = isi.filter(function (x) { return x.baris[2] === 'Buddy'; }).length;
+    const orang = {};
+    isi.forEach(function (x) { orang[normNama(x.baris[1])] = true; });
+    sh.getRange(baris, 1).setValue(ms).setFontWeight('bold').setFontSize(11);
+    sh.getRange(baris, 2).setValue(isi.length
+      ? isi.length + ' penilaian — ' + dariBuddy + ' dari buddy, ' + (isi.length - dariBuddy)
+        + ' dari panitia, ' + Object.keys(orang).length + ' Bizstar'
+      : 'Belum ada penilaian.').setFontColor('#888888');
+    baris++;
+
+    if (!isi.length) { baris += 2; return; }
+
+    sh.getRange(baris, 1, 1, W).setValues([SESI_KOLOM])
+      .setFontWeight('bold').setBackground('#f3f3f3');
+    baris++;
+    sh.getRange(baris, 1, isi.length, W).setValues(isi.map(function (x) { return x.baris; }));
+    sh.getRange(baris, 8, isi.length, 1).setNumberFormat('0.00');
+    sh.getRange(baris, 9, isi.length, 2).setWrap(true);
+    baris += isi.length + 2;
+  });
+
+  [140, 230, 75, 170, 85, 100, 75, 80, 240, 240, 120]
+    .forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
+  return { sesi: urutan.length, penilaian: semua.length };
+}
+
 /* Dipakai sekali di awal: bikin ketiga sheet berikut judul kolomnya sekaligus,
    tanpa menunggu penilaian pertama masuk. Aman diklik berulang — sheet yang
    sudah ada tidak disentuh dan isinya tidak hilang. */
@@ -1569,6 +1686,9 @@ function menuSiapkanSheet() {
 
     rebuildPeringkat();
     rebuildRekapBizstar();
+    rebuildPerSesi();
+    lindungiSheet(ss.getSheetByName(SESI_SHEET),
+      'Ditulis ulang otomatis tiap penilaian masuk. Betulkan di sheet Penilaian, bukan di sini.');
 
     const sesudah = ss.getSheets().map(function (sh) { return sh.getName(); });
     const baru = sesudah.filter(function (n) { return sebelum.indexOf(n) === -1; });
@@ -1629,7 +1749,7 @@ function menuHapusBarisUji() {
       total += dibuang;
     });
 
-    if (total) { rebuildPeringkat(); rebuildRekapBizstar(); }
+    if (total) { rebuildPeringkat(); rebuildRekapBizstar(); rebuildPerSesi(); }
     ui.alert('Baris uji coba',
       total ? 'Dihapus: ' + laporan.join(', ') + '. Peringkat sudah dihitung ulang.'
             : 'Tidak ada baris uji coba yang ditemukan.',
@@ -1692,6 +1812,7 @@ function menuBuangPenilaianDobel() {
       .forEach(function (n) { sh.deleteRow(n); });
     rebuildPeringkat();
     rebuildRekapBizstar();
+    rebuildPerSesi();
     ui.alert('Penilaian dobel', buang.length + ' baris dibuang. Peringkat dan Rekap sudah '
       + 'dihitung ulang.', ui.ButtonSet.OK);
   } catch (err) {
@@ -1711,6 +1832,21 @@ function menuGambarUlangGrafik() {
       + 'sudah dinilai dengan yang belum.', ui.ButtonSet.OK);
   } catch (err) {
     ui.alert('Gagal menggambar grafik', String((err && err.message) || err), ui.ButtonSet.OK);
+  }
+}
+
+/* Dipakai setelah sheet Penilaian diubah tangan (misalnya baris dihapus), supaya
+   tampilan per sesi ikut menyesuaikan tanpa menunggu penilaian berikutnya masuk. */
+function menuPerbaruiPerSesi() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const hasil = rebuildPerSesi();
+    lindungiSheet(penilaianSS().getSheetByName(SESI_SHEET),
+      'Ditulis ulang otomatis tiap penilaian masuk. Betulkan di sheet Penilaian, bukan di sini.');
+    ui.alert('Penilaian per Sesi diperbarui',
+      hasil.penilaian + ' penilaian ditata ke ' + hasil.sesi + ' sesi.', ui.ButtonSet.OK);
+  } catch (err) {
+    ui.alert('Gagal menata per sesi', String((err && err.message) || err), ui.ButtonSet.OK);
   }
 }
 
@@ -1788,6 +1924,7 @@ function onOpen() {
     .addItem('Siapkan Sheet Penilaian', 'menuSiapkanSheet')
     .addItem('Perbarui Peringkat Bizstar', 'menuPerbaruiPeringkat')
     .addItem('Perbarui Rekap', 'menuPerbaruiRekap')
+    .addItem('Perbarui Penilaian per Sesi', 'menuPerbaruiPerSesi')
     .addItem('Gambar Ulang Grafik', 'menuGambarUlangGrafik')
     .addSeparator()
     .addItem('Hapus Baris Uji Coba', 'menuHapusBarisUji')
