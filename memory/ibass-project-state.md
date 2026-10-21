@@ -10,6 +10,93 @@ metadata:
 
 # Proyek IBASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
 
+## AKUMULASI BUDDY + PANITIA — SUDAH DIBUKTIKAN LIVE (2026-10-21)
+
+Boss bertanya apakah panitia juga jalan dan apakah nilainya digabung dengan buddy.
+Dua-duanya dibuktikan dengan baris sungguhan di sheet, bukan hitungan di atas kertas.
+
+Kirim baris panitia (skala 1-5, 4/4/3 = 75,00) lalu baris buddy (8/8/8 = 80,00) untuk
+nama yang sama. Hasil dari sheet Peringkat:
+nilaiBuddy 80, nilaiPanitia 75, nBuddy 1, nPanitia 1, **kpi 78,5** —
+persis 80 x 0,7 + 75 x 0,3. Kolom peringkatPanitia juga terisi.
+Jadi jalur panitia hidup, dan penggabungan 70/30 betul-betul jalan di deploy sekarang.
+
+Rumus lengkapnya di hitungPeringkat():
+- Beberapa penilaian dari peran yang SAMA di-RATA-RATA, bukan dijumlah. Jadi nilai buddy
+  seorang Bizstar adalah rata-rata semua penilaian buddy lintas milestone (Townhall 1,
+  Pematerian 1, dan seterusnya) — bukan tambah terus.
+- Kalau dinilai dua peran: kpi = rataBuddy x 0,7 + rataPanitia x 0,3.
+- Kalau cuma satu peran yang mengisi: kpi = rata peran itu saja, tanpa dikalikan apa pun.
+  (Terbukti: waktu cuma ada baris panitia, kpi = 75, bukan 22,5.)
+- akhir = kpi + poin keaktifan (maks +5).
+Departemen dibaca dari baris buddy; baris panitia mengirim Dept Penilai sebagai tanda
+pisah dan sengaja diabaikan.
+
+Catatan keadaan sheet saat itu: Boss sudah membersihkan sheet Keaktifan (kosong) dan
+baris uji penilaian sebelumnya. Deploy MASIH yang lama — action=proker tetap menjawab
+fall-through. Kolom peringkatPanitia yang tadinya tidak muncul ternyata bukan tanda
+deploy baru: kolom itu memang kosong untuk orang yang belum pernah dinilai panitia.
+
+## UJI JALUR PENILAIAN SAAT PEMATERIAN 1 (2026-10-21) — JALAN
+
+Boss sedang di acara, minta dipastikan penilaian + sheet-nya bisa dipakai. Hasilnya:
+**jalur penilaian HIDUP SEPENUHNYA di deploy yang sekarang**, walau .gs belum ditimpa.
+Dibuktikan dengan satu baris uji sungguhan (nama ZZZ UJI COBA HAPUS, Pematerian 1):
+POST dijawab "1 penilaian tersimpan", baris mendarat di baris data PERTAMA — jadi
+`barisTerakhirBerisi` SUDAH ikut terdeploy, tidak ada lubang baris kosong — 16 kolom
+terisi benar, waktu "2026-10-21 15:11:03", lalu sheet Peringkat terbangun ulang sendiri
+(kpi 80, akhir 80, predikat Sangat Baik, peringkat 1).
+**Baris uji itu perlu dihapus tangan** — deploy sekarang belum punya menu Hapus Baris
+Uji Coba. Selama belum dihapus, ZZZ masih nangkring di Peringkat.
+
+Jadi patokannya: yang belum terdeploy HANYA menyentuh Catat Proker / keaktifan
+(daftar proker, tanggal Indonesia, status Tidak Hadir). Penilaian tidak terpengaruh.
+
+Yang ikut diuji di layar (lokal, tanpa menulis): buddy Eghina ke HRD 8 Bizstar,
+Pematerian 1; rate() + bar "Selesai" + pindah otomatis 2,2 detik; Tidak Hadir tersimpan
+sebagai absent dan TIDAK ikut dikirim; catatan kelebihan/perbaikan terbawa; KPI buddy
+8/9/7 = 79,17 dan 9/8/10 = 90,83; KPI panitia (skala 1-5) 4/4/3 = 75,00, 5/5/5 = 100,
+3/2/4 = 57,50; layar sukses "2 penilaian tersimpan. 1 yang tidak hadir tidak ikut
+dikirim."; server menolak / jaringan mati menghasilkan alert yang menyebut alasannya dan
+nilai TIDAK hilang. Kolom Dept Penilai untuk panitia terkirim sebagai tanda pisah
+(em dash) — disengaja, bukan bug.
+
+Sheet Bizstar masih kosong, tapi itu TIDAK mengganggu penilaian: web jatuh ke daftar
+bawaan di dalam kode dan ke-49 nama tampil benar (HRD 8 nama, panitia 49 nama).
+
+**LUBANG ITU SUDAH DITUTUP (commit 2703bd4, merge 63189da, sudah di-push).**
+Banner "Sesi Tersimpan" (id resumeBanner) dulu ada DI DALAM blok panitia
+(id panitiaPickerWrap), jadi cuma panitia yang pernah melihatnya; cabang buddy di
+penimpa window.openApp isinya cuma komentar "show resume prompt as toast" yang tidak
+pernah ditulis. Sekarang bannernya di halaman identitas dan pemeriksanya satu untuk dua
+peran: checkResume(). Pencocokannya CUKUP NAMA PENILAI (bukan nama + milestone seperti
+dulu) — orang yang tabnya baru tertutup belum tentu ingat sesi mana yang tadi dibuka,
+dan keterangannya sudah menyebut milestone + berapa yang sudah diisi.
+
+Tiga hal lain yang ikut ketemu dan ikut dibetulkan:
+- Simpanan sementara TIDAK PERNAH dibuang setelah kiriman berhasil, jadi orang yang sama
+  nanti ditawari melanjutkan sesi yang sudah selesai. Sekarang clearSavedSession()
+  dipanggil begitu server menjawab berhasil.
+- resumeSession() memanggil openApp lalu goPage(2), padahal untuk buddy openApp BERHENTI
+  di menu dua tugas dan return — layar penilaiannya tertutup menu, tombol Lanjutkan
+  seolah tidak berbuat apa-apa. Sekarang mulaiPenilaian() dipanggil sendiri untuk buddy.
+- Chip milestone dipulihkan dengan membandingkan TULISAN tombol, padahal tombolnya
+  tertulis "PMT 1" sementara nilainya "Pematerian 1" — tidak pernah cocok untuk dua
+  milestone pematerian. Sekarang dibandingkan lewat isi onclick-nya.
+
+HATI-HATI, dua jebakan yang hampir menggigit lagi waktu memperbaiki ini:
+- doSubmit ADA DUA di index.html. Yang hidup adalah window.doSubmit (yang punya
+  absentNote); yang di atasnya kode mati. Tambalan pertama mendarat di yang mati.
+  Cek dulu dengan grep sebelum menambal apa pun di file ini.
+- openApp dan setMilestone juga ditulis dua kali, tapi penimpanya memanggil yang asli
+  (_origOpenApp / _origSetMilestone) jadi aman — tambal yang window.*.
+
+Diuji dua arah di browser: buddy Eghina mengisi 1 dari 8 lalu halaman dimuat ulang dari
+nol — tawaran muncul setelah nama dipilih ("Pematerian 1 — 1 dari 8 Bizstar sudah diisi,
+baru saja."), Lanjutkan membawa ke halaman 2 dengan nilai, dept HRD, milestone, chip
+PMT 1 dan kartu nama utuh. Panitia yang tadinya sudah jalan tetap jalan. Setelah kiriman
+berhasil, tawarannya tidak muncul lagi.
+
 ## HASIL UJI MENYELURUH (2026-10-18) — DEPLOY MASIH VERSI LAMA
 
 Asalnya: sesi **IBASS 3** (worktree agitated-carson-2f7300) berhenti karena error tepat
