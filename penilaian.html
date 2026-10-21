@@ -2136,6 +2136,13 @@ input:focus, select:focus, textarea:focus {
         </div>
       </div>
 
+      <!-- Yang sudah dikirim penilai ini di milestone ini. Diambil dari server, jadi
+           tetap benar walaupun dulu dikirim dari HP lain. -->
+      <div class="card" id="kartuTerkirim" style="display:none">
+        <div class="card-label" id="terkirimJudul">Sudah Kamu Kirim</div>
+        <div id="terkirimIsi" style="font-size:0.74rem;color:var(--text2);line-height:1.8"></div>
+      </div>
+
       <!-- BUDDY: preview semua bizstar di dept -->
       <div class="card" id="bizstarPreviewCard" style="display:none">
         <div class="card-label">Bizstar yang Akan Dinilai</div>
@@ -3320,16 +3327,18 @@ function namaPenilaiBerubah(){
   }
   updateP1();
   checkResume();
+  segarkanTerkirim();
 }
 
 function onDeptChange(){
   const dept=document.getElementById('deptPenilai').value;
   if(dept && currentRole==='buddy'){
-    bizList=BIZSTAR_DB[dept]||[];
+    bizList=(BIZSTAR_DB[dept]||[]).filter(n=>!sudahTerkirim(n));
     showBizstarPreview();
   }
   updateP1();
   checkResume();
+  segarkanTerkirim();
 }
 function showBizstarPreview(){
   const kartu=document.getElementById('bizstarPreviewCard');
@@ -3337,8 +3346,13 @@ function showBizstarPreview(){
   if(!bizList.length){
     // Lebih baik dibilang kosong daripada tombolnya mati tanpa sebab.
     kartu.style.display='block';
-    isi.innerHTML='<span style="color:var(--amber)">Belum ada nama Bizstar untuk departemen ini. '
-      +'Kabari yang pegang spreadsheet.</span>';
+    const dept=document.getElementById('deptPenilai').value;
+    const semua=BIZSTAR_DB[dept]||[];
+    isi.innerHTML = semua.length && semua.every(n=>sudahTerkirim(n))
+      ? '<span style="color:var(--green)">Semua Bizstar '+esc(dept)+' sudah kamu nilai untuk '
+        +esc(milestone)+'. Tidak ada yang perlu dikirim lagi.</span>'
+      : '<span style="color:var(--amber)">Belum ada nama Bizstar untuk departemen ini. '
+        +'Kabari yang pegang spreadsheet.</span>';
     return;
   }
   kartu.style.display='block';
@@ -3378,6 +3392,107 @@ function updateP1(){
 // selected set for panitia
 const panitiaSelected=new Set();
 
+/* ══ YANG SUDAH TERKIRIM ══
+   Dibaca dari sheet, bukan dari ingatan browser. Waktu Pematerian 1 ada buddy yang
+   terkirim dua kali; kunci yang cuma tersimpan di satu HP tidak akan menahannya
+   kalau dia membuka dari HP lain. Kuncinya: peran + nama penilai + milestone.
+   Server juga menolak kiriman dobel — yang di sini supaya penilai tahu lebih awal
+   dan tidak perlu mengisi ulang yang sudah tersimpan. */
+let terkirim = new Map();     // normNama(bizstar) -> baris penilaian dari sheet
+let terkirimKunci = '';       // peran|penilai|milestone milik isi di atas
+let terkirimNomor = 0;        // nomor permintaan, supaya jawaban lama tidak menimpa yang baru
+let terkirimTunda = null;
+
+function kunciTerkirim(){
+  const el = document.getElementById('namaPenilai');
+  const n = el ? el.value.trim() : '';
+  if(!currentRole || !n || !milestone) return '';
+  return currentRole + '|' + normNama(n) + '|' + milestone;
+}
+
+function sudahTerkirim(nama){
+  if(!terkirimKunci || terkirimKunci !== kunciTerkirim()) return false;
+  return terkirim.has(normNama(nama));
+}
+
+// Dipanggil tiap nama, departemen, milestone, atau peran berubah. Ditunda sebentar
+// supaya panitia yang sedang mengetik namanya tidak memicu permintaan tiap huruf.
+function segarkanTerkirim(){
+  clearTimeout(terkirimTunda);
+  terkirimTunda = setTimeout(()=>{ muatTerkirim(false); }, 450);
+}
+
+async function muatTerkirim(paksa){
+  const kunci = kunciTerkirim();
+  if(!kunci){
+    terkirim = new Map(); terkirimKunci = '';
+    gambarTerkirim(); return terkirim;
+  }
+  if(!paksa && kunci === terkirimKunci){ terapkanTerkirim(); return terkirim; }
+  const nomor = ++terkirimNomor;
+  try{
+    const r = await fetch(APPS_URL + '?action=penilaian', { cache:'no-store' });
+    const js = await r.json();
+    if(nomor !== terkirimNomor || kunci !== kunciTerkirim()) return terkirim;
+    const [peran, penilai, ms] = kunci.split('|');
+    const baru = new Map();
+    (js.penilaian || []).forEach(p=>{
+      if(String(p.role).toLowerCase() !== peran) return;
+      if(normNama(p.penilai) !== penilai || String(p.milestone) !== ms) return;
+      const k = normNama(p.nama_bizstar);
+      if(k && !baru.has(k)) baru.set(k, p);
+    });
+    terkirim = baru; terkirimKunci = kunci;
+  }catch(e){
+    // Gagal membaca bukan alasan untuk menahan penilai — server tetap menolak dobel.
+    return terkirim;
+  }
+  gambarTerkirim();
+  terapkanTerkirim();
+  return terkirim;
+}
+
+/* Kartu "Sudah Kamu Kirim" di halaman identitas. */
+function gambarTerkirim(){
+  const kartu = document.getElementById('kartuTerkirim');
+  if(!kartu) return;
+  if(!terkirim.size || terkirimKunci !== kunciTerkirim()){ kartu.style.display='none'; return; }
+  const daftar = [...terkirim.values()];
+  document.getElementById('terkirimJudul').textContent = 'Sudah Kamu Kirim — ' + milestone;
+  document.getElementById('terkirimIsi').innerHTML =
+      `<div style="color:var(--muted);margin-bottom:0.35rem">${daftar.length} Bizstar sudah tersimpan `
+    + `dan tidak bisa dikirim ulang. Kalau ada yang salah nilai, kabari pemegang spreadsheet.</div>`
+    + daftar.map(p=>{
+        const kpi = Number(p.skor_weighted);
+        return `<div>${esc(p.nama_bizstar)} <span style="color:var(--muted)">&middot; `
+          + `${esc(p.skor_adaptive_raw)}/${esc(p.skor_collab_raw)}/${esc(p.skor_growth_raw)}`
+          + (isNaN(kpi) ? '' : ` &middot; ${kpi.toFixed(1)}`) + `</span></div>`;
+      }).join('');
+  kartu.style.display = 'block';
+}
+
+/* Buang yang sudah terkirim dari daftar yang akan dinilai. Hanya di halaman
+   identitas — mengubah daftar di tengah menilai bisa menggeser urutan kartu. */
+function terapkanTerkirim(){
+  const p1 = document.getElementById('page1');
+  if(!p1 || p1.style.display === 'none') return;
+  if(currentRole === 'buddy'){
+    const dept = document.getElementById('deptPenilai').value;
+    if(dept){
+      bizList = (BIZSTAR_DB[dept] || []).filter(n=>!sudahTerkirim(n));
+      showBizstarPreview();
+    }
+  } else if(currentRole === 'panitia'){
+    [...panitiaSelected].forEach(n=>{ if(sudahTerkirim(n)) panitiaSelected.delete(n); });
+    bizList = Array.from(panitiaSelected);
+    const f = document.getElementById('panitia-dept-filter');
+    renderPanitiaChips(f ? f.value : '');
+    renderPanitiaSelected();
+  }
+  const btn = document.getElementById('nextBtn1');
+  if(btn) updateP1();
+}
+
 // ── Helper: key untuk menyimpan riwayat submit panitia ──
 function getPanitiaSubmittedKey(){
   const penilai=document.getElementById('namaPenilai').value.trim();
@@ -3386,10 +3501,14 @@ function getPanitiaSubmittedKey(){
 
 // ── Ambil set Bizstar yang sudah disubmit oleh penilai ini di milestone ini ──
 function getSubmittedSet(){
+  let s;
   try{
     const raw=localStorage.getItem(getPanitiaSubmittedKey());
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  }catch{return new Set();}
+    s = raw ? new Set(JSON.parse(raw)) : new Set();
+  }catch{ s = new Set(); }
+  // ditambah yang tercatat di sheet, supaya kuncinya tetap jalan dari HP lain
+  (BIZSTAR_DB['__ALL__'] || []).forEach(n=>{ if(sudahTerkirim(n)) s.add(n); });
+  return s;
 }
 
 // ── Simpan Bizstar yang baru saja disubmit ──
@@ -4386,6 +4505,7 @@ window.openApp = function(role){
   // Nama penilai biasanya sudah terisi dari simpanan browser, jadi tawarannya bisa
   // langsung muncul begitu layar dibuka — tidak perlu menunggu orangnya mengetik.
   checkResume();
+  segarkanTerkirim();
 };
 
 /* Tawarkan sesi yang belum selesai, untuk buddy maupun panitia.
@@ -4629,6 +4749,7 @@ const _origSetMilestone = setMilestone;
 window.setMilestone = function(el,val){
   _origSetMilestone(el,val);
   checkResume();
+  segarkanTerkirim();
 };
 
 /* Patch triggerAutosave into rate & rate5el */
@@ -4764,7 +4885,7 @@ window.doSubmit = async function(){
   const max     = isBuddy?10:5;
 
   // Exclude absent AND incomplete
-  const rows = bizList
+  let rows = bizList
     .filter(name=>isComplete(name) && !(allScores[name]&&allScores[name].absent))
     .map(name=>{
       const sc=allScores[name];
@@ -4784,6 +4905,24 @@ window.doSubmit = async function(){
     });
 
   const absentList = bizList.filter(n=>allScores[n]&&allScores[n].absent);
+
+  /* Tanya server sekali lagi tepat sebelum mengirim: bisa saja penilai ini sudah
+     mengirim dari HP lain sejak halamannya dibuka. Yang sudah tersimpan tidak
+     dikirim ulang. Kalau server tidak terjangkau, kirim saja — server sendiri
+     tetap menolak kiriman dobel. */
+  await muatTerkirim(true);
+  const sudahAda = rows.filter(r=>sudahTerkirim(r.nama_bizstar)).map(r=>r.nama_bizstar);
+  rows = rows.filter(r=>!sudahTerkirim(r.nama_bizstar));
+  const kalimatDobel = n => n
+    ? ` ${n} sudah pernah kamu kirim di ${milestone}, tidak dikirim ulang.` : '';
+
+  if(!rows.length && sudahAda.length){
+    document.getElementById('successMsg').textContent =
+      `Tidak ada yang dikirim ulang. ${sudahAda.length} Bizstar ini sudah kamu nilai di ${milestone}.`;
+    document.getElementById('success').classList.add('visible');
+    clearSavedSession();
+    return;
+  }
 
   if(APPS_URL==='YOUR_APPS_SCRIPT_URL_HERE'){
     await new Promise(r=>setTimeout(r,1800));
@@ -4807,8 +4946,18 @@ window.doSubmit = async function(){
     if(!hasil || !hasil.ok) throw new Error((hasil&&hasil.error)||'ditolak server');
     if(currentRole==='panitia') saveSubmittedNames(rows.map(r=>r.nama_bizstar));
     const absentNote = absentList.length ? ` ${absentList.length} yang tidak hadir tidak ikut dikirim.` : '';
-    document.getElementById('successMsg').textContent=`${rows.length} penilaian tersimpan.${absentNote}`;
+    // Server yang sudah memasang kunci dobel menjawab berapa yang benar-benar masuk.
+    const masuk = typeof hasil.tersimpan === 'number' ? hasil.tersimpan : rows.length;
+    const dobelServer = Array.isArray(hasil.dobel) ? hasil.dobel.length : 0;
+    document.getElementById('successMsg').textContent =
+      `${masuk} penilaian tersimpan.${absentNote}${kalimatDobel(sudahAda.length + dobelServer)}`;
     document.getElementById('success').classList.add('visible');
+    // Catat sebagai terkirim supaya kembali ke halaman ini tidak bisa mengirim ulang.
+    const kunciNow = kunciTerkirim();
+    if(kunciNow){
+      if(terkirimKunci !== kunciNow){ terkirim = new Map(); terkirimKunci = kunciNow; }
+      rows.forEach(r=>terkirim.set(normNama(r.nama_bizstar), r));
+    }
     /* Sudah mendarat di server, simpanan sementaranya tidak diperlukan lagi. Kalau
        dibiarkan, orang yang sama nanti ditawari melanjutkan sesi yang sudah selesai. */
     clearSavedSession();
