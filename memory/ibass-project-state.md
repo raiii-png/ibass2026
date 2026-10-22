@@ -10,6 +10,67 @@ metadata:
 
 # Proyek IBASS 2026 — HIMA Administrasi Bisnis, Universitas Telkom
 
+## SHEET "PENILAIAN PER SESI" (2026-10-22, commit af8926b)
+
+Boss minta sheet penilaian lebih rapi karena Townhall dan Pematerian bakal bercampur,
+dengan "barisan khusus" per sesi. Keputusan desain: sheet Penilaian TETAP catatan
+mentah (kode menempel di bawah, dibaca lewat nama kolom, dipakai kunci dobel) — JANGAN
+disisipi baris judul atau diurutkan di tempat. Yang rapi adalah sheet TURUNAN baru
+"Penilaian per Sesi" (SESI_SHEET), dibangun ulang oleh rebuildPerSesi():
+- satu blok per sesi urut MILESTONE_LIST; sesi kosong tetap punya baris
+  "Belum ada penilaian."; sesi di luar jadwal ditaruh di belakang.
+- judul blok: "N penilaian — B dari buddy, P dari panitia, K Bizstar".
+- di dalam blok urut DEPT_LIST lalu nama, buddy sebelum panitia untuk Bizstar sama.
+- departemen baris panitia dari daftar Bizstar, lalu dari baris buddy orang yang sama.
+- dipanggil di savePenilaian, menu Buang Penilaian Dobel, Hapus Baris Uji Coba, Siapkan
+  Sheet; ada menu "Perbarui Penilaian per Sesi". Diberi lindungiSheet (peringatan).
+- sheet baru disisipkan tepat sesudah tab Penilaian (insertSheet(nama, pen.getIndex())).
+Di savePenilaian ketiga rebuild sekarang try terpisah.
+Uji: scratchpad/uji-sesi.js — memasukkan data ASLI (action=penilaian, cuma dibaca) ke
+spreadsheet tiruan, 16 uji + pratinjau teks. Uji lama uji-gas.js tetap 22 lulus.
+Catatan kecil: nama panitia tersimpan apa adanya ("fakhri haidar sawego", huruf kecil).
+
+## SETELAH PEMATERIAN 1 (2026-10-22) — KUNCI DOBEL, STATUS BUDDY, GRAFIK
+
+Data semalam: 39 baris. Buddy yang mengisi: Anggun (ACT 6), Eghina (HRD 14 =
+7 x 2, TERKIRIM DUA KALI 22:57 dan 23:03, isi sama), Marzya (Entre 5), Nursyfa
+(Finance 4), Tyara (MEIN 7). Belum: Ayu (Secretary), Akram (Advocacy), Razwa
+(ExtAff). Panitia cuma Fakhri, 3 Bizstar. Penilaian banyak yang datar 7/7/7.
+
+Dikerjakan di commit 996b025 (BELUM di-merge/push saat ditulis):
+- Kunci dobel dua lapis. Server: savePenilaian menolak yang kunciPenilaian(peran,
+  penilai, milestone, bizstar)-nya sudah ada; jawab {tersimpan, dobel[]}. Tidak
+  menimpa — mau membetulkan nilai = hapus barisnya dulu di sheet. Web: membaca
+  ?action=penilaian waktu nama+milestone dipilih DAN sekali lagi tepat sebelum
+  kirim (muatTerkirim(true)); yang sudah ada tidak ikut dikirim. Lapisan web ini
+  JALAN DI DEPLOY LAMA juga, karena action=penilaian sudah lama ada.
+- Menu "Buang Penilaian Dobel" (menuBuangPenilaianDobel): simpan kiriman pertama,
+  tanya Ya/Tidak dulu. Ini yang membersihkan 7 baris dobel Eghina.
+  UPDATE 22 Okt 01:07 WIB: Boss sudah menghapus 7 baris dobel Eghina SECARA MANUAL
+  (baris 22-28, kiriman 23:03:02; yang 22:57:13 dipertahankan). Sheet Penilaian jadi
+  32 baris, 0 dobel; Peringkat sudah dibangun ulang (action=peringkat&segarkan=1).
+  Pelajaran: setelah Boss mengedit sheet, beri jeda beberapa detik sebelum membaca —
+  bacaan pertama sempat masih menunjukkan data lama.
+- Sheet Rekap: bagian "Buddy per milestone" (8 buddy x 4 milestone, isi = jumlah
+  Bizstar unik, dicocokkan lewat nama ATAU dept_penilai) + kalimat siap salin
+  "Belum mengisi <milestone terakhir yang ada isinya>: ...".
+- Grafik: penyebabnya rebuildRekap ganda di kode yang TERPASANG (yang menang punya
+  Track File dan butuh ss) -> Rekap tidak pernah terbentuk. Sudah dibuktikan dengan
+  menjalankan kode terpasang (d1bfb60^) di spreadsheet tiruan. Kode repo sudah benar
+  sejak 14 Okt — perbaikannya cuma TEMPEL + Save + New version.
+- Saran A: kartu "Sudah Kamu Kirim — <milestone>" (id kartuTerkirim) di halaman
+  identitas; daftar yang dinilai tinggal sisanya; kalau semua sudah, Mulai mati.
+- Panitia: getSubmittedSet() sekarang = localStorage + yang tercatat di sheet,
+  jadi chip "(sudah)" berlaku juga dari HP lain.
+
+ALAT UJI SERVER: scratchpad/uji-gas.js menjalankan .gs di Node dengan spreadsheet
+tiruan (Proxy untuk Range, chart, format). 22 uji. Pakai pola ini lagi kalau mengubah
+.gs — Boss tidak bisa diminta menguji tiap kali.
+
+Saran yang ditawarkan tapi BELUM dikerjakan: (B) tunjukkan ke panitia Bizstar yang
+belum disentuh panitia mana pun; (C) pengingat kalau tiga kriteria diberi angka sama;
+(D) buka-tutup milestone dari sheet.
+
 ## AKUMULASI BUDDY + PANITIA — SUDAH DIBUKTIKAN LIVE (2026-10-21)
 
 Boss bertanya apakah panitia juga jalan dan apakah nilainya digabung dengan buddy.
