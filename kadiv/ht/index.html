@@ -8,10 +8,10 @@
 <title>HT IBASS 2026</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230d1c3a'/><path d='M16 5.5l2.7 7.1L26 13.8l-5.7 4.7L22 26l-6-3.9L10 26l1.7-7.5L6 13.8l7.3-1.2z' fill='%23e8bf6a'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-/* Tampilan meniru HT sungguhan (badan, layar LCD, keypad, kisi speaker, tombol karet)
-   dengan warna tema IBASS: navy, biru muda, emas — sama dengan dashboard. */
+/* HT IBASS: wujud radio genggam (antena, kenop, layar LCD, keypad, tombol karet),
+   warna tema IBASS navy, biru muda, emas. */
 :root{
   --navy:#0d1c3a; --bg2:#122448; --bg3:#182e58; --bg4:#1f3866;
   --tepi:rgba(120,190,240,0.26); --tepi2:rgba(120,190,240,0.13);
@@ -21,111 +21,112 @@
   --lcd:#a9dcf6; --lcd2:#8cc8ea; --lcd-ink:#0a1f3f; --lcd-redup:#3d6990;
   --emas:#e8bf6a; --emas-terang:#f6dc9c; --emas-gelap:#b8862c;
   --green:#36c97a; --amber:#f0a820; --red:#ff4d4d;
-  --mono:'IBM Plex Mono',ui-monospace,monospace;
-  --sans:'IBM Plex Sans Condensed','Arial Narrow',sans-serif;
+  --lcdfont:'Share Tech Mono',ui-monospace,monospace;
+  --sans:'Chakra Petch',system-ui,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
-body{background:var(--navy);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.4;
+body{background:var(--navy);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.35;
   min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   background:linear-gradient(165deg,#22406f 0%,#152c54 45%,#0b1c3c 100%)}
 button{font-family:inherit;color:inherit}
-.wrap{position:relative;z-index:1;max-width:440px;margin:0 auto;
-  padding:max(12px,env(safe-area-inset-top)) 12px max(24px,env(safe-area-inset-bottom));
-  display:flex;flex-direction:column;gap:14px}
+.wrap{position:relative;z-index:1;max-width:430px;margin:0 auto;
+  padding:max(30px,calc(env(safe-area-inset-top) + 18px)) 14px max(24px,env(safe-area-inset-bottom));
+  display:flex;flex-direction:column}
 
 /* ── badan radio ── */
-.radio{position:relative;background:linear-gradient(180deg,var(--bg3),var(--bg2) 40%);
-  border:1px solid var(--tepi);border-radius:22px 22px 18px 18px;padding:14px 14px 18px;
-  box-shadow:inset 0 1px 0 rgba(160,210,250,0.12),0 18px 40px rgba(3,10,26,0.55)}
-.radio::before,.radio::after{content:'';position:absolute;top:12px;width:7px;height:7px;border-radius:50%;
-  background:radial-gradient(circle at 35% 35%,#5b7bab,#1a2f57);box-shadow:inset 0 0 0 1px #0a1630}
-.radio::before{left:12px}.radio::after{right:12px}
-.kepala{display:flex;align-items:center;justify-content:space-between;padding:0 16px 10px}
-.merek{font-family:var(--sans);font-weight:700;font-size:13px;letter-spacing:0.04em;color:var(--ink2)}
-.merek b{color:var(--emas);font-weight:700}
-.model{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.radio{position:relative;background:linear-gradient(180deg,var(--bg3),var(--bg2) 34%,#10203f);
+  border:1px solid var(--tepi);border-radius:26px 26px 22px 22px;padding:16px 14px 20px;
+  box-shadow:inset 0 1px 0 rgba(160,210,250,0.12),inset 0 -2px 0 rgba(0,0,0,0.25),0 22px 44px rgba(3,10,26,0.55)}
+/* antena dan kenop saluran di atas badan */
+.antena{position:absolute;left:30px;bottom:100%;width:16px;height:22px;border-radius:5px 5px 0 0;
+  background:linear-gradient(90deg,#0a1630,#1d3360 50%,#0a1630);border:1px solid var(--tepi);border-bottom:none}
+.kenop{position:absolute;right:34px;bottom:100%;width:30px;height:14px;border-radius:5px 5px 0 0;
+  background:repeating-linear-gradient(90deg,#24406f 0 2px,#132a52 2px 4px);border:1px solid var(--tepi);border-bottom:none}
+.kepala{display:flex;align-items:center;justify-content:space-between;padding:0 4px 12px}
+.merek{font-weight:700;font-size:15px;letter-spacing:0.06em}
+.merek b{color:var(--emas)}
+.merek span{color:var(--ink2);font-weight:500}
+.lampu{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.08em}
+.lampu i{width:8px;height:8px;border-radius:50%;background:#26406c;box-shadow:inset 0 1px 1px rgba(0,0,0,0.5)}
+.radio.tx .lampu i{background:var(--red);box-shadow:0 0 8px rgba(255,77,77,0.9)}
+.radio.rx .lampu i{background:var(--green);box-shadow:0 0 8px rgba(54,201,122,0.9)}
 
-/* layar LCD (lampu layar biru) */
-.lcd{background:linear-gradient(180deg,var(--lcd),var(--lcd2));color:var(--lcd-ink);border-radius:8px;
-  padding:9px 12px 10px;font-family:var(--mono);
-  box-shadow:inset 0 2px 6px rgba(0,20,50,0.35),inset 0 0 0 1px rgba(0,20,50,0.25),0 0 0 4px #0a1630,0 0 0 5px var(--tepi),0 0 22px rgba(134,207,245,0.18)}
-.lcd-baris{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;font-weight:500}
-.lcd-ch{font-size:28px;font-weight:600;letter-spacing:-0.01em;line-height:1.15;margin:3px 0 2px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* layar LCD */
+.lcd{background:linear-gradient(180deg,var(--lcd),var(--lcd2));color:var(--lcd-ink);border-radius:6px;
+  padding:9px 12px 10px;font-family:var(--lcdfont);
+  box-shadow:inset 0 2px 7px rgba(0,20,50,0.4),0 0 0 5px #0a1630,0 0 0 6px var(--tepi),0 0 24px rgba(134,207,245,0.16)}
+.lcd-baris{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+.lcd-ch{font-size:31px;line-height:1.1;margin:4px 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
 .lcd .redup{color:var(--lcd-redup)}
 .status{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dot{width:8px;height:8px;border-radius:2px;background:var(--lcd-redup);flex-shrink:0;opacity:.55}
+.dot{width:8px;height:8px;background:var(--lcd-redup);flex-shrink:0;opacity:.5}
 .dot.on{background:var(--lcd-ink);opacity:1}
 .dot.warn{background:var(--lcd-ink);opacity:1;animation:kedip 1s steps(2) infinite}
 .dot.err{background:#8a1c1c;opacity:1;animation:kedip .6s steps(2) infinite}
 @keyframes kedip{50%{opacity:.15}}
 
-/* kisi speaker */
-.kisi{height:22px;margin:14px 6px 0;border-radius:4px;
-  background:repeating-linear-gradient(90deg,#081633 0 4px,transparent 4px 9px);
-  -webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
-          mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+/* kisi speaker: lubang bulat */
+.kisi{height:30px;margin:16px 4px 0;
+  background:radial-gradient(circle,#06102a 2.2px,transparent 2.6px) 0 0/9px 9px;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);
+          mask:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
 
 /* keypad saluran */
-.kanal{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:14px;counter-reset:ch}
-.kanal button{counter-increment:ch;position:relative;text-align:left;min-height:48px;padding:6px 8px 6px 9px;
+.kanal{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:16px;counter-reset:ch}
+.kanal button{counter-increment:ch;position:relative;text-align:left;min-height:50px;padding:6px 8px 7px 9px;
   background:linear-gradient(180deg,var(--key),var(--key2));border:1px solid var(--key-tepi);border-bottom-color:var(--key-bawah);
-  border-radius:7px;font-size:13px;font-weight:500;color:var(--ink);cursor:pointer;
-  box-shadow:0 2px 0 var(--key-bawah);line-height:1.15;overflow:hidden}
-.kanal button::before{content:counter(ch,decimal-leading-zero);display:block;font-family:var(--mono);
-  font-size:10px;color:var(--muted);margin-bottom:1px}
-.kanal button .n{position:absolute;top:6px;right:8px;font-family:var(--mono);font-size:10px;color:var(--blue2)}
-.kanal button:active{transform:translateY(1px);box-shadow:0 1px 0 var(--key-bawah)}
-.kanal button.on{background:linear-gradient(180deg,#2a3b5c,#22314f);border-color:rgba(232,191,106,0.6);color:var(--emas)}
+  border-radius:9px 9px 7px 7px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;
+  box-shadow:0 3px 0 var(--key-bawah);line-height:1.1;overflow:hidden}
+.kanal button::before{content:counter(ch);display:block;font-family:var(--lcdfont);font-size:15px;color:var(--blue2);margin-bottom:2px}
+.kanal button .n{position:absolute;top:7px;right:8px;font-family:var(--lcdfont);font-size:12px;color:var(--ink2)}
+.kanal button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--key-bawah)}
+.kanal button.on{background:linear-gradient(180deg,#2c3c5d,#222f4c);border-color:rgba(232,191,106,0.65);color:var(--emas)}
 .kanal button.on::before,.kanal button.on .n{color:var(--emas)}
 
-/* tombol bicara (karet emas) */
-.ptt-area{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:18px}
-.ptt{width:min(58vw,210px);aspect-ratio:1;border-radius:50%;cursor:pointer;
-  border:none;color:#2b1d04;font-family:var(--sans);font-size:15px;font-weight:700;letter-spacing:0.02em;
+/* tombol bicara */
+.ptt-area{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:22px}
+.ptt{width:min(58vw,212px);aspect-ratio:1;border-radius:50%;cursor:pointer;
+  border:none;color:#2b1d04;font-family:var(--sans);font-size:17px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
   background:radial-gradient(circle at 50% 30%,var(--emas-terang),var(--emas) 45%,var(--emas-gelap) 100%);
-  box-shadow:0 0 0 8px #0a1630,0 0 0 9px var(--tepi),0 8px 0 9px #061026,inset 0 -6px 14px rgba(80,50,0,0.3),inset 0 3px 6px rgba(255,255,255,0.35);
+  box-shadow:0 0 0 9px #0a1630,0 0 0 10px var(--tepi),0 9px 0 10px #061026,inset 0 -6px 14px rgba(80,50,0,0.3),inset 0 3px 6px rgba(255,255,255,0.35);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
   user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;
   transition:transform .08s,box-shadow .08s,filter .15s}
-.ptt .ic{width:12px;height:12px;border-radius:50%;background:#7a5a1c;box-shadow:inset 0 1px 2px rgba(0,0,0,0.5)}
+/* alur karet di permukaan tombol */
+.ptt .ic{width:44%;height:10px;border-radius:5px;
+  background:repeating-linear-gradient(90deg,rgba(90,60,10,0.35) 0 3px,transparent 3px 7px)}
 .ptt:disabled{filter:grayscale(.8) brightness(.55);cursor:not-allowed}
-.ptt.live{transform:translateY(5px);
-  box-shadow:0 0 0 8px #0a1630,0 0 0 9px var(--tepi),0 3px 0 9px #061026,inset 0 -3px 10px rgba(80,50,0,0.35),inset 0 3px 6px rgba(255,255,255,0.3)}
-.ptt.live .ic{background:var(--red);box-shadow:0 0 10px 2px rgba(255,77,77,0.85)}
-.ptt.dengar:not(.live) .ic{background:var(--green);box-shadow:0 0 10px 2px rgba(54,201,122,0.8)}
-.hint{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;min-height:1.3em;padding:0 8px}
+.ptt.live{transform:translateY(6px);
+  box-shadow:0 0 0 9px #0a1630,0 0 0 10px var(--tepi),0 3px 0 10px #061026,inset 0 -3px 10px rgba(80,50,0,0.35),inset 0 3px 6px rgba(255,255,255,0.3)}
+.ptt.live{box-shadow:0 0 0 9px #0a1630,0 0 0 11px var(--red),0 3px 0 11px #061026,inset 0 -3px 10px rgba(80,50,0,0.35),inset 0 3px 6px rgba(255,255,255,0.3)}
+.ptt.dengar:not(.live){box-shadow:0 0 0 9px #0a1630,0 0 0 11px var(--green),0 9px 0 11px #061026,inset 0 -6px 14px rgba(80,50,0,0.3),inset 0 3px 6px rgba(255,255,255,0.35)}
+.hint{font-size:13px;font-weight:500;color:var(--muted);text-align:center;min-height:1.3em;padding:0 8px}
 .hint.dengar{color:var(--green)}
 
 /* tombol samping */
-.mode{display:flex;gap:6px;flex-wrap:wrap}
-.samping{margin-top:12px;justify-content:center}
-.mode button{background:linear-gradient(180deg,var(--key),var(--key2));border:1px solid var(--key-tepi);border-bottom-color:var(--key-bawah);
-  border-radius:7px;color:var(--ink2);font-size:13px;font-weight:500;padding:9px 12px;min-height:42px;cursor:pointer;box-shadow:0 2px 0 var(--key-bawah)}
-.mode button:active{transform:translateY(1px);box-shadow:0 1px 0 var(--key-bawah)}
-.mode button.on{color:var(--emas);border-color:rgba(232,191,106,0.6);background:#22314f}
-.mode button.merah{color:#ff9a9a;border-color:rgba(224,82,96,0.5)}
-
-/* ── panel di bawah radio ── */
-.panel{border-top:1px solid var(--tepi2);padding-top:12px}
-.judul{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:9px}
-.judul h2{font-family:var(--sans);font-size:15px;font-weight:600;color:var(--ink)}
-.judul span,.judul b{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--muted)}
+.samping{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:16px}
+.samping #btnRingAll{grid-column:1 / -1}
+.mode button,.samping button{background:linear-gradient(180deg,var(--key),var(--key2));border:1px solid var(--key-tepi);border-bottom-color:var(--key-bawah);
+  border-radius:8px;color:var(--ink2);font-size:14px;font-weight:600;padding:9px 12px;min-height:44px;cursor:pointer;box-shadow:0 3px 0 var(--key-bawah)}
+.mode button:active,.samping button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--key-bawah)}
+.samping button.on{color:var(--emas);border-color:rgba(232,191,106,0.65);background:#22314f}
+.samping button.merah{color:#ffb0a8;background:linear-gradient(180deg,#4a1f2c,#3a1826);border-color:#6e2e3c;border-bottom-color:#22080f}
 
 /* daftar orang */
-.daftar{margin-top:14px}
-.daftar .judul{padding:0 2px}
-.orang{display:flex;flex-direction:column;max-height:36vh;overflow-y:auto;border:1px solid var(--tepi2);border-radius:8px;background:rgba(8,20,46,0.55)}
+.daftar{margin-top:20px}
+.label{font-size:12px;font-weight:600;letter-spacing:0.1em;color:var(--muted);margin:0 2px 7px}
+.orang{display:flex;flex-direction:column;max-height:36vh;overflow-y:auto;border-radius:8px;background:rgba(6,16,38,0.6);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,0.4);border:1px solid var(--tepi2)}
 .o{display:flex;align-items:center;gap:10px;padding:8px 10px;border-top:1px solid var(--tepi2)}
 .o:first-child{border-top:none}
-.o .av{width:30px;height:30px;border-radius:6px;background:var(--bg4);color:var(--emas);
-  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;flex-shrink:0}
+.o .av{width:30px;height:30px;border-radius:50%;background:var(--bg4);color:var(--emas);
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
 .o.talk .av{background:var(--green);color:#06210f}
 .o .info{flex:1;min-width:0}
-.o .nm{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.o .sub{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.o .nm{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.o .sub{font-size:12px;color:var(--muted)}
 .o .sub.hijau{color:var(--green)}
 .o.goyah .sub{color:var(--amber)}
 .sinyal{display:inline-flex;align-items:flex-end;gap:2px;height:11px;margin-left:7px;vertical-align:-1px}
@@ -134,71 +135,100 @@ button{font-family:inherit;color:inherit}
 .sinyal.kuat i{background:var(--green)}
 .sinyal.sedang i:nth-child(1),.sinyal.sedang i:nth-child(2){background:var(--amber)}
 .sinyal.lemah i:nth-child(1){background:var(--red)}
-.o .call{background:transparent;border:1px solid rgba(232,191,106,0.45);border-radius:6px;color:var(--emas);
-  font-size:12px;font-weight:600;padding:0 10px;height:34px;cursor:pointer;flex-shrink:0}
+.o .call{background:transparent;border:1px solid rgba(232,191,106,0.5);border-radius:16px;color:var(--emas);
+  font-size:13px;font-weight:600;padding:0 12px;height:32px;cursor:pointer;flex-shrink:0}
 .o .call:active{background:var(--bg4)}
-.kosong{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.6;padding:10px 2px 0}
+.kosong{font-size:13px;color:var(--muted);line-height:1.5;padding:10px 2px 0}
 
-/* pemberitahuan */
+/* pemberitahuan: pita di dalam radio */
 .banner{display:none}
-.banner.tampil{display:block;border-left:3px solid var(--amber);background:rgba(240,168,32,0.1);
-  padding:10px 12px;font-size:13px;line-height:1.5;color:var(--ink2);border-radius:0 6px 6px 0}
+.banner.tampil{display:block;margin-top:14px;background:rgba(240,168,32,0.12);border:1px solid rgba(240,168,32,0.4);
+  padding:9px 11px;font-size:13px;line-height:1.45;color:var(--ink2);border-radius:7px}
 .banner.tampil strong{color:var(--amber);font-weight:600}
-.banner.merah{border-left-color:var(--red);background:rgba(224,82,96,0.1)}
+.banner.merah{background:rgba(224,82,96,0.12);border-color:rgba(224,82,96,0.45)}
 .banner.merah strong{color:var(--red)}
 
 /* isian & tombol */
-label.f{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:5px}
-input,select{width:100%;background:rgba(8,20,46,0.7);border:1px solid var(--key-tepi);color:var(--ink);font-family:var(--sans);
-  font-size:16px;padding:11px 12px;border-radius:7px;outline:none;-webkit-appearance:none;appearance:none}
+label.f{display:block;font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--muted);margin-bottom:5px}
+input,select{width:100%;background:rgba(6,16,38,0.7);border:1px solid var(--key-tepi);color:var(--ink);font-family:var(--sans);
+  font-size:16px;padding:11px 12px;border-radius:8px;outline:none;-webkit-appearance:none;appearance:none}
 select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
   background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
 select option{background:var(--bg2)}
 input:focus,select:focus{border-color:var(--emas)}
 .field{margin-bottom:12px}
 .btn{width:100%;background:linear-gradient(180deg,var(--key),var(--key2));border:1px solid var(--key-tepi);border-bottom-color:var(--key-bawah);
-  color:var(--ink);font-size:15px;font-weight:600;padding:12px;border-radius:8px;cursor:pointer;min-height:48px;box-shadow:0 2px 0 var(--key-bawah)}
-.btn:active{transform:translateY(1px);box-shadow:0 1px 0 var(--key-bawah)}
+  color:var(--ink);font-size:15px;font-weight:600;padding:12px;border-radius:9px;cursor:pointer;min-height:48px;box-shadow:0 3px 0 var(--key-bawah)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--key-bawah)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
-.btn.gold{background:linear-gradient(180deg,var(--emas-terang),var(--emas));border-color:var(--emas-gelap);color:#2b1d04;box-shadow:0 2px 0 #7a5a1c}
-.btn.danger{color:#ff9a9a}
-.btn-row{display:flex;gap:8px}.btn-row .btn{flex:1}
-.btn-ghost{background:transparent;box-shadow:none;border-color:var(--tepi2);color:var(--ink2);font-weight:500}
+.btn.gold{background:linear-gradient(180deg,var(--emas-terang),var(--emas));border-color:var(--emas-gelap);color:#2b1d04;box-shadow:0 3px 0 #7a5a1c;
+  text-transform:uppercase;letter-spacing:0.06em;font-weight:700}
+.masuk{margin-top:18px}
+.note{font-size:13px;color:var(--muted);line-height:1.5}
 
-/* masuk */
-.masuk{margin-top:16px}
-.note{font-size:13px;color:var(--muted);line-height:1.55}
+/* ── bagian bawah radio: tombol fungsi, log, saklar ── */
+.bawah{margin-top:14px;background:linear-gradient(180deg,#10203f,#0d1b37);border:1px solid var(--tepi);
+  border-radius:20px;padding:16px 14px 18px;display:flex;flex-direction:column;gap:18px;
+  box-shadow:inset 0 1px 0 rgba(160,210,250,0.08),0 14px 30px rgba(3,10,26,0.45)}
+.fkeys{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;counter-reset:fk}
+.fkeys button{counter-increment:fk;display:flex;align-items:center;gap:8px;text-align:left;min-height:44px;padding:8px 10px;
+  background:linear-gradient(180deg,var(--key),var(--key2));border:1px solid var(--key-tepi);border-bottom-color:var(--key-bawah);
+  border-radius:8px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 3px 0 var(--key-bawah)}
+.fkeys button::before{content:'F' counter(fk);font-family:var(--lcdfont);font-size:13px;color:var(--blue2);
+  border:1px solid var(--key-tepi);border-radius:4px;padding:1px 4px;flex-shrink:0}
+.fkeys button:last-child{grid-column:1 / -1}
+.fkeys button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--key-bawah)}
+.ketik{display:flex;gap:7px;margin-top:8px}
+.ketik input{flex:1}
+.ketik .btn{width:auto;padding:0 18px}
 
-/* riwayat */
-#riwayat{display:flex;flex-direction:column;max-height:260px;overflow-y:auto}
-.rw{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--tepi2)}
+/* layar log riwayat: LCD gelap bercahaya */
+.log{background:#06122a;border-radius:6px;padding:4px 10px;font-family:var(--lcdfont);
+  box-shadow:inset 0 2px 8px rgba(0,0,0,0.6),0 0 0 4px #081530,0 0 0 5px var(--tepi2)}
+#riwayat{display:flex;flex-direction:column;max-height:240px;overflow-y:auto}
+.rw{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px dashed rgba(134,207,245,0.15)}
 .rw:first-child{border-top:none}
 .rw-kiri{flex:1;min-width:0}
-.rw-nm{font-size:14px;font-weight:500;display:flex;align-items:baseline;gap:8px}
-.rw-jam{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400}
-.rw-isi{font-family:var(--mono);font-size:12px;color:var(--ink2);margin-top:1px;word-break:break-word}
-.rw.teks .rw-isi{font-family:var(--sans);font-size:14px;color:var(--emas)}
-.rw-play{background:var(--key);border:1px solid var(--key-tepi);color:var(--blue2);width:38px;height:38px;border-radius:50%;
-  font-size:11px;cursor:pointer;flex-shrink:0}
-.rw-play:active{background:var(--bg4)}
+.rw-nm{font-size:14px;color:var(--blue2);display:flex;align-items:baseline;gap:8px}
+.rw-jam{font-size:12px;color:#4f7aa3}
+.rw-isi{font-size:13px;color:#9cc4e4;margin-top:1px;word-break:break-word}
+.rw.teks .rw-isi{color:var(--emas)}
+.rw-play{background:transparent;border:1px solid rgba(134,207,245,0.35);color:var(--blue2);width:34px;height:34px;border-radius:50%;
+  font-size:10px;cursor:pointer;flex-shrink:0}
+.rw-play:active{background:rgba(134,207,245,0.12)}
+.log .kosong{font-family:var(--lcdfont);color:#4f7aa3;padding:8px 0}
+.tautan{background:none;border:none;color:var(--ink2);font-size:13px;font-weight:600;text-decoration:underline;
+  text-underline-offset:3px;cursor:pointer;padding:8px 0 0;align-self:flex-start}
+
+/* saklar status tiga posisi */
+.saklar{display:grid;grid-template-columns:repeat(3,1fr);background:#06122a;border-radius:10px;padding:4px;gap:4px;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,0.55)}
+.saklar button{background:transparent;border:none;border-radius:7px;color:var(--muted);font-size:14px;font-weight:600;
+  min-height:40px;cursor:pointer}
+.saklar button.on{background:linear-gradient(180deg,var(--key),var(--key2));color:var(--emas);
+  box-shadow:0 2px 0 var(--key-bawah),inset 0 1px 0 rgba(160,210,250,0.12)}
+.kaki{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.kaki .btn{width:auto;flex:1}
+.kaki .keluar{color:#ffb0a8}
 
 /* panggilan masuk */
 .ring{position:fixed;inset:0;z-index:900;display:none;align-items:center;justify-content:center;
-  padding:20px;background:rgba(6,14,32,0.88)}
+  padding:20px;background:rgba(6,14,32,0.9)}
 .ring.open{display:flex}
-.ring-box{background:linear-gradient(180deg,var(--bg3),var(--bg2));border:1px solid var(--tepi);border-radius:18px;padding:18px;max-width:340px;width:100%;
+.ring-box{background:linear-gradient(180deg,var(--bg3),var(--bg2));border:1px solid var(--tepi);border-radius:22px;padding:18px;max-width:340px;width:100%;
   box-shadow:0 20px 50px rgba(0,0,0,0.6)}
-.ring-lcd{background:linear-gradient(180deg,var(--lcd),var(--lcd2));color:var(--lcd-ink);border-radius:8px;
-  padding:12px 14px;font-family:var(--mono);margin-bottom:14px;animation:nyala 1s steps(2) infinite;
-  box-shadow:inset 0 2px 6px rgba(0,20,50,0.35),0 0 0 4px #0a1630}
-@keyframes nyala{50%{filter:brightness(.82)}}
+.ring-lcd{background:linear-gradient(180deg,var(--lcd),var(--lcd2));color:var(--lcd-ink);border-radius:6px;
+  padding:12px 14px;font-family:var(--lcdfont);margin-bottom:16px;animation:nyala 1s steps(2) infinite;
+  box-shadow:inset 0 2px 7px rgba(0,20,50,0.4),0 0 0 5px #0a1630}
+@keyframes nyala{50%{filter:brightness(.8)}}
 .ring-box.urgent .ring-lcd{background:linear-gradient(180deg,#f2b0a8,#e0928a);color:#3a0b0b}
-.ring-ic{font-size:11px;font-weight:600}
-.ring-who{font-size:26px;font-weight:600;line-height:1.2;margin:4px 0;word-break:break-word}
-.ring-sub{font-size:12px;line-height:1.5}
+.ring-ic{font-size:13px}
+.ring-who{font-size:30px;line-height:1.15;margin:4px 0;word-break:break-word;text-transform:uppercase}
+.ring-sub{font-size:13px;line-height:1.45}
+.btn-row{display:flex;gap:8px}.btn-row .btn{flex:1}
 
 .toast{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:950;
-  background:var(--bg2);border:1px solid var(--tepi);color:var(--blue2);font-size:14px;font-weight:500;padding:10px 16px;border-radius:8px;
+  background:#06122a;border:1px solid var(--tepi);color:var(--blue2);font-family:var(--lcdfont);font-size:14px;padding:10px 16px;border-radius:8px;
   max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s;box-shadow:0 8px 24px rgba(0,0,0,0.5)}
 .toast.show{opacity:1}
 .hide{display:none !important}
@@ -207,36 +237,37 @@ input:focus,select:focus{border-color:var(--emas)}
 <body>
 <div class="wrap">
 
-  <div class="radio">
+  <div class="radio" id="radio">
+    <div class="antena"></div><div class="kenop"></div>
     <div class="kepala">
-      <div class="merek"><b>IBASS</b> 2026</div>
-      <div class="model">HT PANITIA</div>
+      <div class="merek"><b>IBASS</b> <span>HT-26</span></div>
+      <div class="lampu"><i></i>TX / RX</div>
     </div>
     <div class="lcd">
-      <div class="lcd-baris"><span class="redup">SALURAN</span><span class="status"><span class="dot" id="dot"></span><span id="statusTxt">Belum masuk</span></span></div>
+      <div class="lcd-baris"><span class="redup">CH</span><span class="status"><span class="dot" id="dot"></span><span id="statusTxt">Belum masuk</span></span></div>
       <div class="lcd-ch" id="chLabel">Semua Panitia</div>
-      <div class="lcd-baris"><span id="jmlOrang" class="redup">belum masuk</span><span class="redup" id="versiHT">26 Okt</span></div>
+      <div class="lcd-baris"><span id="jmlOrang" class="redup">belum masuk</span><span class="redup" id="versiHT">v26.10</span></div>
     </div>
     <div class="kisi"></div>
 
     <!-- MASUK -->
     <div id="joinView" class="masuk">
       <div class="field">
-        <label class="f" for="nama">Nama kamu</label>
+        <label class="f" for="nama">NAMA</label>
         <input type="text" id="nama" placeholder="Contoh: Tommy" autocomplete="off" maxlength="24">
       </div>
       <div class="field">
-        <label class="f" for="room">Saluran</label>
+        <label class="f" for="room">SALURAN</label>
         <select id="room"></select>
       </div>
       <button class="btn gold" id="joinBtn">Masuk</button>
-      <p class="note" style="margin-top:12px">Browser akan minta izin mikrofon, pilih Izinkan.
-      Mikrofon tetap mati sampai kamu menahan tombol bicara.</p>
+      <p class="note" style="margin-top:12px">Izinkan mikrofon saat browser bertanya.
+      Mikrofon mati sampai tombol bicara ditahan.</p>
     </div>
 
-    <!-- RUANG HT (bagian di dalam radio) -->
+    <!-- RUANG HT -->
     <div id="htView" class="hide">
-      <div class="banner" id="banner" style="margin-top:14px"></div>
+      <div class="banner" id="banner"></div>
       <div class="kanal" id="kanal"></div>
 
       <div class="ptt-area">
@@ -245,57 +276,55 @@ input:focus,select:focus{border-color:var(--emas)}
         </button>
         <div class="hint" id="pttHint">Menunggu orang lain masuk</div>
       </div>
-      <div class="mode samping">
+      <div class="samping">
         <button id="btnOpen">Mic Terbuka</button>
         <button id="btnRingCh">Panggil Saluran</button>
         <button id="btnRingAll" class="merah">Panggil Semua Divisi</button>
       </div>
 
       <div class="daftar">
-        <div class="judul"><h2>Di saluran ini</h2></div>
+        <div class="label">DI SALURAN</div>
         <div class="orang" id="orang"></div>
-        <div class="kosong hide" id="sendiri">Belum ada orang lain di sini. Bagikan link HT ke staff,
+        <div class="kosong hide" id="sendiri">Belum ada orang lain. Bagikan link HT ke staff,
           atau tekan Panggil Semua Divisi.</div>
       </div>
     </div>
   </div>
 
-  <div id="htBawah" class="hide" style="display:flex;flex-direction:column;gap:14px">
-    <div class="panel">
-      <div class="judul"><h2>Pesan cepat</h2><span>untuk tempat berisik</span></div>
-      <div class="mode" style="margin-bottom:8px">
+  <div id="htBawah" class="bawah hide">
+    <div>
+      <div class="label">PESAN CEPAT</div>
+      <div class="fkeys">
         <button onclick="kirimTeks('Saya akan lawan')">Saya akan lawan</button>
         <button onclick="kirimTeks('Saya masih sanggup')">Saya masih sanggup</button>
         <button onclick="kirimTeks('Sudah beres')">Sudah beres</button>
         <button onclick="kirimTeks('Butuh bantuan di sini')">Butuh bantuan</button>
         <button onclick="kirimTeks('Tunggu sebentar')">Tunggu sebentar</button>
       </div>
-      <div style="display:flex;gap:8px">
-        <input type="text" id="teksInput" placeholder="Ketik pesan" maxlength="120" style="flex:1">
-        <button class="btn" id="btnTeks" style="width:auto;padding:0 18px">Kirim</button>
+      <div class="ketik">
+        <input type="text" id="teksInput" placeholder="Ketik pesan" maxlength="120">
+        <button class="btn" id="btnTeks">Kirim</button>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="judul"><h2>Riwayat</h2><span>ketuk untuk putar ulang</span></div>
-      <div id="riwayat"></div>
-      <button class="btn btn-ghost" id="btnSalinLog" style="margin-top:10px">Salin catatan percakapan</button>
+    <div>
+      <div class="label">LOG</div>
+      <div class="log"><div id="riwayat"></div></div>
+      <button class="tautan" id="btnSalinLog">Salin catatan percakapan</button>
     </div>
 
-    <div class="panel">
-      <div class="judul"><h2>Status kamu</h2><span>terlihat di saluran</span></div>
-      <div class="mode">
+    <div>
+      <div class="label">STATUS</div>
+      <div class="saklar">
         <button class="st-btn on" data-st="Siap">Siap</button>
         <button class="st-btn" data-st="Di Lokasi">Di Lokasi</button>
         <button class="st-btn" data-st="Sibuk">Sibuk</button>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="btn-row">
-        <button class="btn" id="btnCopy">Salin link HT</button>
-        <button class="btn danger" id="btnLeave">Keluar</button>
-      </div>
+    <div class="kaki">
+      <button class="btn" id="btnCopy">Salin link HT</button>
+      <button class="btn keluar" id="btnLeave">Keluar</button>
     </div>
   </div>
 </div>
@@ -554,8 +583,12 @@ let brokerSudahDicoba=false, urut=0, menyiapkan=false;
 const cepatSiap=()=>klien.some(k=>k.c&&k.c.terhubung);
 const lewatCepat=o=>!!(o&&o.cepat&&cepatSiap());
 
+// Kotak masuk pribadi: pesan untuk satu orang (jabat tangan, balasan hadir, panggilan
+// pribadi) hanya dikirim ke sini. Kalau lewat topik saluran, setiap HP ikut menerima
+// jabat tangan semua pasangan lain dan beban broker naik sebanding kuadrat jumlah orang.
+const kotak=n=>AKAR+'u/'+kunciRoom(n);
 function langganan(c,r){
-  return Promise.all([AKAR+'h',AKAR+'s',AKAR+'r/'+kunciRoom(r),AKAR+'v/'+kunciRoom(r)].map(t=>c.langgan(t)));
+  return Promise.all([AKAR+'h',AKAR+'s',AKAR+'r/'+kunciRoom(r),AKAR+'v/'+kunciRoom(r),kotak(nama)].map(t=>c.langgan(t)));
 }
 async function sambungBroker(k){
   if((!masuk&&!menyiapkan)||!kunci||k.menyambung||(k.c&&k.c.terhubung)) return;
@@ -621,7 +654,9 @@ async function terimaCepat(topik,bytes){
   if(topik===AKAR+'h') return olahHadir(m);
   if(topik.indexOf(AKAR+'v/')===0) return terimaCadangan(m);
   if(m.to&&m.to!==nama) return;
-  if(topik.indexOf(AKAR+'r/')===0){
+  const pribadi=topik.indexOf(AKAR+'u/')===0;
+  if(pribadi&&m.kind==='hadir') return olahHadir(m);   // balasan atas sapaan kita
+  if(topik.indexOf(AKAR+'r/')===0||pribadi){
     if(m.room!==room) return;                     // sisa saluran lama
     // Pesan lewat broker = pengirimnya ada di jalur cepat, walau kabar hadirnya belum
     // sampai. Tanpa ini, tawaran yang mendahului kabar hadir dijawab lewat server.
@@ -657,7 +692,8 @@ function olahHadir(m){
   // Baru terlihat di jalur cepat padahal sambungannya sedang dirintis lewat server:
   // mulai ulang lewat jalur cepat, jangan menunggu server yang lambat.
   else if(!lama&&peers[m.dari]&&peers[m.dari].mulai&&!peers[m.dari].cepatAwal&&!sudahLangsung(m.dari)) tutupPeer(m.dari);
-  if(m.kind==='tanya') setTimeout(()=>umumkanHadir('hadir'),Math.random()*300);
+  // Balas sapaan ke kotak masuk penanya saja, bukan ke semua orang
+  if(m.kind==='tanya'&&masuk) setTimeout(()=>terbitCepat(kotak(m.dari),{to:m.dari,kind:'hadir',room,status:statusSaya}),Math.random()*300);
   if(!lama||lama.room!==m.room||lama.status!==m.status||lama.sid!==m.sid) segarkanTampilan();
 }
 
@@ -734,11 +770,12 @@ async function putaran(){
     const nungguServer=daftarOnline.some(o=>!lewatCepat(o)&&!sudahLangsung(o.nama));
     if(outbox.length||suaraKeluar.length) jeda=400;
     // Jalur cepat hidup: server cukup sesekali, untuk menemukan HP yang hanya bisa lewat server.
-    // Jangan lebih jarang dari 5 dtk — server menganggap orang keluar setelah 20 dtk tanpa kabar.
-    else if(cepatSiap()) jeda=nungguServer?1500:5000;
+    // 8 dtk: 19 HP x 1 panggilan / 8 dtk masih jauh di bawah batas Apps Script. Jangan lebih
+    // jarang lagi — server menganggap orang keluar setelah 20 dtk tanpa kabar.
+    else if(cepatSiap()) jeda=nungguServer?1500:8000;
     else jeda=nungguServer?700:(daftarOnline.length?2500:4000);
   }catch(e){
-    jeda=cepatSiap()?5000:4000;
+    jeda=cepatSiap()?8000:4000;
     segarkanTampilan();
   }
   sedangPutaran=false;
@@ -751,7 +788,7 @@ async function putaran(){
 function orangIni(n){ return daftarOnline.find(o=>o.nama===n); }
 function kirimKe(lawan,kind,data){
   if(lewatCepat(orangIni(lawan))||(hadirCepat.has(lawan)&&cepatSiap()))
-    terbitCepat(AKAR+'r/'+kunciRoom(room),{to:lawan,kind,data,room});
+    terbitCepat(kotak(lawan),{to:lawan,kind,data,room});
   else antre(lawan,kind,data);
 }
 // Siaran ke saluran (teks, panggil) atau ke semua divisi (panggilan darurat)
@@ -878,7 +915,7 @@ function buatPeer(lawan,sayaMulai){
       if(!p.iceTimer) p.iceTimer=setTimeout(()=>{
         p.iceTimer=null; const c=p.iceAntre; p.iceAntre=[];
         if(c.length&&peers[lawan]===p) kirimKe(lawan,'ices',JSON.stringify(c));
-      },80);
+      },200);
     }else kirimKe(lawan,'ice',JSON.stringify(e.candidate));
   };
   pc.ontrack=e=>{ audio.srcObject=e.streams[0]; audio.play().catch(()=>{}); pantau(lawan,e.streams[0]); };
@@ -1138,6 +1175,9 @@ function gambarOrang(){
   // Baris bawah layar: seperti HT, TX saat mengirim, RX saat menerima
   $('jmlOrang').textContent=sedangBicara||modeTerbuka?'TX  mengirim'
     :(yangBicara.length?'RX  '+yangBicara[0]:(list.length?'SIAGA':'SENDIRI'));
+  const kirimSaya=sedangBicara||modeTerbuka;
+  $('radio').classList.toggle('tx',kirimSaya);
+  $('radio').classList.toggle('rx',!kirimSaya&&yangBicara.length>0);
   const hint=$('pttHint');
   $('ptt').classList.toggle('dengar',yangBicara.length>0);
   hint.classList.toggle('dengar',yangBicara.length>0&&!sedangBicara);
@@ -1220,15 +1260,16 @@ function mulaiJaga(){
   timerJaga=setInterval(()=>{
     if(!masuk) return;
     detakJaga++;
-    if(detakJaga%4===0) umumkanHadir('hadir');
+    if(detakJaga%5===0) umumkanHadir('hadir');
     let berubah=false;
     hadirCepat.forEach((h,n)=>{ if(Date.now()-h.t>15000&&!sudahLangsung(n)){ hadirCepat.delete(n); berubah=true; } });
     klien.forEach(k=>{ if(k.c&&k.c.terhubung&&Date.now()-k.c.lastRx>32000) k.c.paksaPutus(); });
-    // Pemulai yang belum pernah tersambung: tawarannya mungkin hilang di jalan. Bangun ulang.
+    // Pemulai yang belum pernah tersambung: tawarannya mungkin hilang di jalan. Bangun ulang,
+    // makin sabar tiap kali gagal supaya tidak menambah lalu lintas saat broker sedang padat.
     Object.entries(peers).forEach(([n,p])=>{
       if(!p.mulai||p.pernahNyambung||p.sedangSegarkan) return;
       const kali=percobaan[n]||0;
-      const batas=(lewatCepat(orangIni(n))?9000:30000)*Math.min(4,1+kali);
+      const batas=(lewatCepat(orangIni(n))?12000:30000)*Math.min(4,1+kali);
       if(Date.now()-p.dibuat>batas){ percobaan[n]=kali+1; tutupPeer(n); berubah=true; }
     });
     if(berubah) segarkanTampilan();
