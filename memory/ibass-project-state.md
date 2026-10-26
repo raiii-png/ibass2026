@@ -530,6 +530,11 @@ refresh keras di web.
   Branch SUDAH di-push (bukan main). Link uji HP: raw.githack.com/raiii-png/ibass2026/<SHA penuh>/kadiv/ht/index.html?ch=...
   (pakai SHA, nama branch ber-/ membingungkan githack; ada halaman peringatan "Open the page").
   Halaman uji pribadi claude.ai TIDAK bisa: akun ini tidak punya izin mikrofon untuk artifact.
+- HT dipakai maks 19 orang, bisa semua di satu saluran (jawaban Boss 26 Okt). Commit 9876393 (sudah push branch):
+  kotak masuk pribadi u/<nama> untuk jabat tangan (JEBAKAN: dulu disiarkan ke topik saluran -> beban kuadrat,
+  broker menahan pesan s/d 15 dtk saat 8 orang). Orang ke-8 tersambung ke 7 lain 4-5,8 dtk. Broker per IP:
+  EMQX 22/22, HiveMQ 19/22. UI: Chakra Petch + Share Tech Mono, antena/kenop, F1-F5, log, saklar status
+  (Boss bilang IBM Plex terasa template). Alat uji banyak.html + badai.js di scratchpad sesi.
 
 ## HT: PANGGILAN HANTU & MASUK CEPAT (2026-08-06, uji Boss ke-3)
 - **Bug**: buka HT → langsung "memanggil" + bergetar padahal belum ada yang dikasih link.
