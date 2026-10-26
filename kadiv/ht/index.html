@@ -3,210 +3,233 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#0b1730">
+<meta name="theme-color" content="#0d1c3a">
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <title>HT IBASS 2026</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230d1c3a'/><path d='M16 5.5l2.7 7.1L26 13.8l-5.7 4.7L22 26l-6-3.9L10 26l1.7-7.5L6 13.8l7.3-1.2z' fill='%23e8bf6a'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-/* HT IBASS — dibuat seperti HT sungguhan: plastik navy doff, tulisan putih tercetak,
-   tombol karet, layar LCD titik. Sengaja tanpa gradasi dan tanpa cahaya berpendar. */
+/* HT IBASS: wujud radio genggam (antena, kenop, layar LCD, keypad, tombol karet),
+   warna tema IBASS navy, biru muda, emas. */
 :root{
-  --meja:#0b1730;
-  --plastik:#1b2d55; --plastik2:#162649; --sambungan:#0f1d3b; --cetak:#e9eef7; --cetak2:#9fb0cc;
-  --karet:#26396a; --karet-tepi:#0e1a36; --karet-on:#e2b04f;
-  --lcd:#8fc6ea; --lcd-ink:#0b2340; --lcd-redup:#4c7ba3;
-  --emas:#e2b04f; --emas-tua:#a9791f;
-  --led-merah:#ff5a4a; --led-hijau:#3bd27f; --amber:#f0a820;
-  --muted:#9fb0cc;
-  --label:'Archivo Narrow','Arial Narrow',sans-serif;
-  --lcdfont:'VT323',ui-monospace,monospace;
+  --navy:#0d1c3a; --bg2:#122448; --bg3:#182e58; --bg4:#1f3866;
+  --tepi:rgba(120,190,240,0.26); --tepi2:rgba(120,190,240,0.13);
+  --key:#1c3564; --key2:#152a52; --key-tepi:#2b4a80; --key-bawah:#081633;
+  --ink:#eaf4ff; --ink2:#b4d0ec; --muted:#7e9cc0;
+  --blue2:#86cff5;
+  --lcd:#a9dcf6; --lcd2:#8cc8ea; --lcd-ink:#0a1f3f; --lcd-redup:#3d6990;
+  --emas:#e8bf6a; --emas-terang:#f6dc9c; --emas-gelap:#b8862c;
+  --green:#36c97a; --amber:#f0a820; --red:#ff4d4d;
+  --lcdfont:'Share Tech Mono',ui-monospace,monospace;
+  --sans:'Chakra Petch',system-ui,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
-body{background:var(--meja);color:var(--cetak);font-family:var(--label);font-size:15px;font-weight:600;line-height:1.3;
+body{background:var(--navy);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.35;
   min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(165deg,#22406f 0%,#152c54 45%,#0b1c3c 100%)}
 button{font-family:inherit;color:inherit}
-.wrap{max-width:420px;margin:0 auto;
-  padding:max(34px,calc(env(safe-area-inset-top) + 22px)) 14px max(26px,env(safe-area-inset-bottom));
+.wrap{position:relative;z-index:1;max-width:430px;margin:0 auto;
+  padding:max(30px,calc(env(safe-area-inset-top) + 18px)) 14px max(24px,env(safe-area-inset-bottom));
   display:flex;flex-direction:column}
 
 /* ── badan radio ── */
-.radio{position:relative;background:var(--plastik);border-radius:28px 28px 22px 22px;padding:16px 16px 22px;
-  border:2px solid var(--sambungan)}
-.antena{position:absolute;left:34px;bottom:100%;width:18px;height:26px;background:var(--sambungan);border-radius:6px 6px 0 0}
-.kenop{position:absolute;right:38px;bottom:100%;width:30px;height:14px;border-radius:4px 4px 0 0;
-  background:repeating-linear-gradient(90deg,var(--sambungan) 0 3px,#22386a 3px 6px)}
+.radio{position:relative;background:linear-gradient(180deg,var(--bg3),var(--bg2) 34%,#10203f);
+  border:1px solid var(--tepi);border-radius:26px 26px 22px 22px;padding:16px 14px 20px;
+  box-shadow:inset 0 1px 0 rgba(160,210,250,0.12),inset 0 -2px 0 rgba(0,0,0,0.25),0 22px 44px rgba(3,10,26,0.55)}
+/* antena dan kenop saluran di atas badan */
+.antena{position:absolute;left:30px;bottom:100%;width:16px;height:22px;border-radius:5px 5px 0 0;
+  background:linear-gradient(90deg,#0a1630,#1d3360 50%,#0a1630);border:1px solid var(--tepi);border-bottom:none}
+.kenop{position:absolute;right:34px;bottom:100%;width:30px;height:14px;border-radius:5px 5px 0 0;
+  background:repeating-linear-gradient(90deg,#24406f 0 2px,#132a52 2px 4px);border:1px solid var(--tepi);border-bottom:none}
 .kepala{display:flex;align-items:center;justify-content:space-between;padding:0 4px 12px}
-.merek{font-weight:700;font-size:17px;letter-spacing:0.12em;text-transform:uppercase}
+.merek{font-weight:700;font-size:15px;letter-spacing:0.06em}
 .merek b{color:var(--emas)}
-.merek span{font-size:11px;letter-spacing:0.08em;color:var(--cetak2);margin-left:6px}
-.lampu{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--cetak2)}
-.lampu i{width:10px;height:10px;border-radius:50%;background:#33466f;border:2px solid var(--sambungan)}
-.radio.tx .lampu i{background:var(--led-merah)}
-.radio.rx .lampu i{background:var(--led-hijau)}
+.merek span{color:var(--ink2);font-weight:500}
+.lampu{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.08em}
+.lampu i{width:8px;height:8px;border-radius:50%;background:#26406c;box-shadow:inset 0 1px 1px rgba(0,0,0,0.5)}
+.radio.tx .lampu i{background:var(--red);box-shadow:0 0 8px rgba(255,77,77,0.9)}
+.radio.rx .lampu i{background:var(--green);box-shadow:0 0 8px rgba(54,201,122,0.9)}
 
 /* layar LCD */
-.lcd{background:var(--lcd);color:var(--lcd-ink);border-radius:4px;padding:6px 12px 7px;font-family:var(--lcdfont);
-  border:6px solid var(--sambungan);outline:1px solid #2c4478}
-.lcd-baris{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:19px;line-height:1}
-.lcd-ch{font-size:40px;line-height:0.95;margin:4px 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
+.lcd{background:linear-gradient(180deg,var(--lcd),var(--lcd2));color:var(--lcd-ink);border-radius:6px;
+  padding:9px 12px 10px;font-family:var(--lcdfont);
+  box-shadow:inset 0 2px 7px rgba(0,20,50,0.4),0 0 0 5px #0a1630,0 0 0 6px var(--tepi),0 0 24px rgba(134,207,245,0.16)}
+.lcd-baris{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+.lcd-ch{font-size:31px;line-height:1.1;margin:4px 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
 .lcd .redup{color:var(--lcd-redup)}
 .status{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dot{width:9px;height:9px;background:var(--lcd-redup);flex-shrink:0;opacity:.45}
+.dot{width:8px;height:8px;background:var(--lcd-redup);flex-shrink:0;opacity:.5}
 .dot.on{background:var(--lcd-ink);opacity:1}
 .dot.warn{background:var(--lcd-ink);opacity:1;animation:kedip 1s steps(2) infinite}
-.dot.err{background:#7d1b14;opacity:1;animation:kedip .6s steps(2) infinite}
+.dot.err{background:#8a1c1c;opacity:1;animation:kedip .6s steps(2) infinite}
 @keyframes kedip{50%{opacity:.15}}
 
-/* kisi speaker: celah mendatar */
-.kisi{margin:16px 26px 0;height:34px;
-  background:repeating-linear-gradient(180deg,var(--sambungan) 0 4px,transparent 4px 9px)}
-.cetak-kecil{font-size:10px;font-weight:700;letter-spacing:0.16em;color:var(--cetak2);text-transform:uppercase}
+/* kisi speaker: lubang bulat */
+.kisi{height:30px;margin:16px 4px 0;
+  background:radial-gradient(circle,#06102a 2.2px,transparent 2.6px) 0 0/9px 9px;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);
+          mask:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
 
-/* keypad saluran: karet */
-.kanal{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px;counter-reset:ch}
-.kanal button{counter-increment:ch;position:relative;text-align:left;min-height:52px;padding:6px 8px 7px 9px;
-  background:var(--karet);border:none;border-bottom:3px solid var(--karet-tepi);border-radius:10px;
-  font-size:13px;font-weight:700;color:var(--cetak);cursor:pointer;line-height:1.1;overflow:hidden;text-transform:uppercase;letter-spacing:0.02em}
-.kanal button::before{content:counter(ch);display:block;font-size:18px;font-weight:700;color:var(--cetak);margin-bottom:1px}
-.kanal button .n{position:absolute;top:7px;right:9px;font-family:var(--lcdfont);font-size:17px;color:var(--cetak2)}
-.kanal button:active{border-bottom-width:1px;transform:translateY(2px)}
-.kanal button.on{background:var(--karet-on);color:var(--lcd-ink);border-bottom-color:var(--emas-tua)}
-.kanal button.on::before,.kanal button.on .n{color:var(--lcd-ink)}
-@media (max-width:360px){.kanal button{font-size:11.5px}}
+/* keypad saluran */
+.kanal{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:16px;counter-reset:ch}
+.kanal button{counter-increment:ch;position:relative;text-align:left;min-height:50px;padding:6px 8px 7px 9px;
+  background:linear-gradient(180deg,var(--key),var(--key2));border:1px solid var(--key-tepi);border-bottom-color:var(--key-bawah);
+  border-radius:9px 9px 7px 7px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;
+  box-shadow:0 3px 0 var(--key-bawah);line-height:1.1;overflow:hidden}
+.kanal button::before{content:counter(ch);display:block;font-family:var(--lcdfont);font-size:15px;color:var(--blue2);margin-bottom:2px}
+.kanal button .n{position:absolute;top:7px;right:8px;font-family:var(--lcdfont);font-size:12px;color:var(--ink2)}
+.kanal button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--key-bawah)}
+.kanal button.on{background:linear-gradient(180deg,#2c3c5d,#222f4c);border-color:rgba(232,191,106,0.65);color:var(--emas)}
+.kanal button.on::before,.kanal button.on .n{color:var(--emas)}
 
-/* tombol PTT: karet emas, tulisan tercetak */
+/* tombol bicara */
 .ptt-area{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:22px}
-.ptt{width:100%;max-width:300px;height:118px;border-radius:22px;cursor:pointer;
-  background:var(--emas);color:var(--lcd-ink);border:none;border-bottom:7px solid var(--emas-tua);
-  font-family:var(--label);font-size:15px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
-.ptt::before{content:'PTT';font-size:36px;letter-spacing:0.14em;line-height:1}
-.ptt .ic{width:96px;height:6px;background:repeating-linear-gradient(90deg,var(--emas-tua) 0 3px,transparent 3px 7px)}
-.ptt:disabled{background:#4a5a7d;border-bottom-color:#33415f;color:#aab5c9;cursor:not-allowed}
-.ptt:disabled .ic{background:repeating-linear-gradient(90deg,#33415f 0 3px,transparent 3px 7px)}
-.ptt.live{transform:translateY(5px);border-bottom-width:2px;outline:3px solid var(--led-merah);outline-offset:4px}
-.ptt.dengar:not(.live){outline:3px solid var(--led-hijau);outline-offset:4px}
-.ptt-area .ic{order:2}
-.hint{font-size:13px;font-weight:600;color:var(--cetak2);text-align:center;min-height:1.3em;padding:0 8px}
-.hint.dengar{color:var(--led-hijau)}
+.ptt{width:min(58vw,212px);aspect-ratio:1;border-radius:50%;cursor:pointer;
+  border:none;color:#2b1d04;font-family:var(--sans);font-size:17px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+  background:radial-gradient(circle at 50% 30%,var(--emas-terang),var(--emas) 45%,var(--emas-gelap) 100%);
+  box-shadow:0 0 0 9px #0a1630,0 0 0 10px var(--tepi),0 9px 0 10px #061026,inset 0 -6px 14px rgba(80,50,0,0.3),inset 0 3px 6px rgba(255,255,255,0.35);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;
+  transition:transform .08s,box-shadow .08s,filter .15s}
+/* alur karet di permukaan tombol */
+.ptt .ic{width:44%;height:10px;border-radius:5px;
+  background:repeating-linear-gradient(90deg,rgba(90,60,10,0.35) 0 3px,transparent 3px 7px)}
+.ptt:disabled{filter:grayscale(.8) brightness(.55);cursor:not-allowed}
+.ptt.live{transform:translateY(6px);
+  box-shadow:0 0 0 9px #0a1630,0 0 0 10px var(--tepi),0 3px 0 10px #061026,inset 0 -3px 10px rgba(80,50,0,0.35),inset 0 3px 6px rgba(255,255,255,0.3)}
+.ptt.live{box-shadow:0 0 0 9px #0a1630,0 0 0 11px var(--red),0 3px 0 11px #061026,inset 0 -3px 10px rgba(80,50,0,0.35),inset 0 3px 6px rgba(255,255,255,0.3)}
+.ptt.dengar:not(.live){box-shadow:0 0 0 9px #0a1630,0 0 0 11px var(--green),0 9px 0 11px #061026,inset 0 -6px 14px rgba(80,50,0,0.3),inset 0 3px 6px rgba(255,255,255,0.35)}
+.hint{font-size:13px;font-weight:500;color:var(--muted);text-align:center;min-height:1.3em;padding:0 8px}
+.hint.dengar{color:var(--green)}
 
 /* tombol samping */
-.samping{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.samping{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:16px}
 .samping #btnRingAll{grid-column:1 / -1}
-.samping button,.btn{background:var(--karet);border:none;border-bottom:3px solid var(--karet-tepi);border-radius:10px;
-  color:var(--cetak);font-size:14px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:9px 12px;min-height:46px;cursor:pointer}
-.samping button:active,.btn:active{border-bottom-width:1px;transform:translateY(2px)}
-.samping button.on{background:var(--cetak);color:var(--lcd-ink);border-bottom-color:#aab8cf}
-.samping button.merah{background:#8e2a2a;border-bottom-color:#561616;color:#fff}
-
-/* pemberitahuan: tercetak di layar kedua */
-.banner{display:none}
-.banner.tampil{display:block;margin-top:14px;background:#2a2412;border:2px solid var(--amber);
-  padding:8px 11px;font-size:13px;font-weight:600;line-height:1.4;color:#f5deb0;border-radius:6px}
-.banner.tampil strong{color:var(--amber)}
-.banner.merah{background:#2c1414;border-color:var(--led-merah);color:#f6c3bd}
-.banner.merah strong{color:var(--led-merah)}
-
-/* isian */
-label.f{display:block;margin-bottom:5px}
-input,select{width:100%;background:var(--sambungan);border:2px solid #2c4478;color:var(--cetak);font-family:var(--label);font-weight:600;
-  font-size:17px;padding:10px 12px;border-radius:8px;outline:none;-webkit-appearance:none;appearance:none}
-select{background-image:linear-gradient(45deg,transparent 50%,var(--cetak2) 50%),linear-gradient(135deg,var(--cetak2) 50%,transparent 50%);
-  background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
-select option{background:var(--plastik)}
-input:focus,select:focus{border-color:var(--emas)}
-.field{margin-bottom:12px}
-.btn{width:100%}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.btn.gold{background:var(--emas);color:var(--lcd-ink);border-bottom-color:var(--emas-tua);font-size:16px}
-.masuk{margin-top:18px}
-.note{font-size:13px;font-weight:500;color:var(--cetak2);line-height:1.45}
+.mode button,.samping button{background:linear-gradient(180deg,var(--key),var(--key2));border:1px solid var(--key-tepi);border-bottom-color:var(--key-bawah);
+  border-radius:8px;color:var(--ink2);font-size:14px;font-weight:600;padding:9px 12px;min-height:44px;cursor:pointer;box-shadow:0 3px 0 var(--key-bawah)}
+.mode button:active,.samping button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--key-bawah)}
+.samping button.on{color:var(--emas);border-color:rgba(232,191,106,0.65);background:#22314f}
+.samping button.merah{color:#ffb0a8;background:linear-gradient(180deg,#4a1f2c,#3a1826);border-color:#6e2e3c;border-bottom-color:#22080f}
 
 /* daftar orang */
 .daftar{margin-top:20px}
-.daftar .cetak-kecil{margin:0 2px 7px}
-.orang{display:flex;flex-direction:column;max-height:36vh;overflow-y:auto;background:var(--sambungan);border-radius:10px}
-.o{display:flex;align-items:center;gap:10px;padding:8px 10px;border-top:1px solid #1f3260}
+.label{font-size:12px;font-weight:600;letter-spacing:0.1em;color:var(--muted);margin:0 2px 7px}
+.orang{display:flex;flex-direction:column;max-height:36vh;overflow-y:auto;border-radius:8px;background:rgba(6,16,38,0.6);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,0.4);border:1px solid var(--tepi2)}
+.o{display:flex;align-items:center;gap:10px;padding:8px 10px;border-top:1px solid var(--tepi2)}
 .o:first-child{border-top:none}
-.o .av{width:30px;height:30px;border-radius:6px;background:var(--karet);color:var(--cetak);
-  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}
-.o.talk .av{background:var(--led-hijau);color:#062312}
+.o .av{width:30px;height:30px;border-radius:50%;background:var(--bg4);color:var(--emas);
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.o.talk .av{background:var(--green);color:#06210f}
 .o .info{flex:1;min-width:0}
-.o .nm{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.o .sub{font-size:12px;font-weight:600;color:var(--cetak2)}
-.o .sub.hijau{color:var(--led-hijau)}
+.o .nm{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.o .sub{font-size:12px;color:var(--muted)}
+.o .sub.hijau{color:var(--green)}
 .o.goyah .sub{color:var(--amber)}
 .sinyal{display:inline-flex;align-items:flex-end;gap:2px;height:11px;margin-left:7px;vertical-align:-1px}
-.sinyal i{width:3px;background:#3a5080;display:block}
+.sinyal i{width:3px;background:#34507e;display:block}
 .sinyal i:nth-child(1){height:4px}.sinyal i:nth-child(2){height:7px}.sinyal i:nth-child(3){height:11px}
-.sinyal.kuat i{background:var(--led-hijau)}
+.sinyal.kuat i{background:var(--green)}
 .sinyal.sedang i:nth-child(1),.sinyal.sedang i:nth-child(2){background:var(--amber)}
-.sinyal.lemah i:nth-child(1){background:var(--led-merah)}
-.o .call{background:var(--karet);border:none;border-bottom:2px solid var(--karet-tepi);border-radius:8px;color:var(--cetak);
-  font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:0 11px;height:32px;cursor:pointer;flex-shrink:0}
-.kosong{font-size:13px;font-weight:500;color:var(--cetak2);line-height:1.45;padding:10px 2px 0}
+.sinyal.lemah i:nth-child(1){background:var(--red)}
+.o .call{background:transparent;border:1px solid rgba(232,191,106,0.5);border-radius:16px;color:var(--emas);
+  font-size:13px;font-weight:600;padding:0 12px;height:32px;cursor:pointer;flex-shrink:0}
+.o .call:active{background:var(--bg4)}
+.kosong{font-size:13px;color:var(--muted);line-height:1.5;padding:10px 2px 0}
 
-/* ── panel kedua: tombol fungsi, layar log, saklar ── */
-.bawah{margin-top:16px;background:var(--plastik2);border:2px solid var(--sambungan);border-radius:22px;padding:16px 16px 18px;
-  display:flex;flex-direction:column;gap:18px}
-.bawah .cetak-kecil{margin-bottom:7px}
-.fkeys{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;counter-reset:fk}
-.fkeys button{counter-increment:fk;display:flex;align-items:center;gap:9px;text-align:left;min-height:46px;padding:8px 10px;
-  background:var(--karet);border:none;border-bottom:3px solid var(--karet-tepi);border-radius:10px;
-  font-size:13px;font-weight:700;color:var(--cetak);cursor:pointer;text-transform:uppercase;letter-spacing:0.02em}
-.fkeys button::before{content:'F' counter(fk);font-size:12px;font-weight:700;color:var(--lcd-ink);background:var(--cetak2);
-  border-radius:3px;padding:1px 4px;flex-shrink:0}
+/* pemberitahuan: pita di dalam radio */
+.banner{display:none}
+.banner.tampil{display:block;margin-top:14px;background:rgba(240,168,32,0.12);border:1px solid rgba(240,168,32,0.4);
+  padding:9px 11px;font-size:13px;line-height:1.45;color:var(--ink2);border-radius:7px}
+.banner.tampil strong{color:var(--amber);font-weight:600}
+.banner.merah{background:rgba(224,82,96,0.12);border-color:rgba(224,82,96,0.45)}
+.banner.merah strong{color:var(--red)}
+
+/* isian & tombol */
+label.f{display:block;font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--muted);margin-bottom:5px}
+input,select{width:100%;background:rgba(6,16,38,0.7);border:1px solid var(--key-tepi);color:var(--ink);font-family:var(--sans);
+  font-size:16px;padding:11px 12px;border-radius:8px;outline:none;-webkit-appearance:none;appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+select option{background:var(--bg2)}
+input:focus,select:focus{border-color:var(--emas)}
+.field{margin-bottom:12px}
+.btn{width:100%;background:linear-gradient(180deg,var(--key),var(--key2));border:1px solid var(--key-tepi);border-bottom-color:var(--key-bawah);
+  color:var(--ink);font-size:15px;font-weight:600;padding:12px;border-radius:9px;cursor:pointer;min-height:48px;box-shadow:0 3px 0 var(--key-bawah)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--key-bawah)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.gold{background:linear-gradient(180deg,var(--emas-terang),var(--emas));border-color:var(--emas-gelap);color:#2b1d04;box-shadow:0 3px 0 #7a5a1c;
+  text-transform:uppercase;letter-spacing:0.06em;font-weight:700}
+.masuk{margin-top:18px}
+.note{font-size:13px;color:var(--muted);line-height:1.5}
+
+/* ── bagian bawah radio: tombol fungsi, log, saklar ── */
+.bawah{margin-top:14px;background:linear-gradient(180deg,#10203f,#0d1b37);border:1px solid var(--tepi);
+  border-radius:20px;padding:16px 14px 18px;display:flex;flex-direction:column;gap:18px;
+  box-shadow:inset 0 1px 0 rgba(160,210,250,0.08),0 14px 30px rgba(3,10,26,0.45)}
+.fkeys{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;counter-reset:fk}
+.fkeys button{counter-increment:fk;display:flex;align-items:center;gap:8px;text-align:left;min-height:44px;padding:8px 10px;
+  background:linear-gradient(180deg,var(--key),var(--key2));border:1px solid var(--key-tepi);border-bottom-color:var(--key-bawah);
+  border-radius:8px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 3px 0 var(--key-bawah)}
+.fkeys button::before{content:'F' counter(fk);font-family:var(--lcdfont);font-size:13px;color:var(--blue2);
+  border:1px solid var(--key-tepi);border-radius:4px;padding:1px 4px;flex-shrink:0}
 .fkeys button:last-child{grid-column:1 / -1}
-.fkeys button:active{border-bottom-width:1px;transform:translateY(2px)}
-.ketik{display:flex;gap:8px;margin-top:8px}
+.fkeys button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--key-bawah)}
+.ketik{display:flex;gap:7px;margin-top:8px}
 .ketik input{flex:1}
-.ketik .btn{width:auto;padding:0 16px}
+.ketik .btn{width:auto;padding:0 18px}
 
-/* layar log */
-.log{background:var(--lcd);border:6px solid var(--sambungan);outline:1px solid #2c4478;border-radius:4px;padding:2px 10px;font-family:var(--lcdfont)}
-#riwayat{display:flex;flex-direction:column;max-height:230px;overflow-y:auto}
-.rw{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px dashed var(--lcd-redup)}
+/* layar log riwayat: LCD gelap bercahaya */
+.log{background:#06122a;border-radius:6px;padding:4px 10px;font-family:var(--lcdfont);
+  box-shadow:inset 0 2px 8px rgba(0,0,0,0.6),0 0 0 4px #081530,0 0 0 5px var(--tepi2)}
+#riwayat{display:flex;flex-direction:column;max-height:240px;overflow-y:auto}
+.rw{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px dashed rgba(134,207,245,0.15)}
 .rw:first-child{border-top:none}
 .rw-kiri{flex:1;min-width:0}
-.rw-nm{font-size:20px;line-height:1;color:var(--lcd-ink);display:flex;align-items:baseline;gap:8px;text-transform:uppercase}
-.rw-jam{font-size:17px;color:var(--lcd-redup)}
-.rw-isi{font-size:18px;line-height:1.05;color:#24486e;margin-top:2px;word-break:break-word}
-.rw.teks .rw-isi{color:var(--lcd-ink)}
-.rw-play{background:var(--lcd-ink);border:none;color:var(--lcd);width:32px;height:32px;border-radius:6px;font-size:10px;cursor:pointer;flex-shrink:0}
-.log .kosong{font-family:var(--lcdfont);font-size:18px;color:var(--lcd-redup);padding:6px 0;line-height:1.1}
-.tautan{background:none;border:none;color:var(--cetak2);font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
-  text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:9px 0 0}
+.rw-nm{font-size:14px;color:var(--blue2);display:flex;align-items:baseline;gap:8px}
+.rw-jam{font-size:12px;color:#4f7aa3}
+.rw-isi{font-size:13px;color:#9cc4e4;margin-top:1px;word-break:break-word}
+.rw.teks .rw-isi{color:var(--emas)}
+.rw-play{background:transparent;border:1px solid rgba(134,207,245,0.35);color:var(--blue2);width:34px;height:34px;border-radius:50%;
+  font-size:10px;cursor:pointer;flex-shrink:0}
+.rw-play:active{background:rgba(134,207,245,0.12)}
+.log .kosong{font-family:var(--lcdfont);color:#4f7aa3;padding:8px 0}
+.tautan{background:none;border:none;color:var(--ink2);font-size:13px;font-weight:600;text-decoration:underline;
+  text-underline-offset:3px;cursor:pointer;padding:8px 0 0;align-self:flex-start}
 
 /* saklar status tiga posisi */
-.saklar{display:grid;grid-template-columns:repeat(3,1fr);background:var(--sambungan);border-radius:10px;padding:4px;gap:4px}
-.saklar button{background:transparent;border:none;border-radius:7px;color:var(--cetak2);font-size:13px;font-weight:700;
-  letter-spacing:0.04em;text-transform:uppercase;min-height:40px;cursor:pointer}
-.saklar button.on{background:var(--cetak);color:var(--lcd-ink)}
-.kaki{display:flex;gap:8px}
-.kaki .btn{flex:1}
-.kaki .keluar{background:#8e2a2a;border-bottom-color:#561616}
+.saklar{display:grid;grid-template-columns:repeat(3,1fr);background:#06122a;border-radius:10px;padding:4px;gap:4px;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,0.55)}
+.saklar button{background:transparent;border:none;border-radius:7px;color:var(--muted);font-size:14px;font-weight:600;
+  min-height:40px;cursor:pointer}
+.saklar button.on{background:linear-gradient(180deg,var(--key),var(--key2));color:var(--emas);
+  box-shadow:0 2px 0 var(--key-bawah),inset 0 1px 0 rgba(160,210,250,0.12)}
+.kaki{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.kaki .btn{width:auto;flex:1}
+.kaki .keluar{color:#ffb0a8}
 
 /* panggilan masuk */
 .ring{position:fixed;inset:0;z-index:900;display:none;align-items:center;justify-content:center;
-  padding:22px;background:rgba(8,16,34,0.9)}
+  padding:20px;background:rgba(6,14,32,0.9)}
 .ring.open{display:flex}
-.ring-box{background:var(--plastik);border:2px solid var(--sambungan);border-radius:24px;padding:18px;max-width:340px;width:100%}
-.ring-lcd{background:var(--lcd);color:var(--lcd-ink);border:6px solid var(--sambungan);border-radius:4px;
-  padding:8px 12px;font-family:var(--lcdfont);margin-bottom:16px;animation:kedip2 1s steps(2) infinite}
-@keyframes kedip2{50%{background:#a9d5f1}}
-.ring-box.urgent .ring-lcd{background:#f0a49b;animation:none}
-.ring-ic{font-size:20px}
-.ring-who{font-size:40px;line-height:1;margin:4px 0;word-break:break-word;text-transform:uppercase}
-.ring-sub{font-size:19px;line-height:1.1}
+.ring-box{background:linear-gradient(180deg,var(--bg3),var(--bg2));border:1px solid var(--tepi);border-radius:22px;padding:18px;max-width:340px;width:100%;
+  box-shadow:0 20px 50px rgba(0,0,0,0.6)}
+.ring-lcd{background:linear-gradient(180deg,var(--lcd),var(--lcd2));color:var(--lcd-ink);border-radius:6px;
+  padding:12px 14px;font-family:var(--lcdfont);margin-bottom:16px;animation:nyala 1s steps(2) infinite;
+  box-shadow:inset 0 2px 7px rgba(0,20,50,0.4),0 0 0 5px #0a1630}
+@keyframes nyala{50%{filter:brightness(.8)}}
+.ring-box.urgent .ring-lcd{background:linear-gradient(180deg,#f2b0a8,#e0928a);color:#3a0b0b}
+.ring-ic{font-size:13px}
+.ring-who{font-size:30px;line-height:1.15;margin:4px 0;word-break:break-word;text-transform:uppercase}
+.ring-sub{font-size:13px;line-height:1.45}
 .btn-row{display:flex;gap:8px}.btn-row .btn{flex:1}
 
-.toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:950;
-  background:var(--lcd);color:var(--lcd-ink);font-family:var(--lcdfont);font-size:20px;padding:6px 14px;border-radius:4px;
-  border:4px solid var(--sambungan);max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .15s}
+.toast{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:950;
+  background:#06122a;border:1px solid var(--tepi);color:var(--blue2);font-family:var(--lcdfont);font-size:14px;padding:10px 16px;border-radius:8px;
+  max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s;box-shadow:0 8px 24px rgba(0,0,0,0.5)}
 .toast.show{opacity:1}
 .hide{display:none !important}
 </style>
@@ -217,8 +240,8 @@ input:focus,select:focus{border-color:var(--emas)}
   <div class="radio" id="radio">
     <div class="antena"></div><div class="kenop"></div>
     <div class="kepala">
-      <div class="merek"><b>IBASS</b><span>HT-26</span></div>
-      <div class="lampu"><i></i>TX/RX</div>
+      <div class="merek"><b>IBASS</b> <span>HT-26</span></div>
+      <div class="lampu"><i></i>TX / RX</div>
     </div>
     <div class="lcd">
       <div class="lcd-baris"><span class="redup">CH</span><span class="status"><span class="dot" id="dot"></span><span id="statusTxt">Belum masuk</span></span></div>
@@ -230,16 +253,16 @@ input:focus,select:focus{border-color:var(--emas)}
     <!-- MASUK -->
     <div id="joinView" class="masuk">
       <div class="field">
-        <label class="f cetak-kecil" for="nama">Nama</label>
+        <label class="f" for="nama">NAMA</label>
         <input type="text" id="nama" placeholder="Contoh: Fikri" autocomplete="off" maxlength="24">
       </div>
       <div class="field">
-        <label class="f cetak-kecil" for="room">Saluran</label>
+        <label class="f" for="room">SALURAN</label>
         <select id="room"></select>
       </div>
       <button class="btn gold" id="joinBtn">Masuk</button>
       <p class="note" style="margin-top:12px">Izinkan mikrofon saat browser bertanya.
-      Mikrofon mati sampai tombol PTT ditahan.</p>
+      Mikrofon mati sampai tombol bicara ditahan.</p>
     </div>
 
     <!-- RUANG HT -->
@@ -249,7 +272,7 @@ input:focus,select:focus{border-color:var(--emas)}
 
       <div class="ptt-area">
         <button class="ptt" id="ptt" disabled>
-          <span id="pttLbl">Tahan untuk bicara</span><span class="ic"></span>
+          <span class="ic"></span><span id="pttLbl">Tahan untuk bicara</span>
         </button>
         <div class="hint" id="pttHint">Menunggu orang lain masuk</div>
       </div>
@@ -260,7 +283,7 @@ input:focus,select:focus{border-color:var(--emas)}
       </div>
 
       <div class="daftar">
-        <div class="cetak-kecil">Di saluran</div>
+        <div class="label">DI SALURAN</div>
         <div class="orang" id="orang"></div>
         <div class="kosong hide" id="sendiri">Belum ada orang lain. Bagikan link HT ke staff,
           atau tekan Panggil Semua Divisi.</div>
@@ -270,7 +293,7 @@ input:focus,select:focus{border-color:var(--emas)}
 
   <div id="htBawah" class="bawah hide">
     <div>
-      <div class="cetak-kecil">Pesan cepat</div>
+      <div class="label">PESAN CEPAT</div>
       <div class="fkeys">
         <button onclick="kirimTeks('Saya akan lawan')">Saya akan lawan</button>
         <button onclick="kirimTeks('Saya masih sanggup')">Saya masih sanggup</button>
@@ -285,13 +308,13 @@ input:focus,select:focus{border-color:var(--emas)}
     </div>
 
     <div>
-      <div class="cetak-kecil">Log</div>
+      <div class="label">LOG</div>
       <div class="log"><div id="riwayat"></div></div>
       <button class="tautan" id="btnSalinLog">Salin catatan percakapan</button>
     </div>
 
     <div>
-      <div class="cetak-kecil">Status</div>
+      <div class="label">STATUS</div>
       <div class="saklar">
         <button class="st-btn on" data-st="Siap">Siap</button>
         <button class="st-btn" data-st="Di Lokasi">Di Lokasi</button>
