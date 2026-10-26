@@ -3,233 +3,211 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#0d1c3a">
+<meta name="theme-color" content="#f6f1e6">
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <title>HT IBASS 2026</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230d1c3a'/><path d='M16 5.5l2.7 7.1L26 13.8l-5.7 4.7L22 26l-6-3.9L10 26l1.7-7.5L6 13.8l7.3-1.2z' fill='%23e8bf6a'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* HT IBASS: wujud radio genggam (antena, kenop, layar LCD, keypad, tombol karet),
-   warna tema IBASS navy, biru muda, emas. */
+/* HT IBASS — gaya resmi acara: kertas krem, tinta navy, aksen emas, huruf Cinzel
+   seperti identitas IBASS. Radio digambar rata, tanpa cahaya dan gradasi. */
 :root{
-  --navy:#0d1c3a; --bg2:#122448; --bg3:#182e58; --bg4:#1f3866;
-  --tepi:rgba(120,190,240,0.26); --tepi2:rgba(120,190,240,0.13);
-  --key:#1c3564; --key2:#152a52; --key-tepi:#2b4a80; --key-bawah:#081633;
-  --ink:#eaf4ff; --ink2:#b4d0ec; --muted:#7e9cc0;
-  --blue2:#86cff5;
-  --lcd:#a9dcf6; --lcd2:#8cc8ea; --lcd-ink:#0a1f3f; --lcd-redup:#3d6990;
-  --emas:#e8bf6a; --emas-terang:#f6dc9c; --emas-gelap:#b8862c;
-  --green:#36c97a; --amber:#f0a820; --red:#ff4d4d;
-  --lcdfont:'Share Tech Mono',ui-monospace,monospace;
-  --sans:'Chakra Petch',system-ui,sans-serif;
+  --kertas:#f6f1e6; --kertas2:#efe7d4; --garis:#dccfb2; --garis2:#e8dec8;
+  --navy:#0d1c3a; --navy2:#16294f; --navy3:#20386a; --navy-garis:#2e4a7e;
+  --tinta:#0d1c3a; --tinta2:#3d4c69; --muted:#7a8299;
+  --emas:#c8922a; --emas2:#e8bf6a; --emas-tua:#8d6417;
+  --krem:#f3ead3; --krem-redup:#7d8aa3;
+  --green:#1f9a5b; --green2:#36c97a; --amber:#b9770e; --red:#c0392b;
+  --serif:'Cinzel',Georgia,serif;
+  --sans:'Raleway',system-ui,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
-body{background:var(--navy);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.35;
+body{background:var(--kertas);color:var(--tinta);font-family:var(--sans);font-size:15px;font-weight:500;line-height:1.4;
   min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
-body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:linear-gradient(165deg,#22406f 0%,#152c54 45%,#0b1c3c 100%)}
 button{font-family:inherit;color:inherit}
-.wrap{position:relative;z-index:1;max-width:430px;margin:0 auto;
-  padding:max(30px,calc(env(safe-area-inset-top) + 18px)) 14px max(24px,env(safe-area-inset-bottom));
+.wrap{max-width:440px;margin:0 auto;
+  padding:max(18px,env(safe-area-inset-top)) 16px max(28px,env(safe-area-inset-bottom));
   display:flex;flex-direction:column}
 
-/* ── badan radio ── */
-.radio{position:relative;background:linear-gradient(180deg,var(--bg3),var(--bg2) 34%,#10203f);
-  border:1px solid var(--tepi);border-radius:26px 26px 22px 22px;padding:16px 14px 20px;
-  box-shadow:inset 0 1px 0 rgba(160,210,250,0.12),inset 0 -2px 0 rgba(0,0,0,0.25),0 22px 44px rgba(3,10,26,0.55)}
-/* antena dan kenop saluran di atas badan */
-.antena{position:absolute;left:30px;bottom:100%;width:16px;height:22px;border-radius:5px 5px 0 0;
-  background:linear-gradient(90deg,#0a1630,#1d3360 50%,#0a1630);border:1px solid var(--tepi);border-bottom:none}
-.kenop{position:absolute;right:34px;bottom:100%;width:30px;height:14px;border-radius:5px 5px 0 0;
-  background:repeating-linear-gradient(90deg,#24406f 0 2px,#132a52 2px 4px);border:1px solid var(--tepi);border-bottom:none}
+/* kop surat */
+.kop{text-align:center;padding:4px 0 16px}
+.kop-kecil{font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--tinta2)}
+.kop-judul{font-family:var(--serif);font-weight:700;font-size:30px;letter-spacing:0.08em;color:var(--navy);margin-top:4px;line-height:1.1}
+.kop-garis{width:120px;margin:9px auto 7px;border-top:2px solid var(--emas);border-bottom:1px solid var(--emas);height:5px}
+.kop-sub{font-family:var(--serif);font-size:13px;font-weight:600;letter-spacing:0.18em;color:var(--emas-tua);text-transform:uppercase}
+
+/* ── radio, digambar rata ── */
+.radio{position:relative;background:var(--navy);color:var(--krem);border-radius:20px;padding:16px 14px 20px;margin-top:20px}
+.antena{position:absolute;left:28px;bottom:100%;width:14px;height:18px;background:var(--navy);border-radius:4px 4px 0 0}
+.kenop{position:absolute;right:30px;bottom:100%;width:26px;height:10px;background:var(--navy);border-radius:4px 4px 0 0}
 .kepala{display:flex;align-items:center;justify-content:space-between;padding:0 4px 12px}
-.merek{font-weight:700;font-size:15px;letter-spacing:0.06em}
-.merek b{color:var(--emas)}
-.merek span{color:var(--ink2);font-weight:500}
-.lampu{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.08em}
-.lampu i{width:8px;height:8px;border-radius:50%;background:#26406c;box-shadow:inset 0 1px 1px rgba(0,0,0,0.5)}
-.radio.tx .lampu i{background:var(--red);box-shadow:0 0 8px rgba(255,77,77,0.9)}
-.radio.rx .lampu i{background:var(--green);box-shadow:0 0 8px rgba(54,201,122,0.9)}
+.merek{font-family:var(--serif);font-weight:600;font-size:13px;letter-spacing:0.14em;color:var(--emas2)}
+.lampu{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:0.1em;color:var(--krem-redup)}
+.lampu i{width:9px;height:9px;border-radius:50%;background:var(--navy3)}
+.radio.tx .lampu i{background:#e5533d}
+.radio.rx .lampu i{background:var(--green2)}
+.radio.tx .lampu{color:#f0a394}.radio.rx .lampu{color:#8fe0b4}
 
-/* layar LCD */
-.lcd{background:linear-gradient(180deg,var(--lcd),var(--lcd2));color:var(--lcd-ink);border-radius:6px;
-  padding:9px 12px 10px;font-family:var(--lcdfont);
-  box-shadow:inset 0 2px 7px rgba(0,20,50,0.4),0 0 0 5px #0a1630,0 0 0 6px var(--tepi),0 0 24px rgba(134,207,245,0.16)}
-.lcd-baris{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
-.lcd-ch{font-size:31px;line-height:1.1;margin:4px 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
-.lcd .redup{color:var(--lcd-redup)}
-.status{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dot{width:8px;height:8px;background:var(--lcd-redup);flex-shrink:0;opacity:.5}
-.dot.on{background:var(--lcd-ink);opacity:1}
-.dot.warn{background:var(--lcd-ink);opacity:1;animation:kedip 1s steps(2) infinite}
-.dot.err{background:#8a1c1c;opacity:1;animation:kedip .6s steps(2) infinite}
-@keyframes kedip{50%{opacity:.15}}
+/* panel layar: krem, seperti papan nama */
+.lcd{background:var(--krem);color:var(--navy);border-radius:8px;padding:10px 14px 11px;border:2px solid var(--emas)}
+.lcd-baris{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:600}
+.lcd-ch{font-family:var(--serif);font-weight:700;font-size:26px;letter-spacing:0.04em;line-height:1.2;margin:4px 0 3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lcd .redup{color:#7a6a45;letter-spacing:0.06em}
+.status{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--navy)}
+.dot{width:8px;height:8px;border-radius:50%;background:#b9ab88;flex-shrink:0}
+.dot.on{background:var(--green)}
+.dot.warn{background:var(--amber);animation:kedip 1s steps(2) infinite}
+.dot.err{background:var(--red);animation:kedip .6s steps(2) infinite}
+@keyframes kedip{50%{opacity:.2}}
 
-/* kisi speaker: lubang bulat */
-.kisi{height:30px;margin:16px 4px 0;
-  background:radial-gradient(circle,#06102a 2.2px,transparent 2.6px) 0 0/9px 9px;
-  -webkit-mask:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);
-          mask:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+/* kisi speaker: garis rata */
+.kisi{height:16px;margin:14px 10px 0;
+  background:repeating-linear-gradient(90deg,var(--navy3) 0 3px,transparent 3px 8px)}
 
 /* keypad saluran */
 .kanal{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:16px;counter-reset:ch}
-.kanal button{counter-increment:ch;position:relative;text-align:left;min-height:50px;padding:6px 8px 7px 9px;
-  background:linear-gradient(180deg,var(--key),var(--key2));border:1px solid var(--key-tepi);border-bottom-color:var(--key-bawah);
-  border-radius:9px 9px 7px 7px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;
-  box-shadow:0 3px 0 var(--key-bawah);line-height:1.1;overflow:hidden}
-.kanal button::before{content:counter(ch);display:block;font-family:var(--lcdfont);font-size:15px;color:var(--blue2);margin-bottom:2px}
-.kanal button .n{position:absolute;top:7px;right:8px;font-family:var(--lcdfont);font-size:12px;color:var(--ink2)}
-.kanal button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--key-bawah)}
-.kanal button.on{background:linear-gradient(180deg,#2c3c5d,#222f4c);border-color:rgba(232,191,106,0.65);color:var(--emas)}
-.kanal button.on::before,.kanal button.on .n{color:var(--emas)}
+.kanal button{counter-increment:ch;position:relative;text-align:left;min-height:50px;padding:7px 9px;
+  background:var(--navy2);border:1px solid var(--navy-garis);border-radius:6px;
+  font-size:13px;font-weight:600;color:var(--krem);cursor:pointer;line-height:1.15;overflow:hidden}
+.kanal button::before{content:counter(ch);display:block;font-family:var(--serif);font-weight:700;font-size:14px;color:var(--emas2);margin-bottom:1px}
+.kanal button .n{position:absolute;top:7px;right:9px;font-size:12px;font-weight:700;color:var(--krem-redup)}
+.kanal button:active{background:var(--navy3)}
+.kanal button.on{background:var(--emas2);border-color:var(--emas2);color:var(--navy)}
+.kanal button.on::before,.kanal button.on .n{color:var(--navy)}
+@media (max-width:360px){.kanal button{font-size:12px;padding:7px 7px}}
 
-/* tombol bicara */
+/* tombol bicara: lingkaran emas rata */
 .ptt-area{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:22px}
-.ptt{width:min(58vw,212px);aspect-ratio:1;border-radius:50%;cursor:pointer;
-  border:none;color:#2b1d04;font-family:var(--sans);font-size:17px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
-  background:radial-gradient(circle at 50% 30%,var(--emas-terang),var(--emas) 45%,var(--emas-gelap) 100%);
-  box-shadow:0 0 0 9px #0a1630,0 0 0 10px var(--tepi),0 9px 0 10px #061026,inset 0 -6px 14px rgba(80,50,0,0.3),inset 0 3px 6px rgba(255,255,255,0.35);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
-  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;
-  transition:transform .08s,box-shadow .08s,filter .15s}
-/* alur karet di permukaan tombol */
-.ptt .ic{width:44%;height:10px;border-radius:5px;
-  background:repeating-linear-gradient(90deg,rgba(90,60,10,0.35) 0 3px,transparent 3px 7px)}
-.ptt:disabled{filter:grayscale(.8) brightness(.55);cursor:not-allowed}
-.ptt.live{transform:translateY(6px);
-  box-shadow:0 0 0 9px #0a1630,0 0 0 10px var(--tepi),0 3px 0 10px #061026,inset 0 -3px 10px rgba(80,50,0,0.35),inset 0 3px 6px rgba(255,255,255,0.3)}
-.ptt.live{box-shadow:0 0 0 9px #0a1630,0 0 0 11px var(--red),0 3px 0 11px #061026,inset 0 -3px 10px rgba(80,50,0,0.35),inset 0 3px 6px rgba(255,255,255,0.3)}
-.ptt.dengar:not(.live){box-shadow:0 0 0 9px #0a1630,0 0 0 11px var(--green),0 9px 0 11px #061026,inset 0 -6px 14px rgba(80,50,0,0.3),inset 0 3px 6px rgba(255,255,255,0.35)}
-.hint{font-size:13px;font-weight:500;color:var(--muted);text-align:center;min-height:1.3em;padding:0 8px}
-.hint.dengar{color:var(--green)}
+.ptt{width:min(56vw,200px);aspect-ratio:1;border-radius:50%;cursor:pointer;
+  background:var(--emas2);color:var(--navy);border:6px solid var(--navy2);outline:2px solid var(--emas2);outline-offset:4px;
+  font-family:var(--serif);font-size:15px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;line-height:1.25;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 18px;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;transition:transform .08s,background .12s}
+.ptt .ic{width:30px;height:2px;background:var(--navy);opacity:.45}
+.ptt:disabled{background:#5d6d8c;outline-color:#5d6d8c;color:#c9d0de;cursor:not-allowed}
+.ptt.live{background:var(--emas);transform:scale(.97);outline-color:#e5533d}
+.ptt.dengar:not(.live){outline-color:var(--green2)}
+.hint{font-size:13px;font-weight:500;color:var(--krem-redup);text-align:center;min-height:1.3em;padding:0 8px}
+.hint.dengar{color:#8fe0b4}
 
-/* tombol samping */
-.samping{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:16px}
+/* tombol di badan radio */
+.samping{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:18px}
 .samping #btnRingAll{grid-column:1 / -1}
-.mode button,.samping button{background:linear-gradient(180deg,var(--key),var(--key2));border:1px solid var(--key-tepi);border-bottom-color:var(--key-bawah);
-  border-radius:8px;color:var(--ink2);font-size:14px;font-weight:600;padding:9px 12px;min-height:44px;cursor:pointer;box-shadow:0 3px 0 var(--key-bawah)}
-.mode button:active,.samping button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--key-bawah)}
-.samping button.on{color:var(--emas);border-color:rgba(232,191,106,0.65);background:#22314f}
-.samping button.merah{color:#ffb0a8;background:linear-gradient(180deg,#4a1f2c,#3a1826);border-color:#6e2e3c;border-bottom-color:#22080f}
+.samping button{background:transparent;border:1px solid var(--navy-garis);border-radius:6px;color:var(--krem);
+  font-size:14px;font-weight:600;padding:9px 12px;min-height:44px;cursor:pointer}
+.samping button:active{background:var(--navy2)}
+.samping button.on{background:var(--krem);color:var(--navy);border-color:var(--krem)}
+.samping button.merah{border-color:#8c3a33;color:#f3b3a8}
 
-/* daftar orang */
-.daftar{margin-top:20px}
-.label{font-size:12px;font-weight:600;letter-spacing:0.1em;color:var(--muted);margin:0 2px 7px}
-.orang{display:flex;flex-direction:column;max-height:36vh;overflow-y:auto;border-radius:8px;background:rgba(6,16,38,0.6);
-  box-shadow:inset 0 1px 3px rgba(0,0,0,0.4);border:1px solid var(--tepi2)}
-.o{display:flex;align-items:center;gap:10px;padding:8px 10px;border-top:1px solid var(--tepi2)}
-.o:first-child{border-top:none}
-.o .av{width:30px;height:30px;border-radius:50%;background:var(--bg4);color:var(--emas);
-  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
-.o.talk .av{background:var(--green);color:#06210f}
+/* pemberitahuan di badan radio */
+.banner{display:none}
+.banner.tampil{display:block;margin-top:14px;background:#2a2f3f;border-left:3px solid var(--emas2);
+  padding:9px 11px;font-size:13px;line-height:1.45;color:var(--krem);border-radius:0 6px 6px 0}
+.banner.tampil strong{color:var(--emas2);font-weight:700}
+.banner.merah{border-left-color:#e5533d}
+.banner.merah strong{color:#f3b3a8}
+
+/* isian di badan radio (halaman masuk) */
+label.f{display:block;font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--krem-redup);margin-bottom:5px}
+input,select{width:100%;background:#fffdf7;border:1px solid var(--garis);color:var(--tinta);font-family:var(--sans);font-weight:500;
+  font-size:16px;padding:11px 12px;border-radius:6px;outline:none;-webkit-appearance:none;appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--tinta2) 50%),linear-gradient(135deg,var(--tinta2) 50%,transparent 50%);
+  background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+input:focus,select:focus{border-color:var(--emas)}
+.radio input,.radio select{background-color:var(--krem);border-color:var(--krem)}
+.field{margin-bottom:12px}
+.btn{width:100%;background:#fffdf7;border:1px solid var(--navy);color:var(--navy);
+  font-size:15px;font-weight:700;padding:12px;border-radius:6px;cursor:pointer;min-height:48px}
+.btn:active{background:var(--kertas2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.gold{background:var(--emas2);border-color:var(--emas2);color:var(--navy);font-family:var(--serif);letter-spacing:0.08em;text-transform:uppercase}
+.btn.gold:active{background:var(--emas)}
+.masuk{margin-top:18px}
+.note{font-size:13px;color:var(--krem-redup);line-height:1.5}
+
+/* ── lembar di bawah radio ── */
+.bawah{margin-top:26px;display:flex;flex-direction:column;gap:26px}
+.judul{font-family:var(--serif);font-weight:700;font-size:15px;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy);
+  display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.judul::after{content:'';flex:1;border-top:1px solid var(--emas)}
+
+/* daftar orang: seperti daftar hadir */
+.orang{display:flex;flex-direction:column;max-height:44vh;overflow-y:auto;border-top:1px solid var(--garis)}
+.o{display:flex;align-items:center;gap:11px;padding:9px 2px;border-bottom:1px solid var(--garis2)}
+.o .av{width:30px;height:30px;border-radius:50%;background:var(--navy);color:var(--emas2);
+  display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:13px;font-weight:700;flex-shrink:0}
+.o.talk .av{background:var(--green);color:#fff}
 .o .info{flex:1;min-width:0}
-.o .nm{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.o .sub{font-size:12px;color:var(--muted)}
-.o .sub.hijau{color:var(--green)}
+.o .nm{font-size:15px;font-weight:700;color:var(--tinta);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.o .sub{font-size:12px;font-weight:500;color:var(--muted)}
+.o .sub.hijau{color:var(--green);font-weight:600}
 .o.goyah .sub{color:var(--amber)}
 .sinyal{display:inline-flex;align-items:flex-end;gap:2px;height:11px;margin-left:7px;vertical-align:-1px}
-.sinyal i{width:3px;background:#34507e;display:block}
+.sinyal i{width:3px;background:#cfc3a6;display:block}
 .sinyal i:nth-child(1){height:4px}.sinyal i:nth-child(2){height:7px}.sinyal i:nth-child(3){height:11px}
 .sinyal.kuat i{background:var(--green)}
 .sinyal.sedang i:nth-child(1),.sinyal.sedang i:nth-child(2){background:var(--amber)}
 .sinyal.lemah i:nth-child(1){background:var(--red)}
-.o .call{background:transparent;border:1px solid rgba(232,191,106,0.5);border-radius:16px;color:var(--emas);
-  font-size:13px;font-weight:600;padding:0 12px;height:32px;cursor:pointer;flex-shrink:0}
-.o .call:active{background:var(--bg4)}
+.o .call{background:transparent;border:1px solid var(--emas);border-radius:4px;color:var(--emas-tua);
+  font-size:13px;font-weight:700;padding:0 12px;height:32px;cursor:pointer;flex-shrink:0}
+.o .call:active{background:var(--kertas2)}
 .kosong{font-size:13px;color:var(--muted);line-height:1.5;padding:10px 2px 0}
 
-/* pemberitahuan: pita di dalam radio */
-.banner{display:none}
-.banner.tampil{display:block;margin-top:14px;background:rgba(240,168,32,0.12);border:1px solid rgba(240,168,32,0.4);
-  padding:9px 11px;font-size:13px;line-height:1.45;color:var(--ink2);border-radius:7px}
-.banner.tampil strong{color:var(--amber);font-weight:600}
-.banner.merah{background:rgba(224,82,96,0.12);border-color:rgba(224,82,96,0.45)}
-.banner.merah strong{color:var(--red)}
-
-/* isian & tombol */
-label.f{display:block;font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--muted);margin-bottom:5px}
-input,select{width:100%;background:rgba(6,16,38,0.7);border:1px solid var(--key-tepi);color:var(--ink);font-family:var(--sans);
-  font-size:16px;padding:11px 12px;border-radius:8px;outline:none;-webkit-appearance:none;appearance:none}
-select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
-  background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
-select option{background:var(--bg2)}
-input:focus,select:focus{border-color:var(--emas)}
-.field{margin-bottom:12px}
-.btn{width:100%;background:linear-gradient(180deg,var(--key),var(--key2));border:1px solid var(--key-tepi);border-bottom-color:var(--key-bawah);
-  color:var(--ink);font-size:15px;font-weight:600;padding:12px;border-radius:9px;cursor:pointer;min-height:48px;box-shadow:0 3px 0 var(--key-bawah)}
-.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--key-bawah)}
-.btn:disabled{opacity:.4;cursor:not-allowed}
-.btn.gold{background:linear-gradient(180deg,var(--emas-terang),var(--emas));border-color:var(--emas-gelap);color:#2b1d04;box-shadow:0 3px 0 #7a5a1c;
-  text-transform:uppercase;letter-spacing:0.06em;font-weight:700}
-.masuk{margin-top:18px}
-.note{font-size:13px;color:var(--muted);line-height:1.5}
-
-/* ── bagian bawah radio: tombol fungsi, log, saklar ── */
-.bawah{margin-top:14px;background:linear-gradient(180deg,#10203f,#0d1b37);border:1px solid var(--tepi);
-  border-radius:20px;padding:16px 14px 18px;display:flex;flex-direction:column;gap:18px;
-  box-shadow:inset 0 1px 0 rgba(160,210,250,0.08),0 14px 30px rgba(3,10,26,0.45)}
+/* pesan cepat */
 .fkeys{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;counter-reset:fk}
-.fkeys button{counter-increment:fk;display:flex;align-items:center;gap:8px;text-align:left;min-height:44px;padding:8px 10px;
-  background:linear-gradient(180deg,var(--key),var(--key2));border:1px solid var(--key-tepi);border-bottom-color:var(--key-bawah);
-  border-radius:8px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 3px 0 var(--key-bawah)}
-.fkeys button::before{content:'F' counter(fk);font-family:var(--lcdfont);font-size:13px;color:var(--blue2);
-  border:1px solid var(--key-tepi);border-radius:4px;padding:1px 4px;flex-shrink:0}
+.fkeys button{counter-increment:fk;display:flex;align-items:center;gap:9px;text-align:left;min-height:44px;padding:8px 10px;
+  background:#fffdf7;border:1px solid var(--garis);border-radius:6px;font-size:14px;font-weight:600;color:var(--tinta);cursor:pointer}
+.fkeys button::before{content:counter(fk);font-family:var(--serif);font-weight:700;font-size:14px;color:var(--emas);width:12px;flex-shrink:0}
 .fkeys button:last-child{grid-column:1 / -1}
-.fkeys button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--key-bawah)}
+.fkeys button:active{background:var(--kertas2)}
 .ketik{display:flex;gap:7px;margin-top:8px}
 .ketik input{flex:1}
-.ketik .btn{width:auto;padding:0 18px}
+.ketik .btn{width:auto;padding:0 18px;background:var(--navy);color:var(--krem)}
 
-/* layar log riwayat: LCD gelap bercahaya */
-.log{background:#06122a;border-radius:6px;padding:4px 10px;font-family:var(--lcdfont);
-  box-shadow:inset 0 2px 8px rgba(0,0,0,0.6),0 0 0 4px #081530,0 0 0 5px var(--tepi2)}
-#riwayat{display:flex;flex-direction:column;max-height:240px;overflow-y:auto}
-.rw{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px dashed rgba(134,207,245,0.15)}
-.rw:first-child{border-top:none}
-.rw-kiri{flex:1;min-width:0}
-.rw-nm{font-size:14px;color:var(--blue2);display:flex;align-items:baseline;gap:8px}
-.rw-jam{font-size:12px;color:#4f7aa3}
-.rw-isi{font-size:13px;color:#9cc4e4;margin-top:1px;word-break:break-word}
-.rw.teks .rw-isi{color:var(--emas)}
-.rw-play{background:transparent;border:1px solid rgba(134,207,245,0.35);color:var(--blue2);width:34px;height:34px;border-radius:50%;
-  font-size:10px;cursor:pointer;flex-shrink:0}
-.rw-play:active{background:rgba(134,207,245,0.12)}
-.log .kosong{font-family:var(--lcdfont);color:#4f7aa3;padding:8px 0}
-.tautan{background:none;border:none;color:var(--ink2);font-size:13px;font-weight:600;text-decoration:underline;
-  text-underline-offset:3px;cursor:pointer;padding:8px 0 0;align-self:flex-start}
+/* riwayat: seperti notulen, jam di kolom kiri */
+#riwayat{display:flex;flex-direction:column;max-height:260px;overflow-y:auto;border-top:1px solid var(--garis)}
+.rw{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--garis2)}
+.rw-kiri{min-width:0}
+.rw-nm{font-size:14px;font-weight:700;display:flex;align-items:baseline;gap:9px;flex-direction:row-reverse;justify-content:flex-end}
+.rw-jam{font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;width:38px;flex-shrink:0}
+.rw-isi{font-size:13px;color:var(--tinta2);margin:1px 0 0 47px;word-break:break-word}
+.rw.teks .rw-isi{color:var(--emas-tua);font-weight:600}
+.rw-play{background:var(--navy);border:none;color:var(--emas2);width:32px;height:32px;border-radius:50%;font-size:10px;cursor:pointer}
+.rw-play:active{background:var(--navy3)}
+#riwayat .kosong{padding:10px 2px}
+.tautan{background:none;border:none;color:var(--tinta2);font-size:13px;font-weight:600;text-decoration:underline;
+  text-underline-offset:3px;cursor:pointer;padding:9px 0 0}
 
-/* saklar status tiga posisi */
-.saklar{display:grid;grid-template-columns:repeat(3,1fr);background:#06122a;border-radius:10px;padding:4px;gap:4px;
-  box-shadow:inset 0 2px 6px rgba(0,0,0,0.55)}
-.saklar button{background:transparent;border:none;border-radius:7px;color:var(--muted);font-size:14px;font-weight:600;
-  min-height:40px;cursor:pointer}
-.saklar button.on{background:linear-gradient(180deg,var(--key),var(--key2));color:var(--emas);
-  box-shadow:0 2px 0 var(--key-bawah),inset 0 1px 0 rgba(160,210,250,0.12)}
-.kaki{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.kaki .btn{width:auto;flex:1}
-.kaki .keluar{color:#ffb0a8}
+/* status */
+.saklar{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--navy);border-radius:6px;overflow:hidden}
+.saklar button{background:#fffdf7;border:none;border-left:1px solid var(--navy);color:var(--navy);font-size:14px;font-weight:600;
+  min-height:42px;cursor:pointer}
+.saklar button:first-child{border-left:none}
+.saklar button.on{background:var(--navy);color:var(--emas2)}
+.kaki{display:flex;gap:8px}
+.kaki .btn{flex:1}
+.kaki .keluar{color:var(--red);border-color:var(--red)}
+.tanda{text-align:center;font-family:var(--serif);font-size:11px;letter-spacing:0.16em;color:var(--muted);margin-top:28px}
 
 /* panggilan masuk */
 .ring{position:fixed;inset:0;z-index:900;display:none;align-items:center;justify-content:center;
-  padding:20px;background:rgba(6,14,32,0.9)}
+  padding:22px;background:rgba(13,28,58,0.82)}
 .ring.open{display:flex}
-.ring-box{background:linear-gradient(180deg,var(--bg3),var(--bg2));border:1px solid var(--tepi);border-radius:22px;padding:18px;max-width:340px;width:100%;
-  box-shadow:0 20px 50px rgba(0,0,0,0.6)}
-.ring-lcd{background:linear-gradient(180deg,var(--lcd),var(--lcd2));color:var(--lcd-ink);border-radius:6px;
-  padding:12px 14px;font-family:var(--lcdfont);margin-bottom:16px;animation:nyala 1s steps(2) infinite;
-  box-shadow:inset 0 2px 7px rgba(0,20,50,0.4),0 0 0 5px #0a1630}
-@keyframes nyala{50%{filter:brightness(.8)}}
-.ring-box.urgent .ring-lcd{background:linear-gradient(180deg,#f2b0a8,#e0928a);color:#3a0b0b}
-.ring-ic{font-size:13px}
-.ring-who{font-size:30px;line-height:1.15;margin:4px 0;word-break:break-word;text-transform:uppercase}
-.ring-sub{font-size:13px;line-height:1.45}
+.ring-box{background:var(--kertas);border-top:4px solid var(--emas);border-radius:10px;padding:20px 18px 18px;max-width:340px;width:100%;text-align:center}
+.ring-lcd{margin-bottom:18px}
+.ring-ic{font-size:11px;font-weight:700;letter-spacing:0.16em;color:var(--emas-tua);animation:kedip 1s steps(2) infinite}
+.ring-box.urgent{border-top-color:var(--red)}
+.ring-box.urgent .ring-ic{color:var(--red)}
+.ring-who{font-family:var(--serif);font-weight:700;font-size:28px;color:var(--navy);line-height:1.2;margin:8px 0 4px;word-break:break-word}
+.ring-sub{font-size:14px;color:var(--tinta2);line-height:1.45}
 .btn-row{display:flex;gap:8px}.btn-row .btn{flex:1}
 
-.toast{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:950;
-  background:#06122a;border:1px solid var(--tepi);color:var(--blue2);font-family:var(--lcdfont);font-size:14px;padding:10px 16px;border-radius:8px;
-  max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s;box-shadow:0 8px 24px rgba(0,0,0,0.5)}
+.toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:950;
+  background:var(--navy);color:var(--krem);font-size:14px;font-weight:600;padding:10px 16px;border-radius:6px;
+  max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.show{opacity:1}
 .hide{display:none !important}
 </style>
@@ -237,16 +215,23 @@ input:focus,select:focus{border-color:var(--emas)}
 <body>
 <div class="wrap">
 
+  <header class="kop">
+    <div class="kop-kecil">HIMA Administrasi Bisnis · Telkom University</div>
+    <div class="kop-judul">IBASS 2026</div>
+    <div class="kop-garis"></div>
+    <div class="kop-sub">Radio Panitia</div>
+  </header>
+
   <div class="radio" id="radio">
     <div class="antena"></div><div class="kenop"></div>
     <div class="kepala">
-      <div class="merek"><b>IBASS</b> <span>HT-26</span></div>
+      <div class="merek">HT PANITIA</div>
       <div class="lampu"><i></i>TX / RX</div>
     </div>
     <div class="lcd">
-      <div class="lcd-baris"><span class="redup">CH</span><span class="status"><span class="dot" id="dot"></span><span id="statusTxt">Belum masuk</span></span></div>
+      <div class="lcd-baris"><span class="redup">SALURAN</span><span class="status"><span class="dot" id="dot"></span><span id="statusTxt">Belum masuk</span></span></div>
       <div class="lcd-ch" id="chLabel">Semua Panitia</div>
-      <div class="lcd-baris"><span id="jmlOrang" class="redup">belum masuk</span><span class="redup" id="versiHT">v26.10</span></div>
+      <div class="lcd-baris"><span id="jmlOrang" class="redup">belum masuk</span></div>
     </div>
     <div class="kisi"></div>
 
@@ -281,19 +266,19 @@ input:focus,select:focus{border-color:var(--emas)}
         <button id="btnRingCh">Panggil Saluran</button>
         <button id="btnRingAll" class="merah">Panggil Semua Divisi</button>
       </div>
-
-      <div class="daftar">
-        <div class="label">DI SALURAN</div>
-        <div class="orang" id="orang"></div>
-        <div class="kosong hide" id="sendiri">Belum ada orang lain. Bagikan link HT ke staff,
-          atau tekan Panggil Semua Divisi.</div>
-      </div>
     </div>
   </div>
 
   <div id="htBawah" class="bawah hide">
-    <div>
-      <div class="label">PESAN CEPAT</div>
+    <section>
+      <div class="judul">Di Saluran</div>
+      <div class="orang" id="orang"></div>
+      <div class="kosong hide" id="sendiri">Belum ada orang lain. Bagikan link HT ke staff,
+        atau tekan Panggil Semua Divisi.</div>
+    </section>
+
+    <section>
+      <div class="judul">Pesan Cepat</div>
       <div class="fkeys">
         <button onclick="kirimTeks('Saya akan lawan')">Saya akan lawan</button>
         <button onclick="kirimTeks('Saya masih sanggup')">Saya masih sanggup</button>
@@ -305,28 +290,30 @@ input:focus,select:focus{border-color:var(--emas)}
         <input type="text" id="teksInput" placeholder="Ketik pesan" maxlength="120">
         <button class="btn" id="btnTeks">Kirim</button>
       </div>
-    </div>
+    </section>
 
-    <div>
-      <div class="label">LOG</div>
-      <div class="log"><div id="riwayat"></div></div>
+    <section>
+      <div class="judul">Riwayat</div>
+      <div id="riwayat"></div>
       <button class="tautan" id="btnSalinLog">Salin catatan percakapan</button>
-    </div>
+    </section>
 
-    <div>
-      <div class="label">STATUS</div>
+    <section>
+      <div class="judul">Status</div>
       <div class="saklar">
         <button class="st-btn on" data-st="Siap">Siap</button>
         <button class="st-btn" data-st="Di Lokasi">Di Lokasi</button>
         <button class="st-btn" data-st="Sibuk">Sibuk</button>
       </div>
-    </div>
+    </section>
 
     <div class="kaki">
       <button class="btn" id="btnCopy">Salin link HT</button>
       <button class="btn keluar" id="btnLeave">Keluar</button>
     </div>
   </div>
+
+  <div class="tanda">IBASS 2026 · <span id="versiHT">v26.10</span></div>
 </div>
 
 <div class="ring" id="ringBox">
