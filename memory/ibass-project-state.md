@@ -535,6 +535,14 @@ refresh keras di web.
   broker menahan pesan s/d 15 dtk saat 8 orang). Orang ke-8 tersambung ke 7 lain 4-5,8 dtk. Broker per IP:
   EMQX 22/22, HiveMQ 19/22. UI: Chakra Petch + Share Tech Mono, antena/kenop, F1-F5, log, saklar status
   (Boss bilang IBM Plex terasa template). Alat uji banyak.html + badai.js di scratchpad sesi.
+- UI FINAL HT (pilihan Boss "Resmi acara IBASS", commit 43bf7cf, sudah push branch): kertas krem #f6f1e6, kop panitia,
+  radio rata navy, panel krem berbingkai emas, Cinzel+Raleway. Boss merasa gaya gelap+bercahaya/mono = "vibe Claude";
+  jangan kembali ke situ. Contoh nama di kolom masuk: Fikri.
+  REVISI: gaya resmi krem dibilang Boss "agak jelek". FINAL sekarang = "radio asli tanpa efek": plastik navy doff,
+  Archivo Narrow + VT323, PTT emas bertulisan PTT, tanpa gradasi/cahaya. Jadi yang tidak disukai: gaya glow/
+  mono-tech dan gaya kertas resmi; yang disukai: konsep alat radio.
+  REVISI LAGI (26 Okt): Boss bilang versi radio biru-emas Chakra Petch (ea38ecb) yang paling bagus -> tampilan
+  dikembalikan ke ea38ecb persis, logika terbaru tetap. Itu tampilan FINAL; jangan ganti tanpa diminta.
 
 ## HT: PANGGILAN HANTU & MASUK CEPAT (2026-08-06, uji Boss ke-3)
 - **Bug**: buka HT → langsung "memanggil" + bergetar padahal belum ada yang dikasih link.
