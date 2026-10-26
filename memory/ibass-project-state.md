@@ -512,6 +512,25 @@ refresh keras di web.
 - Menu Sheets: `Pisahkan File Penilaian (buat baru)` / `Pakai File Penilaian yang Sudah Ada`
   (tempel link sheet yang sudah terlanjur dibuat, data lama ikut pindah) / `Lihat Lokasi File Penilaian`.
 
+## HT TANPA JEDA (2026-10-26, branch claude/ht-tanpa-jeda-87c9f9, commit 986f6d2, BELUM di-merge/push)
+- Diukur: jeda datang dari Apps Script (~2,8 dtk/panggilan, berurutan) -> tersambung ~22 dtk,
+  mode hemat lewat sheet ~10 dtk. Suara langsung sendiri ~0,1 dtk.
+- Sekarang sinyal/hadir/panggil/teks lewat **2 broker MQTT publik** (wss EMQX 8084 + HiveMQ 8884,
+  tanpa akun), klien mini `MqttMini` di halaman, isi AES-GCM, topik `ibass2026/ht/v2/` (h, s, r/<room>, v/<room>).
+  Apps Script tetap dipoll tiap 5 dtk (jembatan ke HP yang broker-nya diblokir / halaman lama).
+- Jalur cadangan suara: `PerekamBergulir` 0,8 dtk lewat broker (~1 dtk), per orang yang belum tersambung langsung.
+- Hasil uji: tersambung 1,5-2 dtk, suara 0,1-0,19 dtk, cadangan ~1,0 dtk, broker diblokir ~19 dtk.
+- JEBAKAN yang ketemu: (1) umumkan 'tanya' SEBELUM SUBACK -> saling tak terlihat 4 dtk;
+  (2) tawaran basi lewat server membongkar sambungan cepat -> offer bawa pcid+pcwaktu;
+  (3) EMQX menahan kiriman beruntun -> ICE digabung kind 'ices'; (4) panel browser tersembunyi =
+  timer dilambatkan 1 dtk, ukuran jeda jadi ngawur -> tampilkan panel dulu (show_pane preview);
+  (5) mic buatan uji harus bikin stream baru tiap getUserMedia. Alat uji dua iframe di scratchpad sesi.
+- .gs TIDAK berubah, tidak perlu deploy.
+- 26 Okt lanjutan: UI HT diganti gaya radio (LCD, keypad, tombol karet) warna tema biru-emas (commit 4431828).
+  Branch SUDAH di-push (bukan main). Link uji HP: raw.githack.com/raiii-png/ibass2026/<SHA penuh>/kadiv/ht/index.html?ch=...
+  (pakai SHA, nama branch ber-/ membingungkan githack; ada halaman peringatan "Open the page").
+  Halaman uji pribadi claude.ai TIDAK bisa: akun ini tidak punya izin mikrofon untuk artifact.
+
 ## HT: PANGGILAN HANTU & MASUK CEPAT (2026-08-06, uji Boss ke-3)
 - **Bug**: buka HT → langsung "memanggil" + bergetar padahal belum ada yang dikasih link.
   Sebab: `sejak=0` saat masuk → server kirim SELURUH 120 baris terakhir saluran, termasuk
