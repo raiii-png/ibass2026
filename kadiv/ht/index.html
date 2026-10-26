@@ -3,211 +3,210 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#f6f1e6">
+<meta name="theme-color" content="#0b1730">
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <title>HT IBASS 2026</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230d1c3a'/><path d='M16 5.5l2.7 7.1L26 13.8l-5.7 4.7L22 26l-6-3.9L10 26l1.7-7.5L6 13.8l7.3-1.2z' fill='%23e8bf6a'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=VT323&display=swap" rel="stylesheet">
 <style>
-/* HT IBASS — gaya resmi acara: kertas krem, tinta navy, aksen emas, huruf Cinzel
-   seperti identitas IBASS. Radio digambar rata, tanpa cahaya dan gradasi. */
+/* HT IBASS — dibuat seperti HT sungguhan: plastik navy doff, tulisan putih tercetak,
+   tombol karet, layar LCD titik. Sengaja tanpa gradasi dan tanpa cahaya berpendar. */
 :root{
-  --kertas:#f6f1e6; --kertas2:#efe7d4; --garis:#dccfb2; --garis2:#e8dec8;
-  --navy:#0d1c3a; --navy2:#16294f; --navy3:#20386a; --navy-garis:#2e4a7e;
-  --tinta:#0d1c3a; --tinta2:#3d4c69; --muted:#7a8299;
-  --emas:#c8922a; --emas2:#e8bf6a; --emas-tua:#8d6417;
-  --krem:#f3ead3; --krem-redup:#7d8aa3;
-  --green:#1f9a5b; --green2:#36c97a; --amber:#b9770e; --red:#c0392b;
-  --serif:'Cinzel',Georgia,serif;
-  --sans:'Raleway',system-ui,sans-serif;
+  --meja:#0b1730;
+  --plastik:#1b2d55; --plastik2:#162649; --sambungan:#0f1d3b; --cetak:#e9eef7; --cetak2:#9fb0cc;
+  --karet:#26396a; --karet-tepi:#0e1a36; --karet-on:#e2b04f;
+  --lcd:#8fc6ea; --lcd-ink:#0b2340; --lcd-redup:#4c7ba3;
+  --emas:#e2b04f; --emas-tua:#a9791f;
+  --led-merah:#ff5a4a; --led-hijau:#3bd27f; --amber:#f0a820;
+  --muted:#9fb0cc;
+  --label:'Archivo Narrow','Arial Narrow',sans-serif;
+  --lcdfont:'VT323',ui-monospace,monospace;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
-body{background:var(--kertas);color:var(--tinta);font-family:var(--sans);font-size:15px;font-weight:500;line-height:1.4;
+body{background:var(--meja);color:var(--cetak);font-family:var(--label);font-size:15px;font-weight:600;line-height:1.3;
   min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 button{font-family:inherit;color:inherit}
-.wrap{max-width:440px;margin:0 auto;
-  padding:max(18px,env(safe-area-inset-top)) 16px max(28px,env(safe-area-inset-bottom));
+.wrap{max-width:420px;margin:0 auto;
+  padding:max(34px,calc(env(safe-area-inset-top) + 22px)) 14px max(26px,env(safe-area-inset-bottom));
   display:flex;flex-direction:column}
 
-/* kop surat */
-.kop{text-align:center;padding:4px 0 16px}
-.kop-kecil{font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--tinta2)}
-.kop-judul{font-family:var(--serif);font-weight:700;font-size:30px;letter-spacing:0.08em;color:var(--navy);margin-top:4px;line-height:1.1}
-.kop-garis{width:120px;margin:9px auto 7px;border-top:2px solid var(--emas);border-bottom:1px solid var(--emas);height:5px}
-.kop-sub{font-family:var(--serif);font-size:13px;font-weight:600;letter-spacing:0.18em;color:var(--emas-tua);text-transform:uppercase}
-
-/* ── radio, digambar rata ── */
-.radio{position:relative;background:var(--navy);color:var(--krem);border-radius:20px;padding:16px 14px 20px;margin-top:20px}
-.antena{position:absolute;left:28px;bottom:100%;width:14px;height:18px;background:var(--navy);border-radius:4px 4px 0 0}
-.kenop{position:absolute;right:30px;bottom:100%;width:26px;height:10px;background:var(--navy);border-radius:4px 4px 0 0}
+/* ── badan radio ── */
+.radio{position:relative;background:var(--plastik);border-radius:28px 28px 22px 22px;padding:16px 16px 22px;
+  border:2px solid var(--sambungan)}
+.antena{position:absolute;left:34px;bottom:100%;width:18px;height:26px;background:var(--sambungan);border-radius:6px 6px 0 0}
+.kenop{position:absolute;right:38px;bottom:100%;width:30px;height:14px;border-radius:4px 4px 0 0;
+  background:repeating-linear-gradient(90deg,var(--sambungan) 0 3px,#22386a 3px 6px)}
 .kepala{display:flex;align-items:center;justify-content:space-between;padding:0 4px 12px}
-.merek{font-family:var(--serif);font-weight:600;font-size:13px;letter-spacing:0.14em;color:var(--emas2)}
-.lampu{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:0.1em;color:var(--krem-redup)}
-.lampu i{width:9px;height:9px;border-radius:50%;background:var(--navy3)}
-.radio.tx .lampu i{background:#e5533d}
-.radio.rx .lampu i{background:var(--green2)}
-.radio.tx .lampu{color:#f0a394}.radio.rx .lampu{color:#8fe0b4}
+.merek{font-weight:700;font-size:17px;letter-spacing:0.12em;text-transform:uppercase}
+.merek b{color:var(--emas)}
+.merek span{font-size:11px;letter-spacing:0.08em;color:var(--cetak2);margin-left:6px}
+.lampu{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--cetak2)}
+.lampu i{width:10px;height:10px;border-radius:50%;background:#33466f;border:2px solid var(--sambungan)}
+.radio.tx .lampu i{background:var(--led-merah)}
+.radio.rx .lampu i{background:var(--led-hijau)}
 
-/* panel layar: krem, seperti papan nama */
-.lcd{background:var(--krem);color:var(--navy);border-radius:8px;padding:10px 14px 11px;border:2px solid var(--emas)}
-.lcd-baris{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:600}
-.lcd-ch{font-family:var(--serif);font-weight:700;font-size:26px;letter-spacing:0.04em;line-height:1.2;margin:4px 0 3px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lcd .redup{color:#7a6a45;letter-spacing:0.06em}
-.status{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--navy)}
-.dot{width:8px;height:8px;border-radius:50%;background:#b9ab88;flex-shrink:0}
-.dot.on{background:var(--green)}
-.dot.warn{background:var(--amber);animation:kedip 1s steps(2) infinite}
-.dot.err{background:var(--red);animation:kedip .6s steps(2) infinite}
-@keyframes kedip{50%{opacity:.2}}
+/* layar LCD */
+.lcd{background:var(--lcd);color:var(--lcd-ink);border-radius:4px;padding:6px 12px 7px;font-family:var(--lcdfont);
+  border:6px solid var(--sambungan);outline:1px solid #2c4478}
+.lcd-baris{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:19px;line-height:1}
+.lcd-ch{font-size:40px;line-height:0.95;margin:4px 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
+.lcd .redup{color:var(--lcd-redup)}
+.status{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{width:9px;height:9px;background:var(--lcd-redup);flex-shrink:0;opacity:.45}
+.dot.on{background:var(--lcd-ink);opacity:1}
+.dot.warn{background:var(--lcd-ink);opacity:1;animation:kedip 1s steps(2) infinite}
+.dot.err{background:#7d1b14;opacity:1;animation:kedip .6s steps(2) infinite}
+@keyframes kedip{50%{opacity:.15}}
 
-/* kisi speaker: garis rata */
-.kisi{height:16px;margin:14px 10px 0;
-  background:repeating-linear-gradient(90deg,var(--navy3) 0 3px,transparent 3px 8px)}
+/* kisi speaker: celah mendatar */
+.kisi{margin:16px 26px 0;height:34px;
+  background:repeating-linear-gradient(180deg,var(--sambungan) 0 4px,transparent 4px 9px)}
+.cetak-kecil{font-size:10px;font-weight:700;letter-spacing:0.16em;color:var(--cetak2);text-transform:uppercase}
 
-/* keypad saluran */
-.kanal{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:16px;counter-reset:ch}
-.kanal button{counter-increment:ch;position:relative;text-align:left;min-height:50px;padding:7px 9px;
-  background:var(--navy2);border:1px solid var(--navy-garis);border-radius:6px;
-  font-size:13px;font-weight:600;color:var(--krem);cursor:pointer;line-height:1.15;overflow:hidden}
-.kanal button::before{content:counter(ch);display:block;font-family:var(--serif);font-weight:700;font-size:14px;color:var(--emas2);margin-bottom:1px}
-.kanal button .n{position:absolute;top:7px;right:9px;font-size:12px;font-weight:700;color:var(--krem-redup)}
-.kanal button:active{background:var(--navy3)}
-.kanal button.on{background:var(--emas2);border-color:var(--emas2);color:var(--navy)}
-.kanal button.on::before,.kanal button.on .n{color:var(--navy)}
-@media (max-width:360px){.kanal button{font-size:12px;padding:7px 7px}}
+/* keypad saluran: karet */
+.kanal{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px;counter-reset:ch}
+.kanal button{counter-increment:ch;position:relative;text-align:left;min-height:52px;padding:6px 8px 7px 9px;
+  background:var(--karet);border:none;border-bottom:3px solid var(--karet-tepi);border-radius:10px;
+  font-size:13px;font-weight:700;color:var(--cetak);cursor:pointer;line-height:1.1;overflow:hidden;text-transform:uppercase;letter-spacing:0.02em}
+.kanal button::before{content:counter(ch);display:block;font-size:18px;font-weight:700;color:var(--cetak);margin-bottom:1px}
+.kanal button .n{position:absolute;top:7px;right:9px;font-family:var(--lcdfont);font-size:17px;color:var(--cetak2)}
+.kanal button:active{border-bottom-width:1px;transform:translateY(2px)}
+.kanal button.on{background:var(--karet-on);color:var(--lcd-ink);border-bottom-color:var(--emas-tua)}
+.kanal button.on::before,.kanal button.on .n{color:var(--lcd-ink)}
+@media (max-width:360px){.kanal button{font-size:11.5px}}
 
-/* tombol bicara: lingkaran emas rata */
+/* tombol PTT: karet emas, tulisan tercetak */
 .ptt-area{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:22px}
-.ptt{width:min(56vw,200px);aspect-ratio:1;border-radius:50%;cursor:pointer;
-  background:var(--emas2);color:var(--navy);border:6px solid var(--navy2);outline:2px solid var(--emas2);outline-offset:4px;
-  font-family:var(--serif);font-size:15px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;line-height:1.25;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 18px;
-  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;transition:transform .08s,background .12s}
-.ptt .ic{width:30px;height:2px;background:var(--navy);opacity:.45}
-.ptt:disabled{background:#5d6d8c;outline-color:#5d6d8c;color:#c9d0de;cursor:not-allowed}
-.ptt.live{background:var(--emas);transform:scale(.97);outline-color:#e5533d}
-.ptt.dengar:not(.live){outline-color:var(--green2)}
-.hint{font-size:13px;font-weight:500;color:var(--krem-redup);text-align:center;min-height:1.3em;padding:0 8px}
-.hint.dengar{color:#8fe0b4}
+.ptt{width:100%;max-width:300px;height:118px;border-radius:22px;cursor:pointer;
+  background:var(--emas);color:var(--lcd-ink);border:none;border-bottom:7px solid var(--emas-tua);
+  font-family:var(--label);font-size:15px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
+.ptt::before{content:'PTT';font-size:36px;letter-spacing:0.14em;line-height:1}
+.ptt .ic{width:96px;height:6px;background:repeating-linear-gradient(90deg,var(--emas-tua) 0 3px,transparent 3px 7px)}
+.ptt:disabled{background:#4a5a7d;border-bottom-color:#33415f;color:#aab5c9;cursor:not-allowed}
+.ptt:disabled .ic{background:repeating-linear-gradient(90deg,#33415f 0 3px,transparent 3px 7px)}
+.ptt.live{transform:translateY(5px);border-bottom-width:2px;outline:3px solid var(--led-merah);outline-offset:4px}
+.ptt.dengar:not(.live){outline:3px solid var(--led-hijau);outline-offset:4px}
+.ptt-area .ic{order:2}
+.hint{font-size:13px;font-weight:600;color:var(--cetak2);text-align:center;min-height:1.3em;padding:0 8px}
+.hint.dengar{color:var(--led-hijau)}
 
-/* tombol di badan radio */
-.samping{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:18px}
+/* tombol samping */
+.samping{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
 .samping #btnRingAll{grid-column:1 / -1}
-.samping button{background:transparent;border:1px solid var(--navy-garis);border-radius:6px;color:var(--krem);
-  font-size:14px;font-weight:600;padding:9px 12px;min-height:44px;cursor:pointer}
-.samping button:active{background:var(--navy2)}
-.samping button.on{background:var(--krem);color:var(--navy);border-color:var(--krem)}
-.samping button.merah{border-color:#8c3a33;color:#f3b3a8}
+.samping button,.btn{background:var(--karet);border:none;border-bottom:3px solid var(--karet-tepi);border-radius:10px;
+  color:var(--cetak);font-size:14px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:9px 12px;min-height:46px;cursor:pointer}
+.samping button:active,.btn:active{border-bottom-width:1px;transform:translateY(2px)}
+.samping button.on{background:var(--cetak);color:var(--lcd-ink);border-bottom-color:#aab8cf}
+.samping button.merah{background:#8e2a2a;border-bottom-color:#561616;color:#fff}
 
-/* pemberitahuan di badan radio */
+/* pemberitahuan: tercetak di layar kedua */
 .banner{display:none}
-.banner.tampil{display:block;margin-top:14px;background:#2a2f3f;border-left:3px solid var(--emas2);
-  padding:9px 11px;font-size:13px;line-height:1.45;color:var(--krem);border-radius:0 6px 6px 0}
-.banner.tampil strong{color:var(--emas2);font-weight:700}
-.banner.merah{border-left-color:#e5533d}
-.banner.merah strong{color:#f3b3a8}
+.banner.tampil{display:block;margin-top:14px;background:#2a2412;border:2px solid var(--amber);
+  padding:8px 11px;font-size:13px;font-weight:600;line-height:1.4;color:#f5deb0;border-radius:6px}
+.banner.tampil strong{color:var(--amber)}
+.banner.merah{background:#2c1414;border-color:var(--led-merah);color:#f6c3bd}
+.banner.merah strong{color:var(--led-merah)}
 
-/* isian di badan radio (halaman masuk) */
-label.f{display:block;font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--krem-redup);margin-bottom:5px}
-input,select{width:100%;background:#fffdf7;border:1px solid var(--garis);color:var(--tinta);font-family:var(--sans);font-weight:500;
-  font-size:16px;padding:11px 12px;border-radius:6px;outline:none;-webkit-appearance:none;appearance:none}
-select{background-image:linear-gradient(45deg,transparent 50%,var(--tinta2) 50%),linear-gradient(135deg,var(--tinta2) 50%,transparent 50%);
+/* isian */
+label.f{display:block;margin-bottom:5px}
+input,select{width:100%;background:var(--sambungan);border:2px solid #2c4478;color:var(--cetak);font-family:var(--label);font-weight:600;
+  font-size:17px;padding:10px 12px;border-radius:8px;outline:none;-webkit-appearance:none;appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--cetak2) 50%),linear-gradient(135deg,var(--cetak2) 50%,transparent 50%);
   background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+select option{background:var(--plastik)}
 input:focus,select:focus{border-color:var(--emas)}
-.radio input,.radio select{background-color:var(--krem);border-color:var(--krem)}
 .field{margin-bottom:12px}
-.btn{width:100%;background:#fffdf7;border:1px solid var(--navy);color:var(--navy);
-  font-size:15px;font-weight:700;padding:12px;border-radius:6px;cursor:pointer;min-height:48px}
-.btn:active{background:var(--kertas2)}
+.btn{width:100%}
 .btn:disabled{opacity:.45;cursor:not-allowed}
-.btn.gold{background:var(--emas2);border-color:var(--emas2);color:var(--navy);font-family:var(--serif);letter-spacing:0.08em;text-transform:uppercase}
-.btn.gold:active{background:var(--emas)}
+.btn.gold{background:var(--emas);color:var(--lcd-ink);border-bottom-color:var(--emas-tua);font-size:16px}
 .masuk{margin-top:18px}
-.note{font-size:13px;color:var(--krem-redup);line-height:1.5}
+.note{font-size:13px;font-weight:500;color:var(--cetak2);line-height:1.45}
 
-/* ── lembar di bawah radio ── */
-.bawah{margin-top:26px;display:flex;flex-direction:column;gap:26px}
-.judul{font-family:var(--serif);font-weight:700;font-size:15px;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy);
-  display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.judul::after{content:'';flex:1;border-top:1px solid var(--emas)}
-
-/* daftar orang: seperti daftar hadir */
-.orang{display:flex;flex-direction:column;max-height:44vh;overflow-y:auto;border-top:1px solid var(--garis)}
-.o{display:flex;align-items:center;gap:11px;padding:9px 2px;border-bottom:1px solid var(--garis2)}
-.o .av{width:30px;height:30px;border-radius:50%;background:var(--navy);color:var(--emas2);
-  display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:13px;font-weight:700;flex-shrink:0}
-.o.talk .av{background:var(--green);color:#fff}
+/* daftar orang */
+.daftar{margin-top:20px}
+.daftar .cetak-kecil{margin:0 2px 7px}
+.orang{display:flex;flex-direction:column;max-height:36vh;overflow-y:auto;background:var(--sambungan);border-radius:10px}
+.o{display:flex;align-items:center;gap:10px;padding:8px 10px;border-top:1px solid #1f3260}
+.o:first-child{border-top:none}
+.o .av{width:30px;height:30px;border-radius:6px;background:var(--karet);color:var(--cetak);
+  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}
+.o.talk .av{background:var(--led-hijau);color:#062312}
 .o .info{flex:1;min-width:0}
-.o .nm{font-size:15px;font-weight:700;color:var(--tinta);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.o .sub{font-size:12px;font-weight:500;color:var(--muted)}
-.o .sub.hijau{color:var(--green);font-weight:600}
+.o .nm{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.o .sub{font-size:12px;font-weight:600;color:var(--cetak2)}
+.o .sub.hijau{color:var(--led-hijau)}
 .o.goyah .sub{color:var(--amber)}
 .sinyal{display:inline-flex;align-items:flex-end;gap:2px;height:11px;margin-left:7px;vertical-align:-1px}
-.sinyal i{width:3px;background:#cfc3a6;display:block}
+.sinyal i{width:3px;background:#3a5080;display:block}
 .sinyal i:nth-child(1){height:4px}.sinyal i:nth-child(2){height:7px}.sinyal i:nth-child(3){height:11px}
-.sinyal.kuat i{background:var(--green)}
+.sinyal.kuat i{background:var(--led-hijau)}
 .sinyal.sedang i:nth-child(1),.sinyal.sedang i:nth-child(2){background:var(--amber)}
-.sinyal.lemah i:nth-child(1){background:var(--red)}
-.o .call{background:transparent;border:1px solid var(--emas);border-radius:4px;color:var(--emas-tua);
-  font-size:13px;font-weight:700;padding:0 12px;height:32px;cursor:pointer;flex-shrink:0}
-.o .call:active{background:var(--kertas2)}
-.kosong{font-size:13px;color:var(--muted);line-height:1.5;padding:10px 2px 0}
+.sinyal.lemah i:nth-child(1){background:var(--led-merah)}
+.o .call{background:var(--karet);border:none;border-bottom:2px solid var(--karet-tepi);border-radius:8px;color:var(--cetak);
+  font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:0 11px;height:32px;cursor:pointer;flex-shrink:0}
+.kosong{font-size:13px;font-weight:500;color:var(--cetak2);line-height:1.45;padding:10px 2px 0}
 
-/* pesan cepat */
-.fkeys{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;counter-reset:fk}
-.fkeys button{counter-increment:fk;display:flex;align-items:center;gap:9px;text-align:left;min-height:44px;padding:8px 10px;
-  background:#fffdf7;border:1px solid var(--garis);border-radius:6px;font-size:14px;font-weight:600;color:var(--tinta);cursor:pointer}
-.fkeys button::before{content:counter(fk);font-family:var(--serif);font-weight:700;font-size:14px;color:var(--emas);width:12px;flex-shrink:0}
+/* ── panel kedua: tombol fungsi, layar log, saklar ── */
+.bawah{margin-top:16px;background:var(--plastik2);border:2px solid var(--sambungan);border-radius:22px;padding:16px 16px 18px;
+  display:flex;flex-direction:column;gap:18px}
+.bawah .cetak-kecil{margin-bottom:7px}
+.fkeys{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;counter-reset:fk}
+.fkeys button{counter-increment:fk;display:flex;align-items:center;gap:9px;text-align:left;min-height:46px;padding:8px 10px;
+  background:var(--karet);border:none;border-bottom:3px solid var(--karet-tepi);border-radius:10px;
+  font-size:13px;font-weight:700;color:var(--cetak);cursor:pointer;text-transform:uppercase;letter-spacing:0.02em}
+.fkeys button::before{content:'F' counter(fk);font-size:12px;font-weight:700;color:var(--lcd-ink);background:var(--cetak2);
+  border-radius:3px;padding:1px 4px;flex-shrink:0}
 .fkeys button:last-child{grid-column:1 / -1}
-.fkeys button:active{background:var(--kertas2)}
-.ketik{display:flex;gap:7px;margin-top:8px}
+.fkeys button:active{border-bottom-width:1px;transform:translateY(2px)}
+.ketik{display:flex;gap:8px;margin-top:8px}
 .ketik input{flex:1}
-.ketik .btn{width:auto;padding:0 18px;background:var(--navy);color:var(--krem)}
+.ketik .btn{width:auto;padding:0 16px}
 
-/* riwayat: seperti notulen, jam di kolom kiri */
-#riwayat{display:flex;flex-direction:column;max-height:260px;overflow-y:auto;border-top:1px solid var(--garis)}
-.rw{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--garis2)}
-.rw-kiri{min-width:0}
-.rw-nm{font-size:14px;font-weight:700;display:flex;align-items:baseline;gap:9px;flex-direction:row-reverse;justify-content:flex-end}
-.rw-jam{font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;width:38px;flex-shrink:0}
-.rw-isi{font-size:13px;color:var(--tinta2);margin:1px 0 0 47px;word-break:break-word}
-.rw.teks .rw-isi{color:var(--emas-tua);font-weight:600}
-.rw-play{background:var(--navy);border:none;color:var(--emas2);width:32px;height:32px;border-radius:50%;font-size:10px;cursor:pointer}
-.rw-play:active{background:var(--navy3)}
-#riwayat .kosong{padding:10px 2px}
-.tautan{background:none;border:none;color:var(--tinta2);font-size:13px;font-weight:600;text-decoration:underline;
-  text-underline-offset:3px;cursor:pointer;padding:9px 0 0}
+/* layar log */
+.log{background:var(--lcd);border:6px solid var(--sambungan);outline:1px solid #2c4478;border-radius:4px;padding:2px 10px;font-family:var(--lcdfont)}
+#riwayat{display:flex;flex-direction:column;max-height:230px;overflow-y:auto}
+.rw{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px dashed var(--lcd-redup)}
+.rw:first-child{border-top:none}
+.rw-kiri{flex:1;min-width:0}
+.rw-nm{font-size:20px;line-height:1;color:var(--lcd-ink);display:flex;align-items:baseline;gap:8px;text-transform:uppercase}
+.rw-jam{font-size:17px;color:var(--lcd-redup)}
+.rw-isi{font-size:18px;line-height:1.05;color:#24486e;margin-top:2px;word-break:break-word}
+.rw.teks .rw-isi{color:var(--lcd-ink)}
+.rw-play{background:var(--lcd-ink);border:none;color:var(--lcd);width:32px;height:32px;border-radius:6px;font-size:10px;cursor:pointer;flex-shrink:0}
+.log .kosong{font-family:var(--lcdfont);font-size:18px;color:var(--lcd-redup);padding:6px 0;line-height:1.1}
+.tautan{background:none;border:none;color:var(--cetak2);font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+  text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:9px 0 0}
 
-/* status */
-.saklar{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--navy);border-radius:6px;overflow:hidden}
-.saklar button{background:#fffdf7;border:none;border-left:1px solid var(--navy);color:var(--navy);font-size:14px;font-weight:600;
-  min-height:42px;cursor:pointer}
-.saklar button:first-child{border-left:none}
-.saklar button.on{background:var(--navy);color:var(--emas2)}
+/* saklar status tiga posisi */
+.saklar{display:grid;grid-template-columns:repeat(3,1fr);background:var(--sambungan);border-radius:10px;padding:4px;gap:4px}
+.saklar button{background:transparent;border:none;border-radius:7px;color:var(--cetak2);font-size:13px;font-weight:700;
+  letter-spacing:0.04em;text-transform:uppercase;min-height:40px;cursor:pointer}
+.saklar button.on{background:var(--cetak);color:var(--lcd-ink)}
 .kaki{display:flex;gap:8px}
 .kaki .btn{flex:1}
-.kaki .keluar{color:var(--red);border-color:var(--red)}
-.tanda{text-align:center;font-family:var(--serif);font-size:11px;letter-spacing:0.16em;color:var(--muted);margin-top:28px}
+.kaki .keluar{background:#8e2a2a;border-bottom-color:#561616}
 
 /* panggilan masuk */
 .ring{position:fixed;inset:0;z-index:900;display:none;align-items:center;justify-content:center;
-  padding:22px;background:rgba(13,28,58,0.82)}
+  padding:22px;background:rgba(8,16,34,0.9)}
 .ring.open{display:flex}
-.ring-box{background:var(--kertas);border-top:4px solid var(--emas);border-radius:10px;padding:20px 18px 18px;max-width:340px;width:100%;text-align:center}
-.ring-lcd{margin-bottom:18px}
-.ring-ic{font-size:11px;font-weight:700;letter-spacing:0.16em;color:var(--emas-tua);animation:kedip 1s steps(2) infinite}
-.ring-box.urgent{border-top-color:var(--red)}
-.ring-box.urgent .ring-ic{color:var(--red)}
-.ring-who{font-family:var(--serif);font-weight:700;font-size:28px;color:var(--navy);line-height:1.2;margin:8px 0 4px;word-break:break-word}
-.ring-sub{font-size:14px;color:var(--tinta2);line-height:1.45}
+.ring-box{background:var(--plastik);border:2px solid var(--sambungan);border-radius:24px;padding:18px;max-width:340px;width:100%}
+.ring-lcd{background:var(--lcd);color:var(--lcd-ink);border:6px solid var(--sambungan);border-radius:4px;
+  padding:8px 12px;font-family:var(--lcdfont);margin-bottom:16px;animation:kedip2 1s steps(2) infinite}
+@keyframes kedip2{50%{background:#a9d5f1}}
+.ring-box.urgent .ring-lcd{background:#f0a49b;animation:none}
+.ring-ic{font-size:20px}
+.ring-who{font-size:40px;line-height:1;margin:4px 0;word-break:break-word;text-transform:uppercase}
+.ring-sub{font-size:19px;line-height:1.1}
 .btn-row{display:flex;gap:8px}.btn-row .btn{flex:1}
 
 .toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:950;
-  background:var(--navy);color:var(--krem);font-size:14px;font-weight:600;padding:10px 16px;border-radius:6px;
-  max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s}
+  background:var(--lcd);color:var(--lcd-ink);font-family:var(--lcdfont);font-size:20px;padding:6px 14px;border-radius:4px;
+  border:4px solid var(--sambungan);max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .15s}
 .toast.show{opacity:1}
 .hide{display:none !important}
 </style>
@@ -215,39 +214,32 @@ input:focus,select:focus{border-color:var(--emas)}
 <body>
 <div class="wrap">
 
-  <header class="kop">
-    <div class="kop-kecil">HIMA Administrasi Bisnis · Telkom University</div>
-    <div class="kop-judul">IBASS 2026</div>
-    <div class="kop-garis"></div>
-    <div class="kop-sub">Radio Panitia</div>
-  </header>
-
   <div class="radio" id="radio">
     <div class="antena"></div><div class="kenop"></div>
     <div class="kepala">
-      <div class="merek">HT PANITIA</div>
-      <div class="lampu"><i></i>TX / RX</div>
+      <div class="merek"><b>IBASS</b><span>HT-26</span></div>
+      <div class="lampu"><i></i>TX/RX</div>
     </div>
     <div class="lcd">
-      <div class="lcd-baris"><span class="redup">SALURAN</span><span class="status"><span class="dot" id="dot"></span><span id="statusTxt">Belum masuk</span></span></div>
+      <div class="lcd-baris"><span class="redup">CH</span><span class="status"><span class="dot" id="dot"></span><span id="statusTxt">Belum masuk</span></span></div>
       <div class="lcd-ch" id="chLabel">Semua Panitia</div>
-      <div class="lcd-baris"><span id="jmlOrang" class="redup">belum masuk</span></div>
+      <div class="lcd-baris"><span id="jmlOrang" class="redup">belum masuk</span><span class="redup" id="versiHT">v26.10</span></div>
     </div>
     <div class="kisi"></div>
 
     <!-- MASUK -->
     <div id="joinView" class="masuk">
       <div class="field">
-        <label class="f" for="nama">NAMA</label>
+        <label class="f cetak-kecil" for="nama">Nama</label>
         <input type="text" id="nama" placeholder="Contoh: Fikri" autocomplete="off" maxlength="24">
       </div>
       <div class="field">
-        <label class="f" for="room">SALURAN</label>
+        <label class="f cetak-kecil" for="room">Saluran</label>
         <select id="room"></select>
       </div>
       <button class="btn gold" id="joinBtn">Masuk</button>
       <p class="note" style="margin-top:12px">Izinkan mikrofon saat browser bertanya.
-      Mikrofon mati sampai tombol bicara ditahan.</p>
+      Mikrofon mati sampai tombol PTT ditahan.</p>
     </div>
 
     <!-- RUANG HT -->
@@ -257,7 +249,7 @@ input:focus,select:focus{border-color:var(--emas)}
 
       <div class="ptt-area">
         <button class="ptt" id="ptt" disabled>
-          <span class="ic"></span><span id="pttLbl">Tahan untuk bicara</span>
+          <span id="pttLbl">Tahan untuk bicara</span><span class="ic"></span>
         </button>
         <div class="hint" id="pttHint">Menunggu orang lain masuk</div>
       </div>
@@ -266,19 +258,19 @@ input:focus,select:focus{border-color:var(--emas)}
         <button id="btnRingCh">Panggil Saluran</button>
         <button id="btnRingAll" class="merah">Panggil Semua Divisi</button>
       </div>
+
+      <div class="daftar">
+        <div class="cetak-kecil">Di saluran</div>
+        <div class="orang" id="orang"></div>
+        <div class="kosong hide" id="sendiri">Belum ada orang lain. Bagikan link HT ke staff,
+          atau tekan Panggil Semua Divisi.</div>
+      </div>
     </div>
   </div>
 
   <div id="htBawah" class="bawah hide">
-    <section>
-      <div class="judul">Di Saluran</div>
-      <div class="orang" id="orang"></div>
-      <div class="kosong hide" id="sendiri">Belum ada orang lain. Bagikan link HT ke staff,
-        atau tekan Panggil Semua Divisi.</div>
-    </section>
-
-    <section>
-      <div class="judul">Pesan Cepat</div>
+    <div>
+      <div class="cetak-kecil">Pesan cepat</div>
       <div class="fkeys">
         <button onclick="kirimTeks('Saya akan lawan')">Saya akan lawan</button>
         <button onclick="kirimTeks('Saya masih sanggup')">Saya masih sanggup</button>
@@ -290,30 +282,28 @@ input:focus,select:focus{border-color:var(--emas)}
         <input type="text" id="teksInput" placeholder="Ketik pesan" maxlength="120">
         <button class="btn" id="btnTeks">Kirim</button>
       </div>
-    </section>
+    </div>
 
-    <section>
-      <div class="judul">Riwayat</div>
-      <div id="riwayat"></div>
+    <div>
+      <div class="cetak-kecil">Log</div>
+      <div class="log"><div id="riwayat"></div></div>
       <button class="tautan" id="btnSalinLog">Salin catatan percakapan</button>
-    </section>
+    </div>
 
-    <section>
-      <div class="judul">Status</div>
+    <div>
+      <div class="cetak-kecil">Status</div>
       <div class="saklar">
         <button class="st-btn on" data-st="Siap">Siap</button>
         <button class="st-btn" data-st="Di Lokasi">Di Lokasi</button>
         <button class="st-btn" data-st="Sibuk">Sibuk</button>
       </div>
-    </section>
+    </div>
 
     <div class="kaki">
       <button class="btn" id="btnCopy">Salin link HT</button>
       <button class="btn keluar" id="btnLeave">Keluar</button>
     </div>
   </div>
-
-  <div class="tanda">IBASS 2026 · <span id="versiHT">v26.10</span></div>
 </div>
 
 <div class="ring" id="ringBox">
@@ -603,7 +593,8 @@ async function sambungBroker(k){
   }
 }
 function putusBroker(k){
-  if(!masuk) return;
+  // Sambungan yang dibuka sejak halaman dimuat juga dicoba ulang, jangan menunggu tombol Masuk
+  if(!masuk&&!menyiapkan) return;
   if(!cepatSiap()){
     brokerSudahDicoba=klien.every(x=>x.gagal||x.c===null);
     hadirCepat.clear();
